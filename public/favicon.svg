@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" width="200" height="60">
+  <rect x="0" y="0" width="48" height="48" rx="12" fill="#0139f6"/>
+  <text x="24" y="34" font-family="Poppins,Arial,sans-serif" font-size="22" font-weight="800" fill="white" text-anchor="middle">S</text>
+  <text x="70" y="36" font-family="Poppins,Arial,sans-serif" font-size="26" font-weight="800" fill="#0139f6">SAH</text>
+  <text x="124" y="36" font-family="Poppins,Arial,sans-serif" font-size="26" font-weight="800" fill="#1a1a2e">TECH</text>
+</svg>
