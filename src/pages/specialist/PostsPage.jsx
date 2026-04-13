@@ -5,6 +5,7 @@ import SpecialistLayout from "../../components/layout/SpecialistLayout";
 import PageHeader from "../../components/common/PageHeader";
 import Modal from "../../components/common/Modal";
 import api from "../../services/api";
+import { toast } from "react-toastify";
 
 export default function PostsPage() {
   const { t } = useTranslation();
@@ -44,6 +45,10 @@ export default function PostsPage() {
     } catch (err) {
       console.error("Failed to load posts:", err);
       setPosts([]);
+      toast.error(
+        err.response?.data?.message ||
+          "Erreur lors du chargement des publications",
+      );
     } finally {
       setLoading(false);
     }
@@ -54,15 +59,15 @@ export default function PostsPage() {
     if (!file) return;
 
     if (form.type === "IMAGE" && !file.type.startsWith("image/")) {
-      alert("Veuillez sélectionner une image valide");
+      toast.error("Veuillez sélectionner une image valide");
       return;
     }
     if (form.type === "VIDEO" && !file.type.startsWith("video/")) {
-      alert("Veuillez sélectionner une vidéo valide");
+      toast.error("Veuillez sélectionner une vidéo valide");
       return;
     }
     if (file.size > 100 * 1024 * 1024) {
-      alert("Le fichier ne doit pas dépasser 100MB");
+      toast.error("Le fichier ne doit pas dépasser 100MB");
       return;
     }
 
@@ -75,7 +80,7 @@ export default function PostsPage() {
 
   const handleSave = async () => {
     if (!form.title.trim() || !form.description.trim()) {
-      alert("Veuillez remplir tous les champs");
+      toast.error("Veuillez remplir tous les champs");
       return;
     }
 
@@ -88,7 +93,7 @@ export default function PostsPage() {
       formData.append("type", form.type);
       if (form.file) formData.append("file", form.file);
 
-      await api.post("/doctors/my_posts", formData, {
+      const res = await api.post("/doctors/my_posts", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
@@ -97,9 +102,10 @@ export default function PostsPage() {
 
       setShowModal(false);
       resetForm();
+      toast.success(res.data?.message || "Publication créée avec succès");
       fetchPosts();
     } catch (err) {
-      alert(err.response?.data?.message || "Erreur lors de la création");
+      toast.error(err.response?.data?.message || "Erreur lors de la création");
     } finally {
       setUploading(false);
     }
@@ -109,12 +115,15 @@ export default function PostsPage() {
     if (!confirm("Supprimer cette publication ?")) return;
     try {
       const token = user?.accessToken;
-      await api.delete(`/doctors/my_posts/${postId}`, {
+      const res = await api.delete(`/doctors/my_posts/${postId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      toast.success(res.data?.message || "Publication supprimée avec succès");
       fetchPosts();
     } catch (err) {
-      alert("Erreur lors de la suppression");
+      toast.error(
+        err.response?.data?.message || "Erreur lors de la suppression",
+      );
     }
   };
 

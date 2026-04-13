@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
-import { useTranslation } from 'react-i18next';
-import { useAuth } from '../../context/AuthContext';
-import AdminLayout from '../../components/layout/AdminLayout';
-import PageHeader from '../../components/common/PageHeader';
-import api from '../../services/api';
-import Cropper from 'react-easy-crop';
+import { useState, useEffect, useRef } from "react";
+import PropTypes from "prop-types";
+import { useTranslation } from "react-i18next";
+import { useAuth } from "../../context/AuthContext";
+import AdminLayout from "../../components/layout/AdminLayout";
+import PageHeader from "../../components/common/PageHeader";
+import api from "../../services/api";
+import Cropper from "react-easy-crop";
+import { toast } from "react-toastify";
 
 // ─── ImageCropper Component (same as specialist page) ──────────────
 function ImageCropper({ image, onCrop, onClose }) {
@@ -25,12 +26,12 @@ function ImageCropper({ image, onCrop, onClose }) {
         imageElement.onload = resolve;
       });
 
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
       canvas.width = croppedAreaPixels.width;
       canvas.height = croppedAreaPixels.height;
-      
+
       ctx.drawImage(
         imageElement,
         croppedAreaPixels.x,
@@ -40,16 +41,20 @@ function ImageCropper({ image, onCrop, onClose }) {
         0,
         0,
         croppedAreaPixels.width,
-        croppedAreaPixels.height
+        croppedAreaPixels.height,
       );
-      
-      canvas.toBlob((blob) => {
-        if (blob) {
-          onCrop(blob);
-        }
-      }, 'image/jpeg', 0.9);
+
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            onCrop(blob);
+          }
+        },
+        "image/jpeg",
+        0.9,
+      );
     } catch (error) {
-      console.error('Error creating cropped image:', error);
+      console.error("Error creating cropped image:", error);
     }
   };
 
@@ -57,7 +62,7 @@ function ImageCropper({ image, onCrop, onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
       <div className="bg-white rounded-2xl max-w-lg w-full p-6">
         <h3 className="text-lg font-bold mb-4">Recadrer l'image</h3>
-        
+
         <div className="relative h-80 mb-4 bg-gray-100 rounded-lg overflow-hidden">
           <Cropper
             image={image}
@@ -69,9 +74,14 @@ function ImageCropper({ image, onCrop, onClose }) {
             onCropComplete={onCropComplete}
           />
         </div>
-        
+
         <div className="mb-4">
-          <label htmlFor="zoom-slider" className="block text-sm text-gray-600 mb-2">Zoom</label>
+          <label
+            htmlFor="zoom-slider"
+            className="block text-sm text-gray-600 mb-2"
+          >
+            Zoom
+          </label>
           <input
             id="zoom-slider"
             type="range"
@@ -83,7 +93,7 @@ function ImageCropper({ image, onCrop, onClose }) {
             className="w-full"
           />
         </div>
-        
+
         <div className="flex gap-3">
           <button
             onClick={createCroppedImage}
@@ -110,17 +120,33 @@ ImageCropper.propTypes = {
 };
 
 const ROLE_UI = {
-  ADMIN: { label: 'Administrateur', type: 'admin', bgClass: 'bg-red-500', textClass: 'text-red-500' },
-  DOCTOR: { label: 'Médecin', type: 'doctor', bgClass: 'bg-blue-500', textClass: 'text-blue-500' },
-  PATIENT: { label: 'Patient', type: 'patient', bgClass: 'bg-green-500', textClass: 'text-green-500' },
+  ADMIN: {
+    label: "Administrateur",
+    type: "admin",
+    bgClass: "bg-red-500",
+    textClass: "text-red-500",
+  },
+  DOCTOR: {
+    label: "Médecin",
+    type: "doctor",
+    bgClass: "bg-blue-500",
+    textClass: "text-blue-500",
+  },
+  PATIENT: {
+    label: "Patient",
+    type: "patient",
+    bgClass: "bg-green-500",
+    textClass: "text-green-500",
+  },
 };
 
-const getRoleUi = (role) => ROLE_UI[role] || {
-  label: role || '',
-  type: 'patient',
-  bgClass: 'bg-green-500',
-  textClass: 'text-green-500',
-};
+const getRoleUi = (role) =>
+  ROLE_UI[role] || {
+    label: role || "",
+    type: "patient",
+    bgClass: "bg-green-500",
+    textClass: "text-green-500",
+  };
 
 const addNumberFieldIfPresent = (target, key, value) => {
   if (value) {
@@ -132,14 +158,14 @@ const addDoctorFields = (target, form) => {
   if (form.bio) target.bio = form.bio;
   if (form.clinic) target.clinic = form.clinic;
   if (form.location) target.location = form.location;
-  addNumberFieldIfPresent(target, 'latitude', form.latitude);
-  addNumberFieldIfPresent(target, 'longitude', form.longitude);
+  addNumberFieldIfPresent(target, "latitude", form.latitude);
+  addNumberFieldIfPresent(target, "longitude", form.longitude);
 };
 
 const addPatientFields = (target, form) => {
   if (form.age) target.age = form.age;
-  addNumberFieldIfPresent(target, 'weight', form.weight);
-  addNumberFieldIfPresent(target, 'height', form.height);
+  addNumberFieldIfPresent(target, "weight", form.weight);
+  addNumberFieldIfPresent(target, "height", form.height);
 };
 
 const buildUpdateData = (form, role) => {
@@ -150,11 +176,11 @@ const buildUpdateData = (form, role) => {
     address: form.address,
   };
 
-  if (role === 'PATIENT') {
+  if (role === "PATIENT") {
     addPatientFields(updateData, form);
   }
 
-  if (role === 'DOCTOR') {
+  if (role === "DOCTOR") {
     addDoctorFields(updateData, form);
   }
 
@@ -171,23 +197,21 @@ export default function AdminProfile() {
   const [showCropper, setShowCropper] = useState(false);
   const [tempImage, setTempImage] = useState(null);
   const fileInputRef = useRef(null);
-  const [form, setForm] = useState({ 
-    fullName: '', 
-    email: '', 
-    phone: '', 
-    address: '',
-    age: '',
-    weight: '',
-    height: '',
-    bio: '',
-    clinic: '',
-    location: '',
-    latitude: '',
-    longitude: ''
+  const [form, setForm] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    address: "",
+    age: "",
+    weight: "",
+    height: "",
+    bio: "",
+    clinic: "",
+    location: "",
+    latitude: "",
+    longitude: "",
   });
-  const [pwForm, setPwForm] = useState({ current: '', new: '', confirm: '' });
-  const [saved, setSaved] = useState(false);
-  const [pwSaved, setPwSaved] = useState(false);
+  const [pwForm, setPwForm] = useState({ current: "", new: "", confirm: "" });
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
 
@@ -199,26 +223,29 @@ export default function AdminProfile() {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/users/profile');
+      const res = await api.get("/users/profile");
       setProfile(res.data);
       setForm({
-        fullName: res.data.fullName || '',
-        email: res.data.email || '',
-        phone: res.data.phone || '',
-        address: res.data.address || '',
-        age: res.data.patient?.age?.toString() || '',
-        weight: res.data.patient?.weight?.toString() || '',
-        height: res.data.patient?.height?.toString() || '',
-        bio: res.data.specialist?.bio || '',
-        clinic: res.data.specialist?.clinic || '',
-        location: res.data.specialist?.location || '',
-        latitude: res.data.specialist?.latitude?.toString() || '',
-        longitude: res.data.specialist?.longitude?.toString() || '',
+        fullName: res.data.fullName || "",
+        email: res.data.email || "",
+        phone: res.data.phone || "",
+        address: res.data.address || "",
+        age: res.data.patient?.age?.toString() || "",
+        weight: res.data.patient?.weight?.toString() || "",
+        height: res.data.patient?.height?.toString() || "",
+        bio: res.data.specialist?.bio || "",
+        clinic: res.data.specialist?.clinic || "",
+        location: res.data.specialist?.location || "",
+        latitude: res.data.specialist?.latitude?.toString() || "",
+        longitude: res.data.specialist?.longitude?.toString() || "",
       });
       setError(null);
     } catch (err) {
-      console.error('Failed to load profile:', err);
-      setError('Impossible de charger le profil');
+      console.error("Failed to load profile:", err);
+      setError("Impossible de charger le profil");
+      toast.error(
+        err.response?.data?.message || "Impossible de charger le profil",
+      );
     } finally {
       setLoading(false);
     }
@@ -229,13 +256,13 @@ export default function AdminProfile() {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      alert('Veuillez sélectionner une image valide');
+    if (!file.type.startsWith("image/")) {
+      toast.error("Veuillez sélectionner une image valide");
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('L\'image ne doit pas dépasser 5MB');
+      toast.error("L'image ne doit pas dépasser 5MB");
       return;
     }
 
@@ -245,35 +272,38 @@ export default function AdminProfile() {
       setShowCropper(true);
     };
     reader.readAsDataURL(file);
-    
+
     // Reset input so same file can be selected again
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
   // ─── Upload cropped image ──────────────────────────────────────
   const uploadImage = async (croppedBlob) => {
     const formData = new FormData();
-    formData.append('file', croppedBlob, 'profile.jpg');
+    formData.append("file", croppedBlob, "profile.jpg");
 
     setUploading(true);
     setShowCropper(false);
-    
+
     try {
-      const res = await api.post('/users/upload-image', formData, {
-        headers: { 
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`
+      const res = await api.post("/users/upload-image", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
         },
       });
-      
-      setProfile(prev => ({ ...prev, imageUrl: res.data.imageUrl }));
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
+
+      setProfile((prev) => ({ ...prev, imageUrl: res.data.imageUrl }));
+      toast.success(
+        res.data?.message || "Photo de profil mise à jour avec succès",
+      );
     } catch (err) {
-      console.error('Failed to upload image:', err);
-      alert(err.response?.data?.message || 'Erreur lors de l\'upload de l\'image');
+      console.error("Failed to upload image:", err);
+      toast.error(
+        err.response?.data?.message || "Erreur lors de l'upload de l'image",
+      );
     } finally {
       setUploading(false);
       setTempImage(null);
@@ -286,14 +316,16 @@ export default function AdminProfile() {
     try {
       const updateData = buildUpdateData(form, profile?.role);
 
-      await api.patch('/users/update-user', updateData);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-      
+      const res = await api.patch("/users/update-user", updateData);
+      toast.success(res.data?.message || "Profil enregistré avec succès");
+
       await fetchProfile();
     } catch (err) {
-      console.error('Failed to update profile:', err);
-      alert(err.response?.data?.message || 'Erreur lors de la mise à jour du profil');
+      console.error("Failed to update profile:", err);
+      toast.error(
+        err.response?.data?.message ||
+          "Erreur lors de la mise à jour du profil",
+      );
     } finally {
       setSaving(false);
     }
@@ -302,30 +334,34 @@ export default function AdminProfile() {
   // ─── Change password ───────────────────────────────────────────
   const handlePwSave = async () => {
     if (!pwForm.current || !pwForm.new || pwForm.new !== pwForm.confirm) {
-      alert('Veuillez remplir tous les champs correctement. Le nouveau mot de passe doit correspondre à la confirmation.');
+      toast.error(
+        "Veuillez remplir tous les champs correctement. Le nouveau mot de passe doit correspondre à la confirmation.",
+      );
       return;
     }
     if (pwForm.new.length < 6) {
-      alert('Le mot de passe doit contenir au moins 6 caractères');
+      toast.error("Le mot de passe doit contenir au moins 6 caractères");
       return;
     }
     try {
-      await api.patch('/users/change-password', {
+      const res = await api.patch("/users/change-password", {
         currentPassword: pwForm.current,
         newPassword: pwForm.new,
       });
-      setPwSaved(true);
-      setPwForm({ current: '', new: '', confirm: '' });
-      setTimeout(() => setPwSaved(false), 2500);
+      setPwForm({ current: "", new: "", confirm: "" });
+      toast.success(res.data?.message || "Mot de passe modifié avec succès");
     } catch (err) {
-      console.error('Failed to change password:', err);
-      alert(err.response?.data?.message || 'Erreur lors du changement de mot de passe');
+      console.error("Failed to change password:", err);
+      toast.error(
+        err.response?.data?.message ||
+          "Erreur lors du changement de mot de passe",
+      );
     }
   };
 
   const getUserInitial = () => {
     if (profile?.fullName) return profile.fullName.charAt(0).toUpperCase();
-    return 'A';
+    return "A";
   };
 
   const roleUi = getRoleUi(profile?.role);
@@ -355,25 +391,7 @@ export default function AdminProfile() {
   return (
     <AdminLayout>
       <div className="p-8 animate-fadeIn max-w-2xl">
-        <PageHeader title={t('profile.title')} />
-
-        {saved && (
-          <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-xl flex items-center gap-2 text-sm">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            Profil enregistré avec succès !
-          </div>
-        )}
-
-        {pwSaved && (
-          <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-xl flex items-center gap-2 text-sm">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            Mot de passe modifié avec succès !
-          </div>
-        )}
+        <PageHeader title={t("profile.title")} />
 
         {/* Avatar with upload capability (cropper enabled) */}
         <div className="card mb-6">
@@ -386,13 +404,15 @@ export default function AdminProfile() {
                   className="w-20 h-20 rounded-2xl object-cover shadow-sm"
                 />
               ) : (
-                <div className={`w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-bold text-white ${
-                  roleUi.bgClass
-                }`}>
+                <div
+                  className={`w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-bold text-white ${
+                    roleUi.bgClass
+                  }`}
+                >
                   {getUserInitial()}
                 </div>
               )}
-              
+
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
@@ -402,9 +422,24 @@ export default function AdminProfile() {
                 {uploading ? (
                   <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
                   </svg>
                 )}
               </button>
@@ -416,9 +451,11 @@ export default function AdminProfile() {
                 className="hidden"
               />
             </div>
-            
+
             <div>
-              <p className="font-bold text-lg text-gray-900">{profile?.fullName}</p>
+              <p className="font-bold text-lg text-gray-900">
+                {profile?.fullName}
+              </p>
               <p className={`font-medium text-sm ${roleUi.textClass}`}>
                 {roleUi.label}
               </p>
@@ -432,50 +469,74 @@ export default function AdminProfile() {
 
         {/* Basic Info */}
         <div className="card mb-6">
-          <h2 className="font-bold text-gray-900 mb-4">Informations du compte</h2>
+          <h2 className="font-bold text-gray-900 mb-4">
+            Informations du compte
+          </h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('profile.full_name')}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t("profile.full_name")}
+              </label>
               <input
                 value={form.fullName}
-                onChange={e => setForm(p => ({ ...p, fullName: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, fullName: e.target.value }))
+                }
                 className="input-field"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.email')}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t("auth.email")}
+              </label>
               <input
                 type="email"
                 value={form.email}
-                onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, email: e.target.value }))
+                }
                 className="input-field"
               />
             </div>
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Téléphone (8 chiffres)</label>
+              <label
+                htmlFor="phone"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Téléphone (8 chiffres)
+              </label>
               <input
                 id="phone"
                 type="tel"
                 value={form.phone}
-                onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, phone: e.target.value }))
+                }
                 className="input-field"
                 placeholder="12345678"
                 maxLength={8}
               />
             </div>
             <div>
-              <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+              <label
+                htmlFor="address"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Adresse
+              </label>
               <input
                 id="address"
                 value={form.address}
-                onChange={e => setForm(p => ({ ...p, address: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, address: e.target.value }))
+                }
                 className="input-field"
                 placeholder="Votre adresse"
               />
             </div>
           </div>
-          <button 
-            onClick={handleSave} 
+          <button
+            onClick={handleSave}
             disabled={saving}
             className="btn-primary mt-4 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -486,51 +547,84 @@ export default function AdminProfile() {
               </>
             ) : (
               <>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
-                {t('common.save')}
+                {t("common.save")}
               </>
             )}
           </button>
         </div>
 
         {/* Patient specific info */}
-        {profile?.role === 'PATIENT' && (
+        {profile?.role === "PATIENT" && (
           <div className="card mb-6">
-            <h2 className="font-bold text-gray-900 mb-4">Informations médicales</h2>
+            <h2 className="font-bold text-gray-900 mb-4">
+              Informations médicales
+            </h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-1">Âge</label>
+                <label
+                  htmlFor="age"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Âge
+                </label>
                 <input
                   id="age"
                   type="number"
                   value={form.age}
-                  onChange={e => setForm(p => ({ ...p, age: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, age: e.target.value }))
+                  }
                   className="input-field"
                   placeholder="30"
                 />
               </div>
               <div>
-                <label htmlFor="weight" className="block text-sm font-medium text-gray-700 mb-1">Poids (kg)</label>
+                <label
+                  htmlFor="weight"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Poids (kg)
+                </label>
                 <input
                   id="weight"
                   type="number"
                   step="0.1"
                   value={form.weight}
-                  onChange={e => setForm(p => ({ ...p, weight: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, weight: e.target.value }))
+                  }
                   className="input-field"
                   placeholder="70.5"
                 />
               </div>
               <div>
-                <label htmlFor="height" className="block text-sm font-medium text-gray-700 mb-1">Taille (cm)</label>
+                <label
+                  htmlFor="height"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Taille (cm)
+                </label>
                 <input
                   id="height"
                   type="number"
                   step="0.1"
                   value={form.height}
-                  onChange={e => setForm(p => ({ ...p, height: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, height: e.target.value }))
+                  }
                   className="input-field"
                   placeholder="175"
                 />
@@ -540,72 +634,120 @@ export default function AdminProfile() {
         )}
 
         {/* Specialist specific info */}
-        {profile?.role === 'DOCTOR' && profile?.specialist && (
+        {profile?.role === "DOCTOR" && profile?.specialist && (
           <div className="card mb-6">
-            <h2 className="font-bold text-gray-900 mb-4">Informations professionnelles</h2>
+            <h2 className="font-bold text-gray-900 mb-4">
+              Informations professionnelles
+            </h2>
             <div className="space-y-4">
               <div>
-                <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                <label
+                  htmlFor="bio"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Bio
+                </label>
                 <textarea
                   id="bio"
                   value={form.bio}
-                  onChange={e => setForm(p => ({ ...p, bio: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, bio: e.target.value }))
+                  }
                   className="input-field"
                   rows={3}
                   placeholder="Description de votre parcours et spécialités..."
                 />
               </div>
               <div>
-                <label htmlFor="clinic" className="block text-sm font-medium text-gray-700 mb-1">Cabinet</label>
+                <label
+                  htmlFor="clinic"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Cabinet
+                </label>
                 <input
                   id="clinic"
                   value={form.clinic}
-                  onChange={e => setForm(p => ({ ...p, clinic: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, clinic: e.target.value }))
+                  }
                   className="input-field"
                   placeholder="Nom de votre cabinet"
                 />
               </div>
               <div>
-                <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">Localisation</label>
+                <label
+                  htmlFor="location"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Localisation
+                </label>
                 <input
                   id="location"
                   value={form.location}
-                  onChange={e => setForm(p => ({ ...p, location: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, location: e.target.value }))
+                  }
                   className="input-field"
                   placeholder="Ville, pays"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="latitude" className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
+                  <label
+                    htmlFor="latitude"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Latitude
+                  </label>
                   <input
                     id="latitude"
                     type="number"
                     step="any"
                     value={form.latitude}
-                    onChange={e => setForm(p => ({ ...p, latitude: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, latitude: e.target.value }))
+                    }
                     className="input-field"
                     placeholder="36.8065"
                   />
                 </div>
                 <div>
-                  <label htmlFor="longitude" className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
+                  <label
+                    htmlFor="longitude"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Longitude
+                  </label>
                   <input
                     id="longitude"
                     type="number"
                     step="any"
                     value={form.longitude}
-                    onChange={e => setForm(p => ({ ...p, longitude: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, longitude: e.target.value }))
+                    }
                     className="input-field"
                     placeholder="10.1815"
                   />
                 </div>
               </div>
               <div>
-                <label htmlFor="doctor-status" className="block text-sm font-medium text-gray-700 mb-1">Statut</label>
-                <p className={`text-sm font-medium ${profile.specialist.isValidated ? 'text-green-600' : 'text-orange-500'}`}>
-                  <span id="doctor-status" className="sr-only">Statut du spécialiste</span>
-                  {profile.specialist.isValidated ? '✓ Validé' : '⏳ En attente de validation'}
+                <label
+                  htmlFor="doctor-status"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Statut
+                </label>
+                <p
+                  className={`text-sm font-medium ${profile.specialist.isValidated ? "text-green-600" : "text-orange-500"}`}
+                >
+                  <span id="doctor-status" className="sr-only">
+                    Statut du spécialiste
+                  </span>
+                  {profile.specialist.isValidated
+                    ? "✓ Validé"
+                    : "⏳ En attente de validation"}
                 </p>
               </div>
             </div>
@@ -613,14 +755,22 @@ export default function AdminProfile() {
         )}
 
         {/* Admin specific info */}
-        {profile?.role === 'ADMIN' && profile?.admin && (
+        {profile?.role === "ADMIN" && profile?.admin && (
           <div className="card mb-6">
-            <h2 className="font-bold text-gray-900 mb-4">Privilèges administrateur</h2>
+            <h2 className="font-bold text-gray-900 mb-4">
+              Privilèges administrateur
+            </h2>
             <div className="flex items-center gap-2">
-              <div className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
-                profile.admin.canModerate ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-              }`}>
-                {profile.admin.canModerate ? '✓ Peut modérer' : 'Modération désactivée'}
+              <div
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                  profile.admin.canModerate
+                    ? "bg-green-100 text-green-700"
+                    : "bg-gray-100 text-gray-500"
+                }`}
+              >
+                {profile.admin.canModerate
+                  ? "✓ Peut modérer"
+                  : "Modération désactivée"}
               </div>
             </div>
           </div>
@@ -628,41 +778,55 @@ export default function AdminProfile() {
 
         {/* Password change */}
         <div className="card">
-          <h2 className="font-bold text-gray-900 mb-4">{t('profile.change_password')}</h2>
+          <h2 className="font-bold text-gray-900 mb-4">
+            {t("profile.change_password")}
+          </h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('profile.current_password')}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t("profile.current_password")}
+              </label>
               <input
                 type="password"
                 value={pwForm.current}
-                onChange={e => setPwForm(p => ({ ...p, current: e.target.value }))}
+                onChange={(e) =>
+                  setPwForm((p) => ({ ...p, current: e.target.value }))
+                }
                 className="input-field"
                 placeholder="••••••••"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('profile.new_password')}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t("profile.new_password")}
+              </label>
               <input
                 type="password"
                 value={pwForm.new}
-                onChange={e => setPwForm(p => ({ ...p, new: e.target.value }))}
+                onChange={(e) =>
+                  setPwForm((p) => ({ ...p, new: e.target.value }))
+                }
                 className="input-field"
                 placeholder="••••••••"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('profile.confirm_password')}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t("profile.confirm_password")}
+              </label>
               <input
                 type="password"
                 value={pwForm.confirm}
-                onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))}
+                onChange={(e) =>
+                  setPwForm((p) => ({ ...p, confirm: e.target.value }))
+                }
                 className="input-field"
                 placeholder="••••••••"
               />
             </div>
           </div>
           <button onClick={handlePwSave} className="btn-primary mt-4">
-            {t('profile.change_password')}
+            {t("profile.change_password")}
           </button>
         </div>
       </div>

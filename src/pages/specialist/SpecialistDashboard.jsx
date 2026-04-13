@@ -5,6 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import SpecialistLayout from "../../components/layout/SpecialistLayout";
 import StatCard from "../../components/common/StatCard";
 import api from "../../services/api";
+import { toast } from "react-toastify";
 
 const riskColors = {
   green: "badge-green",
@@ -22,7 +23,7 @@ export default function SpecialistDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [upcomingRDVs, setUpcomingRDVs] = useState([]);
-  
+
   // These will be implemented when APIs are ready
   const [pendingReports, setPendingReports] = useState(0);
   const [unreadMessages, setUnreadMessages] = useState(0);
@@ -34,9 +35,9 @@ export default function SpecialistDashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch stats from API
-      const statsRes = await api.get('/doctors/get-forms');
+      const statsRes = await api.get("/doctors/get-forms");
       setStats({
         patientsCount: statsRes.data.patientsCount || 0,
         appointmentsCount: statsRes.data.appointmentsCount || 0,
@@ -45,7 +46,7 @@ export default function SpecialistDashboard() {
       // TODO: Fetch upcoming appointments when API is ready
       // const appointmentsRes = await api.get('/doctors/get-appointments');
       // setUpcomingRDVs(appointmentsRes.data || []);
-      
+
       // For now, using empty array for upcoming RDVs
       setUpcomingRDVs([]);
 
@@ -56,9 +57,12 @@ export default function SpecialistDashboard() {
       // TODO: Fetch unread messages when API is ready
       // const messagesRes = await api.get('/doctors/unread-messages');
       // setUnreadMessages(messagesRes.data.count || 0);
-
     } catch (err) {
-      console.error('Failed to load dashboard data:', err);
+      console.error("Failed to load dashboard data:", err);
+      toast.error(
+        err.response?.data?.message ||
+          "Impossible de charger le tableau de bord",
+      );
     } finally {
       setLoading(false);
     }
@@ -120,8 +124,8 @@ export default function SpecialistDashboard() {
           <div className="absolute right-16 bottom-0 w-32 h-32 bg-white/5 rounded-full translate-y-8" />
           <div className="flex items-center gap-4 relative z-10">
             {specialist?.imageUrl ? (
-              <img 
-                src={specialist.imageUrl} 
+              <img
+                src={specialist.imageUrl}
                 alt={specialist.name}
                 className="w-14 h-14 rounded-2xl object-cover flex-shrink-0"
               />

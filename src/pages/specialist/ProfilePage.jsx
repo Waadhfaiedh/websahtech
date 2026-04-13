@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
-import { useTranslation } from 'react-i18next';
-import { useAuth } from '../../context/AuthContext';
-import SpecialistLayout from '../../components/layout/SpecialistLayout';
-import PageHeader from '../../components/common/PageHeader';
-import api from '../../services/api';
-import Cropper from 'react-easy-crop';
+import { useState, useEffect, useRef } from "react";
+import PropTypes from "prop-types";
+import { useTranslation } from "react-i18next";
+import { useAuth } from "../../context/AuthContext";
+import SpecialistLayout from "../../components/layout/SpecialistLayout";
+import PageHeader from "../../components/common/PageHeader";
+import api from "../../services/api";
+import Cropper from "react-easy-crop";
+import { toast } from "react-toastify";
 
 function ImageCropper({ image, onCrop, onClose }) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -24,12 +25,12 @@ function ImageCropper({ image, onCrop, onClose }) {
         imageElement.onload = resolve;
       });
 
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
       canvas.width = croppedAreaPixels.width;
       canvas.height = croppedAreaPixels.height;
-      
+
       ctx.drawImage(
         imageElement,
         croppedAreaPixels.x,
@@ -39,16 +40,20 @@ function ImageCropper({ image, onCrop, onClose }) {
         0,
         0,
         croppedAreaPixels.width,
-        croppedAreaPixels.height
+        croppedAreaPixels.height,
       );
-      
-      canvas.toBlob((blob) => {
-        if (blob) {
-          onCrop(blob);
-        }
-      }, 'image/jpeg', 0.9);
+
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            onCrop(blob);
+          }
+        },
+        "image/jpeg",
+        0.9,
+      );
     } catch (error) {
-      console.error('Error creating cropped image:', error);
+      console.error("Error creating cropped image:", error);
     }
   };
 
@@ -56,7 +61,7 @@ function ImageCropper({ image, onCrop, onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
       <div className="bg-white rounded-2xl max-w-lg w-full p-6">
         <h3 className="text-lg font-bold mb-4">Recadrer l'image</h3>
-        
+
         <div className="relative h-80 mb-4 bg-gray-100 rounded-lg overflow-hidden">
           <Cropper
             image={image}
@@ -68,9 +73,14 @@ function ImageCropper({ image, onCrop, onClose }) {
             onCropComplete={onCropComplete}
           />
         </div>
-        
+
         <div className="mb-4">
-          <label htmlFor="zoom-slider" className="block text-sm text-gray-600 mb-2">Zoom</label>
+          <label
+            htmlFor="zoom-slider"
+            className="block text-sm text-gray-600 mb-2"
+          >
+            Zoom
+          </label>
           <input
             id="zoom-slider"
             type="range"
@@ -82,7 +92,7 @@ function ImageCropper({ image, onCrop, onClose }) {
             className="w-full"
           />
         </div>
-        
+
         <div className="flex gap-3">
           <button
             onClick={createCroppedImage}
@@ -112,19 +122,17 @@ export default function ProfilePage() {
   const { t } = useTranslation();
   const { specialist, updateSpecialist, user } = useAuth();
   const [form, setForm] = useState({
-    fullName: specialist?.name || '',
-    email: specialist?.email || '',
-    specialty: specialist?.specialty || '',
-    clinic: specialist?.clinic || '',
-    address: specialist?.location || '',
-    phone: specialist?.phone || '',
-    bio: specialist?.bio || '',
+    fullName: specialist?.name || "",
+    email: specialist?.email || "",
+    specialty: specialist?.specialty || "",
+    clinic: specialist?.clinic || "",
+    address: specialist?.location || "",
+    phone: specialist?.phone || "",
+    bio: specialist?.bio || "",
   });
-  const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [pwForm, setPwForm] = useState({ current: '', new: '', confirm: '' });
-  const [pwSaved, setPwSaved] = useState(false);
+  const [pwForm, setPwForm] = useState({ current: "", new: "", confirm: "" });
   const [showCropper, setShowCropper] = useState(false);
   const [tempImage, setTempImage] = useState(null);
   const fileInputRef = useRef(null);
@@ -132,13 +140,13 @@ export default function ProfilePage() {
   useEffect(() => {
     if (specialist) {
       setForm({
-        fullName: specialist.name || '',
-        email: specialist.email || '',
-        specialty: specialist.specialty || '',
-        clinic: specialist.clinic || '',
-        address: specialist.location || '',
-        phone: specialist.phone || '',
-        bio: specialist.bio || '',
+        fullName: specialist.name || "",
+        email: specialist.email || "",
+        specialty: specialist.specialty || "",
+        clinic: specialist.clinic || "",
+        address: specialist.location || "",
+        phone: specialist.phone || "",
+        bio: specialist.bio || "",
       });
     }
   }, [specialist]);
@@ -147,13 +155,13 @@ export default function ProfilePage() {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      alert('Veuillez sélectionner une image valide');
+    if (!file.type.startsWith("image/")) {
+      toast.error("Veuillez sélectionner une image valide");
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('L\'image ne doit pas dépasser 5MB');
+      toast.error("L'image ne doit pas dépasser 5MB");
       return;
     }
 
@@ -163,35 +171,38 @@ export default function ProfilePage() {
       setShowCropper(true);
     };
     reader.readAsDataURL(file);
-    
+
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
   const uploadImage = async (croppedBlob) => {
     const formData = new FormData();
-    formData.append('file', croppedBlob, 'profile.jpg');
+    formData.append("file", croppedBlob, "profile.jpg");
 
     setUploading(true);
     setShowCropper(false);
-    
+
     try {
       const token = user?.accessToken;
-      const res = await api.post('/users/upload-image', formData, {
-        headers: { 
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}` 
+      const res = await api.post("/users/upload-image", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
         },
       });
-      
+
       updateSpecialist({ ...specialist, imageUrl: res.data.imageUrl });
-      
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
+
+      toast.success(
+        res.data?.message || "Photo de profil mise à jour avec succès",
+      );
     } catch (err) {
-      console.error('Failed to upload image:', err);
-      alert(err.response?.data?.message || 'Erreur lors de l\'upload de l\'image');
+      console.error("Failed to upload image:", err);
+      toast.error(
+        err.response?.data?.message || "Erreur lors de l'upload de l'image",
+      );
     } finally {
       setUploading(false);
       setTempImage(null);
@@ -208,7 +219,7 @@ export default function ProfilePage() {
         address: form.address,
       };
 
-      if (specialist?.role === 'DOCTOR') {
+      if (specialist?.role === "DOCTOR") {
         updateData.bio = form.bio;
         updateData.clinic = form.clinic;
         updateData.location = form.address;
@@ -216,10 +227,10 @@ export default function ProfilePage() {
       }
 
       const token = user?.accessToken;
-      await api.patch('/users/update-user', updateData, {
+      const res = await api.patch("/users/update-user", updateData, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       updateSpecialist({
         ...specialist,
         name: form.fullName,
@@ -230,12 +241,14 @@ export default function ProfilePage() {
         clinic: form.clinic,
         specialty: form.specialty,
       });
-      
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
+
+      toast.success(res.data?.message || "Profil enregistré avec succès");
     } catch (err) {
-      console.error('Failed to update profile:', err);
-      alert(err.response?.data?.message || 'Erreur lors de la mise à jour du profil');
+      console.error("Failed to update profile:", err);
+      toast.error(
+        err.response?.data?.message ||
+          "Erreur lors de la mise à jour du profil",
+      );
     } finally {
       setLoading(false);
     }
@@ -243,41 +256,49 @@ export default function ProfilePage() {
 
   const handlePasswordChange = async () => {
     if (!pwForm.current || !pwForm.new || pwForm.new !== pwForm.confirm) {
-      alert('Veuillez remplir tous les champs correctement. Le nouveau mot de passe doit correspondre à la confirmation.');
+      toast.error(
+        "Veuillez remplir tous les champs correctement. Le nouveau mot de passe doit correspondre à la confirmation.",
+      );
       return;
     }
     if (pwForm.new.length < 6) {
-      alert('Le mot de passe doit contenir au moins 6 caractères');
+      toast.error("Le mot de passe doit contenir au moins 6 caractères");
       return;
     }
-    
+
     try {
       const token = user?.accessToken;
-      await api.patch('/users/change-password', {
-        currentPassword: pwForm.current,
-        newPassword: pwForm.new,
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      
-      setPwSaved(true);
-      setPwForm({ current: '', new: '', confirm: '' });
-      setTimeout(() => setPwSaved(false), 2500);
+      const res = await api.patch(
+        "/users/change-password",
+        {
+          currentPassword: pwForm.current,
+          newPassword: pwForm.new,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      setPwForm({ current: "", new: "", confirm: "" });
+      toast.success(res.data?.message || "Mot de passe modifié avec succès");
     } catch (err) {
-      console.error('Failed to change password:', err);
-      alert(err.response?.data?.message || 'Erreur lors du changement de mot de passe');
+      console.error("Failed to change password:", err);
+      toast.error(
+        err.response?.data?.message ||
+          "Erreur lors du changement de mot de passe",
+      );
     }
   };
 
-  const handleField = (key, val) => setForm(p => ({ ...p, [key]: val }));
+  const handleField = (key, val) => setForm((p) => ({ ...p, [key]: val }));
 
   const fields = [
-    { key: 'fullName', label: t('profile.full_name'), type: 'input' },
-    { key: 'email', label: t('auth.email'), type: 'email' },
-    { key: 'phone', label: t('profile.phone'), type: 'tel' },
-    { key: 'specialty', label: t('profile.specialty'), type: 'input' },
-    { key: 'clinic', label: t('profile.clinic'), type: 'input' },
-    { key: 'address', label: t('profile.address'), type: 'input' },
+    { key: "fullName", label: t("profile.full_name"), type: "input" },
+    { key: "email", label: t("auth.email"), type: "email" },
+    { key: "phone", label: t("profile.phone"), type: "tel" },
+    { key: "specialty", label: t("profile.specialty"), type: "input" },
+    { key: "clinic", label: t("profile.clinic"), type: "input" },
+    { key: "address", label: t("profile.address"), type: "input" },
   ];
 
   if (!specialist) {
@@ -293,42 +314,24 @@ export default function ProfilePage() {
   return (
     <SpecialistLayout>
       <div className="p-8 animate-fadeIn max-w-3xl">
-        <PageHeader title={t('profile.title')} />
-
-        {saved && (
-          <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-xl flex items-center gap-2 text-sm">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            Profil enregistré avec succès !
-          </div>
-        )}
-
-        {pwSaved && (
-          <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-xl flex items-center gap-2 text-sm">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            Mot de passe modifié avec succès !
-          </div>
-        )}
+        <PageHeader title={t("profile.title")} />
 
         {/* Avatar with upload capability */}
         <div className="card mb-6">
           <div className="flex items-center gap-6">
             <div className="relative group">
               {specialist?.imageUrl ? (
-                <img 
-                  src={specialist.imageUrl} 
+                <img
+                  src={specialist.imageUrl}
                   alt={form.fullName}
                   className="w-20 h-20 rounded-full object-cover shadow-sm"
                 />
               ) : (
                 <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center text-3xl font-bold text-primary">
-                  {form.fullName?.charAt(0) || '?'}
+                  {form.fullName?.charAt(0) || "?"}
                 </div>
               )}
-              
+
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
@@ -338,13 +341,28 @@ export default function ProfilePage() {
                 {uploading ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
                   </svg>
                 )}
               </button>
-              
+
               <input
                 ref={fileInputRef}
                 type="file"
@@ -353,12 +371,16 @@ export default function ProfilePage() {
                 className="hidden"
               />
             </div>
-            
+
             <div>
               <p className="font-semibold text-gray-900">{form.fullName}</p>
-              <p className="text-sm text-gray-500">{form.specialty || 'Spécialiste'}</p>
+              <p className="text-sm text-gray-500">
+                {form.specialty || "Spécialiste"}
+              </p>
               <p className="text-xs text-gray-400 mt-1">
-                {specialist?.isValidated ? '✓ Compte validé' : '⏳ En attente de validation'}
+                {specialist?.isValidated
+                  ? "✓ Compte validé"
+                  : "⏳ En attente de validation"}
               </p>
             </div>
           </div>
@@ -366,25 +388,31 @@ export default function ProfilePage() {
 
         {/* Fields */}
         <div className="card mb-6">
-          <h2 className="font-bold text-gray-900 mb-4">Informations professionnelles</h2>
+          <h2 className="font-bold text-gray-900 mb-4">
+            Informations professionnelles
+          </h2>
           <div className="grid grid-cols-2 gap-4 mb-4">
-            {fields.map(f => (
+            {fields.map((f) => (
               <div key={f.key}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{f.label}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {f.label}
+                </label>
                 <input
                   type={f.type}
-                  value={form[f.key] || ''}
-                  onChange={e => handleField(f.key, e.target.value)}
+                  value={form[f.key] || ""}
+                  onChange={(e) => handleField(f.key, e.target.value)}
                   className="input-field"
                 />
               </div>
             ))}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('profile.bio')}</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t("profile.bio")}
+            </label>
             <textarea
-              value={form.bio || ''}
-              onChange={e => handleField('bio', e.target.value)}
+              value={form.bio || ""}
+              onChange={(e) => handleField("bio", e.target.value)}
               rows={4}
               className="input-field resize-none"
               placeholder="Présentation de votre parcours et expertise..."
@@ -395,17 +423,31 @@ export default function ProfilePage() {
         {/* License Info */}
         {(specialist?.licenseNumber || specialist?.rating > 0) && (
           <div className="card mb-6">
-            <h2 className="font-bold text-gray-900 mb-4">Informations légales</h2>
+            <h2 className="font-bold text-gray-900 mb-4">
+              Informations légales
+            </h2>
             <div className="grid grid-cols-2 gap-4">
               {specialist?.licenseNumber && (
                 <div>
-                  <label htmlFor="license-number" className="block text-sm font-medium text-gray-500 mb-1">Numéro de licence</label>
-                  <p id="license-number" className="text-sm text-gray-800">{specialist.licenseNumber}</p>
+                  <label
+                    htmlFor="license-number"
+                    className="block text-sm font-medium text-gray-500 mb-1"
+                  >
+                    Numéro de licence
+                  </label>
+                  <p id="license-number" className="text-sm text-gray-800">
+                    {specialist.licenseNumber}
+                  </p>
                 </div>
               )}
               {specialist?.rating > 0 && (
                 <div>
-                  <label htmlFor="rating" className="block text-sm font-medium text-gray-500 mb-1">Évaluation</label>
+                  <label
+                    htmlFor="rating"
+                    className="block text-sm font-medium text-gray-500 mb-1"
+                  >
+                    Évaluation
+                  </label>
                   <p id="rating" className="text-sm text-gray-800">
                     {specialist.rating}/5 ({specialist.reviewsCount || 0} avis)
                   </p>
@@ -417,32 +459,46 @@ export default function ProfilePage() {
 
         {/* Change password */}
         <div className="card mb-6">
-          <h2 className="font-bold text-gray-900 mb-4">{t('profile.change_password')}</h2>
+          <h2 className="font-bold text-gray-900 mb-4">
+            {t("profile.change_password")}
+          </h2>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('profile.current_password')}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t("profile.current_password")}
+              </label>
               <input
                 type="password"
                 value={pwForm.current}
-                onChange={e => setPwForm(p => ({ ...p, current: e.target.value }))}
+                onChange={(e) =>
+                  setPwForm((p) => ({ ...p, current: e.target.value }))
+                }
                 className="input-field"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('profile.new_password')}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t("profile.new_password")}
+              </label>
               <input
                 type="password"
                 value={pwForm.new}
-                onChange={e => setPwForm(p => ({ ...p, new: e.target.value }))}
+                onChange={(e) =>
+                  setPwForm((p) => ({ ...p, new: e.target.value }))
+                }
                 className="input-field"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('profile.confirm_password')}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {t("profile.confirm_password")}
+              </label>
               <input
                 type="password"
                 value={pwForm.confirm}
-                onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))}
+                onChange={(e) =>
+                  setPwForm((p) => ({ ...p, confirm: e.target.value }))
+                }
                 className="input-field"
               />
             </div>
@@ -464,10 +520,20 @@ export default function ProfilePage() {
             </>
           ) : (
             <>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
-              {t('profile.save')}
+              {t("profile.save")}
             </>
           )}
         </button>
