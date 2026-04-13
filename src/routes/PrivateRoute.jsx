@@ -1,5 +1,6 @@
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import PropTypes from "prop-types";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export function PrivateRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
@@ -21,8 +22,20 @@ export function PrivateRoute({ children, allowedRoles }) {
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to={user.role === 'admin' ? '/admin/dashboard' : '/specialist/dashboard'} replace />;
+    return (
+      <Navigate
+        to={
+          user.role === "ADMIN" ? "/admin/dashboard" : "/specialist/dashboard"
+        }
+        replace
+      />
+    );
   }
 
   return children;
 }
+
+PrivateRoute.propTypes = {
+  children: PropTypes.node.isRequired,
+  allowedRoles: PropTypes.arrayOf(PropTypes.string),
+};

@@ -31,7 +31,7 @@ function RootRedirect() {
   const { user, loading } = useAuth();
   if (loading) return null;
   if (!user) return <Navigate to="/login" replace />;
-  return <Navigate to={user.role === 'admin' ? '/admin/dashboard' : '/specialist/dashboard'} replace />;
+  return <Navigate to={user.role === 'ADMIN' ? '/admin/dashboard' : '/specialist/dashboard'} replace />;
 }
 
 export default function App() {
@@ -44,54 +44,54 @@ export default function App() {
 
         {/* Specialist routes */}
         <Route path="/specialist/dashboard" element={
-          <PrivateRoute allowedRoles={['specialist']}><SpecialistDashboard /></PrivateRoute>
+          <PrivateRoute allowedRoles={['DOCTOR']}><SpecialistDashboard /></PrivateRoute>
         } />
         <Route path="/specialist/patients" element={
-          <PrivateRoute allowedRoles={['specialist']}><PatientsPage /></PrivateRoute>
+          <PrivateRoute allowedRoles={['DOCTOR']}><PatientsPage /></PrivateRoute>
         } />
         <Route path="/specialist/patients/:id" element={
-          <PrivateRoute allowedRoles={['specialist']}><PatientDetailPage /></PrivateRoute>
+          <PrivateRoute allowedRoles={['DOCTOR']}><PatientDetailPage /></PrivateRoute>
         } />
         <Route path="/specialist/reports" element={
-          <PrivateRoute allowedRoles={['specialist']}><ReportsPage /></PrivateRoute>
+          <PrivateRoute allowedRoles={['DOCTOR']}><ReportsPage /></PrivateRoute>
         } />
         <Route path="/specialist/chat" element={
-          <PrivateRoute allowedRoles={['specialist']}><ChatPage /></PrivateRoute>
+          <PrivateRoute allowedRoles={['DOCTOR']}><ChatPage /></PrivateRoute>
         } />
         <Route path="/specialist/posts" element={
-          <PrivateRoute allowedRoles={['specialist']}><PostsPage /></PrivateRoute>
+          <PrivateRoute allowedRoles={['DOCTOR']}><PostsPage /></PrivateRoute>
         } />
         <Route path="/specialist/accueil" element={
-          <PrivateRoute allowedRoles={['specialist']}><AccueilPage /></PrivateRoute>
+          <PrivateRoute allowedRoles={['DOCTOR']}><AccueilPage /></PrivateRoute>
         } />
         <Route path="/specialist/exercises" element={
-          <PrivateRoute allowedRoles={['specialist']}><ExercisesPage /></PrivateRoute>
+          <PrivateRoute allowedRoles={['DOCTOR']}><ExercisesPage /></PrivateRoute>
         } />
         <Route path="/specialist/search" element={
-          <PrivateRoute allowedRoles={['specialist']}><SearchPage /></PrivateRoute>
+          <PrivateRoute allowedRoles={['DOCTOR']}><SearchPage /></PrivateRoute>
         } />
         <Route path="/specialist/planning" element={
-          <PrivateRoute allowedRoles={['specialist']}><PlanningPage /></PrivateRoute>
+          <PrivateRoute allowedRoles={['DOCTOR']}><PlanningPage /></PrivateRoute>
         } />
         <Route path="/specialist/profile" element={
-          <PrivateRoute allowedRoles={['specialist']}><ProfilePage /></PrivateRoute>
+          <PrivateRoute allowedRoles={['DOCTOR']}><ProfilePage /></PrivateRoute>
         } />
 
         {/* Admin routes */}
         <Route path="/admin/dashboard" element={
-          <PrivateRoute allowedRoles={['admin']}><AdminDashboard /></PrivateRoute>
+          <PrivateRoute allowedRoles={['ADMIN']}><AdminDashboard /></PrivateRoute>
         } />
         <Route path="/admin/specialists" element={
-          <PrivateRoute allowedRoles={['admin']}><AdminSpecialists /></PrivateRoute>
+          <PrivateRoute allowedRoles={['ADMIN']}><AdminSpecialists /></PrivateRoute>
         } />
         <Route path="/admin/patients" element={
-          <PrivateRoute allowedRoles={['admin']}><AdminPatients /></PrivateRoute>
+          <PrivateRoute allowedRoles={['ADMIN']}><AdminPatients /></PrivateRoute>
         } />
         <Route path="/admin/posts" element={
-          <PrivateRoute allowedRoles={['admin']}><AdminPosts /></PrivateRoute>
+          <PrivateRoute allowedRoles={['ADMIN']}><AdminPosts /></PrivateRoute>
         } />
         <Route path="/admin/profile" element={
-          <PrivateRoute allowedRoles={['admin']}><AdminProfile /></PrivateRoute>
+          <PrivateRoute allowedRoles={['ADMIN']}><AdminProfile /></PrivateRoute>
         } />
 
         {/* Fallback */}

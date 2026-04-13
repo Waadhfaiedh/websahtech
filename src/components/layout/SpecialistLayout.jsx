@@ -80,6 +80,11 @@ export default function SpecialistLayout({ children }) {
     navigate('/login');
   };
 
+  // Get the display name (prefer specialist name, fallback to user name)
+  const displayName = specialist?.name || user?.name || 'Spécialiste';
+  const displaySpecialty = specialist?.specialty || '';
+  const profileImage = specialist?.imageUrl || user?.imageUrl;
+
   return (
     <div className="flex h-screen bg-surface overflow-hidden">
       {/* Sidebar */}
@@ -91,16 +96,26 @@ export default function SpecialistLayout({ children }) {
         {/* User info */}
         <div className="px-4 py-4 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-              <span className="text-primary font-bold text-sm">
-                {(specialist?.name || user?.name || 'S').charAt(0)}
-              </span>
-            </div>
+            {profileImage ? (
+              <img 
+                src={profileImage} 
+                alt={displayName}
+                className="w-10 h-10 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                <span className="text-primary font-bold text-sm">
+                  {displayName.charAt(0)}
+                </span>
+              </div>
+            )}
             <div className="overflow-hidden">
               <p className="font-semibold text-sm text-gray-800 truncate">
-                {specialist?.name || user?.name}
+                {displayName}
               </p>
-              <p className="text-xs text-gray-500 truncate">{specialist?.specialty}</p>
+              {displaySpecialty && (
+                <p className="text-xs text-gray-500 truncate">{displaySpecialty}</p>
+              )}
             </div>
           </div>
         </div>

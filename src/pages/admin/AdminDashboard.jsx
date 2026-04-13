@@ -1,18 +1,28 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import AdminLayout from '../../components/layout/AdminLayout';
 import StatCard from '../../components/common/StatCard';
-import { mockSpecialists, mockPatients, mockPosts, mockReports } from '../../services/mockData';
+import api from '../../services/api';
 
 export default function AdminDashboard() {
   const { t } = useTranslation();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const activeSpecialists = mockSpecialists.filter(s => s.status === 'active').length;
-  const pendingSpecialists = mockSpecialists.filter(s => s.status === 'pending').length;
-  const activePatients = mockPatients.filter(p => p.status === 'active').length;
-  const pendingPatients = mockPatients.filter(p => p.status === 'pending').length;
-  const totalPosts = mockPosts.length;
-  const totalReports = mockReports.length;
+  useEffect(() => {
+    api.get('/admins/get-forms')
+      .then(res => setData(res.data))
+      .catch(err => console.error('Failed to load dashboard:', err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const activeSpecialists = data?.specialist?.data?.filter(s => s.specialist?.isValidated).length ?? 0;
+  const pendingSpecialists = data?.specialist?.data?.filter(s => !s.specialist?.isValidated).length ?? 0;
+  const totalSpecialists = data?.specialist?.count ?? 0;
+  const totalPatients = data?.patient?.count ?? 0;
+  const totalPosts = data?.postNumber ?? 0;
+  const totalDocuments = data?.medicalDocumentNumber ?? 0;
 
   const recentActivity = [
     { type: 'new_specialist', text: 'Nouvelle inscription: Dr. Samira Touati (Neurologue)', time: '2h', color: 'bg-blue-500' },
@@ -24,13 +34,53 @@ export default function AdminDashboard() {
   ];
 
   const stats = [
-    { title: t('admin.total_specialists'), value: activeSpecialists, color: 'blue', icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
-    { title: t('admin.pending_specialists'), value: pendingSpecialists, color: 'orange', icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
-    { title: t('admin.total_patients'), value: activePatients, color: 'green', icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg> },
-    { title: t('admin.pending_patients'), value: pendingPatients, color: 'red', icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg> },
-    { title: t('admin.total_posts'), value: totalPosts, color: 'purple', icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" /></svg> },
-    { title: t('admin.total_reports'), value: totalReports, color: 'blue', icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg> },
+    {
+      title: t('admin.total_specialists'),
+      value: totalSpecialists,
+      color: 'blue',
+      icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+    },
+    {
+      title: t('admin.pending_specialists'),
+      value: pendingSpecialists,
+      color: 'orange',
+      icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+    },
+    {
+      title: t('admin.total_patients'),
+      value: totalPatients,
+      color: 'green',
+      icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+    },
+    {
+      title: 'Total Spécialistes Validés',
+      value: activeSpecialists,
+      color: 'purple',
+      icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+    },
+    {
+      title: t('admin.total_posts'),
+      value: totalPosts,
+      color: 'purple',
+      icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" /></svg>
+    },
+    {
+      title: 'Documents Médicaux',
+      value: totalDocuments,
+      color: 'blue',
+      icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+    },
   ];
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-full p-8">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -72,22 +122,31 @@ export default function AdminDashboard() {
               ].map(item => (
                 <Link key={item.path} to={item.path}
                   className={`flex items-center gap-3 p-3 rounded-xl ${item.color} hover:opacity-80 transition-opacity`}>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
                   <span className="text-sm font-medium">{item.label}</span>
                 </Link>
               ))}
             </div>
 
+            {/* Pending specialists from API */}
             <div className="mt-6 pt-4 border-t border-gray-100">
-              <p className="text-xs font-semibold text-gray-400 uppercase mb-3">Spécialistes en attente</p>
-              {mockSpecialists.filter(s => s.status === 'pending').map(sp => (
-                <div key={sp.id} className="flex items-center gap-2 mb-2">
-                  <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center">
-                    <span className="text-orange-600 text-xs font-bold">{sp.name.charAt(0)}</span>
+              <p className="text-xs font-semibold text-gray-400 uppercase mb-3">
+                Total Spécialistes ({totalSpecialists})
+              </p>
+              {data?.specialist?.data?.slice(0, 4).map(sp => (
+                <div key={sp.userId} className="flex items-center gap-2 mb-2">
+                  <div className={`w-6 h-6 ${sp.specialist?.isValidated ? 'bg-green-100' : 'bg-orange-100'} rounded-full flex items-center justify-center`}>
+                    <span className={`${sp.specialist?.isValidated ? 'text-green-600' : 'text-orange-600'} text-xs font-bold`}>
+                      {sp.fullName?.charAt(0) ?? '?'}
+                    </span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-gray-800 truncate">{sp.name}</p>
-                    <p className="text-xs text-gray-400">{sp.specialty}</p>
+                    <p className="text-xs font-medium text-gray-800 truncate">{sp.fullName}</p>
+                    <p className="text-xs text-gray-400">
+                      {sp.specialist?.isValidated ? 'Validé' : 'En attente'}
+                    </p>
                   </div>
                 </div>
               ))}
