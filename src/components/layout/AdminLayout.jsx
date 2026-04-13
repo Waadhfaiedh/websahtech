@@ -29,7 +29,7 @@ const navItems = [
 
 export default function AdminLayout({ children }) {
   const { t } = useTranslation();
-  const { user, logout } = useAuth();
+  const { logout, admin } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -38,9 +38,9 @@ export default function AdminLayout({ children }) {
   };
 
   // Get user information
-  const displayName = user?.name || user?.fullName || 'Administrateur';
-  const userRole = 'Administrateur';
-  const profileImage = user?.imageUrl;
+  const displayName = admin?.name || admin?.fullName || 'Administrateur';
+  const userRole = admin?.role || 'ADMIN';
+  const profileImage = admin?.imageUrl;
 
   return (
     <div className="flex h-screen bg-surface overflow-hidden">

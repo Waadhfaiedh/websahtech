@@ -4,13 +4,112 @@ import { useAuth } from '../../context/AuthContext';
 import AdminLayout from '../../components/layout/AdminLayout';
 import PageHeader from '../../components/common/PageHeader';
 import api from '../../services/api';
+import Cropper from 'react-easy-crop';
 
+// ─── ImageCropper Component (same as specialist page) ──────────────
+function ImageCropper({ image, onCrop, onClose }) {
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+
+  const onCropComplete = (croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  };
+
+  const createCroppedImage = async () => {
+    try {
+      const imageElement = new Image();
+      imageElement.src = image;
+      await new Promise((resolve) => {
+        imageElement.onload = resolve;
+      });
+
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      canvas.width = croppedAreaPixels.width;
+      canvas.height = croppedAreaPixels.height;
+      
+      ctx.drawImage(
+        imageElement,
+        croppedAreaPixels.x,
+        croppedAreaPixels.y,
+        croppedAreaPixels.width,
+        croppedAreaPixels.height,
+        0,
+        0,
+        croppedAreaPixels.width,
+        croppedAreaPixels.height
+      );
+      
+      canvas.toBlob((blob) => {
+        if (blob) {
+          onCrop(blob);
+        }
+      }, 'image/jpeg', 0.9);
+    } catch (error) {
+      console.error('Error creating cropped image:', error);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+      <div className="bg-white rounded-2xl max-w-lg w-full p-6">
+        <h3 className="text-lg font-bold mb-4">Recadrer l'image</h3>
+        
+        <div className="relative h-80 mb-4 bg-gray-100 rounded-lg overflow-hidden">
+          <Cropper
+            image={image}
+            crop={crop}
+            zoom={zoom}
+            aspect={1}
+            onCropChange={setCrop}
+            onZoomChange={setZoom}
+            onCropComplete={onCropComplete}
+          />
+        </div>
+        
+        <div className="mb-4">
+          <label className="block text-sm text-gray-600 mb-2">Zoom</label>
+          <input
+            type="range"
+            min={1}
+            max={3}
+            step={0.1}
+            value={zoom}
+            onChange={(e) => setZoom(parseFloat(e.target.value))}
+            className="w-full"
+          />
+        </div>
+        
+        <div className="flex gap-3">
+          <button
+            onClick={createCroppedImage}
+            className="flex-1 bg-primary text-white py-2 rounded-lg font-semibold hover:bg-primary/90 transition-colors"
+          >
+            Appliquer
+          </button>
+          <button
+            onClick={onClose}
+            className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+          >
+            Annuler
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main AdminProfile Component ───────────────────────────────────
 export default function AdminProfile() {
   const { t } = useTranslation();
   const { user: authUser, token } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [showCropper, setShowCropper] = useState(false);
+  const [tempImage, setTempImage] = useState(null);
   const fileInputRef = useRef(null);
   const [form, setForm] = useState({ 
     fullName: '', 
@@ -65,33 +164,50 @@ export default function AdminProfile() {
     }
   };
 
-  // ─── Upload profile image ─────────────────────────────────────────
-  const handleImageUpload = async (event) => {
+  // ─── Handle file selection – open cropper ──────────────────────
+  const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       alert('Veuillez sélectionner une image valide');
       return;
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       alert('L\'image ne doit pas dépasser 5MB');
       return;
     }
 
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setTempImage(e.target.result);
+      setShowCropper(true);
+    };
+    reader.readAsDataURL(file);
+    
+    // Reset input so same file can be selected again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // ─── Upload cropped image ──────────────────────────────────────
+  const uploadImage = async (croppedBlob) => {
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('file', croppedBlob, 'profile.jpg');
 
     setUploading(true);
+    setShowCropper(false);
+    
     try {
       const res = await api.post('/users/upload-image', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { 
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`
+        },
       });
       
-      // Update profile with new image URL
       setProfile(prev => ({ ...prev, imageUrl: res.data.imageUrl }));
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
@@ -100,10 +216,11 @@ export default function AdminProfile() {
       alert(err.response?.data?.message || 'Erreur lors de l\'upload de l\'image');
     } finally {
       setUploading(false);
+      setTempImage(null);
     }
   };
 
-  // ─── Update profile using /users/update-user ─────────────────────────
+  // ─── Update profile using /users/update-user ───────────────────
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -114,14 +231,12 @@ export default function AdminProfile() {
         address: form.address,
       };
 
-      // Add patient-specific fields if user is PATIENT
       if (profile?.role === 'PATIENT') {
         if (form.age) updateData.age = form.age;
         if (form.weight) updateData.weight = parseFloat(form.weight);
         if (form.height) updateData.height = parseFloat(form.height);
       }
 
-      // Add specialist-specific fields if user is DOCTOR
       if (profile?.role === 'DOCTOR') {
         if (form.bio) updateData.bio = form.bio;
         if (form.clinic) updateData.clinic = form.clinic;
@@ -134,7 +249,6 @@ export default function AdminProfile() {
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
       
-      // Refresh profile data
       await fetchProfile();
     } catch (err) {
       console.error('Failed to update profile:', err);
@@ -144,7 +258,7 @@ export default function AdminProfile() {
     }
   };
 
-  // ─── Change password ─────────────────────────────────────────
+  // ─── Change password ───────────────────────────────────────────
   const handlePwSave = async () => {
     if (!pwForm.current || !pwForm.new || pwForm.new !== pwForm.confirm) {
       alert('Veuillez remplir tous les champs correctement. Le nouveau mot de passe doit correspondre à la confirmation.');
@@ -168,30 +282,21 @@ export default function AdminProfile() {
     }
   };
 
-  // Get user role display name
   const getRoleDisplay = () => {
     if (!profile) return '';
     switch (profile.role) {
-      case 'ADMIN':
-        return 'Administrateur';
-      case 'DOCTOR':
-        return 'Médecin';
-      case 'PATIENT':
-        return 'Patient';
-      default:
-        return profile.role;
+      case 'ADMIN': return 'Administrateur';
+      case 'DOCTOR': return 'Médecin';
+      case 'PATIENT': return 'Patient';
+      default: return profile.role;
     }
   };
 
-  // Get user initial for avatar
   const getUserInitial = () => {
-    if (profile?.fullName) {
-      return profile.fullName.charAt(0).toUpperCase();
-    }
+    if (profile?.fullName) return profile.fullName.charAt(0).toUpperCase();
     return 'A';
   };
 
-  // Get user type for badge
   const getUserType = () => {
     if (profile?.role === 'ADMIN') return 'admin';
     if (profile?.role === 'DOCTOR') return 'doctor';
@@ -243,10 +348,9 @@ export default function AdminProfile() {
           </div>
         )}
 
-        {/* Avatar with upload capability */}
+        {/* Avatar with upload capability (cropper enabled) */}
         <div className="card mb-6">
           <div className="flex items-center gap-5">
-            {/* Profile Image */}
             <div className="relative group">
               {profile?.imageUrl ? (
                 <img
@@ -262,7 +366,6 @@ export default function AdminProfile() {
                 </div>
               )}
               
-              {/* Upload button overlay */}
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
@@ -282,7 +385,7 @@ export default function AdminProfile() {
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
-                onChange={handleImageUpload}
+                onChange={handleFileSelect}
                 className="hidden"
               />
             </div>
@@ -298,6 +401,9 @@ export default function AdminProfile() {
             </div>
           </div>
         </div>
+
+        {/* Rest of your form remains the same (basic info, patient/specialist sections, password) */}
+        {/* ... (keep all the existing JSX from your original AdminProfile after this point) ... */}
 
         {/* Basic Info */}
         <div className="card mb-6">
@@ -484,7 +590,7 @@ export default function AdminProfile() {
           </div>
         )}
 
-        {/* Password */}
+        {/* Password change */}
         <div className="card">
           <h2 className="font-bold text-gray-900 mb-4">{t('profile.change_password')}</h2>
           <div className="space-y-4">
@@ -524,6 +630,18 @@ export default function AdminProfile() {
           </button>
         </div>
       </div>
+
+      {/* Image Cropper Modal */}
+      {showCropper && (
+        <ImageCropper
+          image={tempImage}
+          onCrop={uploadImage}
+          onClose={() => {
+            setShowCropper(false);
+            setTempImage(null);
+          }}
+        />
+      )}
     </AdminLayout>
   );
 }

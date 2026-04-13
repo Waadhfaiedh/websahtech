@@ -14,6 +14,7 @@ const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [specialist, setSpecialist] = useState(null);
+  const [admin, setAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -40,27 +41,40 @@ export function AuthProvider({ children }) {
         headers: { Authorization: `Bearer ${token}` },
       });
       // map API response to specialist format the dashboard expects
-      setSpecialist({
-        id: data.userId,
-        name: data.fullName,
-        email: data.email,
-        phone: data.phone,
-        role: data.role,
-        imageUrl: data.imageUrl,
-        // doctor specific
-        specialty: data.specialist?.speciality ?? "",
-        clinic: data.specialist?.clinic ?? "",
-        bio: data.specialist?.bio ?? "",
-        licenseNumber: data.specialist?.licenseNumber ?? "",
-        isValidated: data.specialist?.isValidated ?? false,
-        location: data.specialist?.location ?? "",
-        rating: data.specialist?.rating ?? 0,
-        reviewsCount: data.specialist?.reviewsCount ?? 0,
-        latitude: data.specialist?.latitude ?? null,
-        longitude: data.specialist?.longitude ?? null,
-        // admin specific
-        canModerate: data.admin?.canModerate ?? false,
-      });
+      if (data.role === "ADMIN") {
+        setAdmin({
+          id: data.userId,
+          name: data.fullName,
+          email: data.email,
+          phone: data.phone,
+          role: data.role,
+          imageUrl: data.imageUrl,
+          canModerate: data.admin?.canModerate ?? false,
+        });
+        setSpecialist(null);
+      } else {
+        setSpecialist({
+          id: data.userId,
+          name: data.fullName,
+          email: data.email,
+          phone: data.phone,
+          role: data.role,
+          imageUrl: data.imageUrl,
+          // doctor specific
+          specialty: data.specialist?.speciality ?? "",
+          clinic: data.specialist?.clinic ?? "",
+          bio: data.specialist?.bio ?? "",
+          licenseNumber: data.specialist?.licenseNumber ?? "",
+          isValidated: data.specialist?.isValidated ?? false,
+          location: data.specialist?.location ?? "",
+          rating: data.specialist?.rating ?? 0,
+          reviewsCount: data.specialist?.reviewsCount ?? 0,
+          latitude: data.specialist?.latitude ?? null,
+          longitude: data.specialist?.longitude ?? null,
+          // admin specific
+          canModerate: data.admin?.canModerate ?? false,
+        });
+      }
     } catch (err) {
       console.error("Failed to load profile:", err);
     }
@@ -96,6 +110,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("sahtech_user");
     setUser(null);
     setSpecialist(null);
+    setAdmin(null);
   }, []);
 
   const updateSpecialist = useCallback((updates) => {
@@ -106,6 +121,7 @@ export function AuthProvider({ children }) {
     () => ({
       user,
       specialist,
+      admin,
       loading,
       login,
       verifyOtp,
@@ -116,6 +132,7 @@ export function AuthProvider({ children }) {
     [
       user,
       specialist,
+      admin,
       loading,
       login,
       verifyOtp,
