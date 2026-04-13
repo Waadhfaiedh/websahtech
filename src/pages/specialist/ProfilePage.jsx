@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import SpecialistLayout from '../../components/layout/SpecialistLayout';
@@ -69,14 +70,15 @@ function ImageCropper({ image, onCrop, onClose }) {
         </div>
         
         <div className="mb-4">
-          <label className="block text-sm text-gray-600 mb-2">Zoom</label>
+          <label htmlFor="zoom-slider" className="block text-sm text-gray-600 mb-2">Zoom</label>
           <input
+            id="zoom-slider"
             type="range"
             min={1}
             max={3}
             step={0.1}
             value={zoom}
-            onChange={(e) => setZoom(parseFloat(e.target.value))}
+            onChange={(e) => setZoom(Number.parseFloat(e.target.value))}
             className="w-full"
           />
         </div>
@@ -99,6 +101,12 @@ function ImageCropper({ image, onCrop, onClose }) {
     </div>
   );
 }
+
+ImageCropper.propTypes = {
+  image: PropTypes.string.isRequired,
+  onCrop: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired,
+};
 
 export default function ProfilePage() {
   const { t } = useTranslation();
@@ -391,14 +399,14 @@ export default function ProfilePage() {
             <div className="grid grid-cols-2 gap-4">
               {specialist?.licenseNumber && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">Numéro de licence</label>
-                  <p className="text-sm text-gray-800">{specialist.licenseNumber}</p>
+                  <label htmlFor="license-number" className="block text-sm font-medium text-gray-500 mb-1">Numéro de licence</label>
+                  <p id="license-number" className="text-sm text-gray-800">{specialist.licenseNumber}</p>
                 </div>
               )}
               {specialist?.rating > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 mb-1">Évaluation</label>
-                  <p className="text-sm text-gray-800">
+                  <label htmlFor="rating" className="block text-sm font-medium text-gray-500 mb-1">Évaluation</label>
+                  <p id="rating" className="text-sm text-gray-800">
                     {specialist.rating}/5 ({specialist.reviewsCount || 0} avis)
                   </p>
                 </div>

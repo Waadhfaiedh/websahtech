@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import AdminLayout from '../../components/layout/AdminLayout';
@@ -70,14 +71,15 @@ function ImageCropper({ image, onCrop, onClose }) {
         </div>
         
         <div className="mb-4">
-          <label className="block text-sm text-gray-600 mb-2">Zoom</label>
+          <label htmlFor="zoom-slider" className="block text-sm text-gray-600 mb-2">Zoom</label>
           <input
+            id="zoom-slider"
             type="range"
             min={1}
             max={3}
             step={0.1}
             value={zoom}
-            onChange={(e) => setZoom(parseFloat(e.target.value))}
+            onChange={(e) => setZoom(Number.parseFloat(e.target.value))}
             className="w-full"
           />
         </div>
@@ -101,10 +103,68 @@ function ImageCropper({ image, onCrop, onClose }) {
   );
 }
 
+ImageCropper.propTypes = {
+  image: PropTypes.string.isRequired,
+  onCrop: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired,
+};
+
+const ROLE_UI = {
+  ADMIN: { label: 'Administrateur', type: 'admin', bgClass: 'bg-red-500', textClass: 'text-red-500' },
+  DOCTOR: { label: 'Médecin', type: 'doctor', bgClass: 'bg-blue-500', textClass: 'text-blue-500' },
+  PATIENT: { label: 'Patient', type: 'patient', bgClass: 'bg-green-500', textClass: 'text-green-500' },
+};
+
+const getRoleUi = (role) => ROLE_UI[role] || {
+  label: role || '',
+  type: 'patient',
+  bgClass: 'bg-green-500',
+  textClass: 'text-green-500',
+};
+
+const addNumberFieldIfPresent = (target, key, value) => {
+  if (value) {
+    target[key] = Number.parseFloat(value);
+  }
+};
+
+const addDoctorFields = (target, form) => {
+  if (form.bio) target.bio = form.bio;
+  if (form.clinic) target.clinic = form.clinic;
+  if (form.location) target.location = form.location;
+  addNumberFieldIfPresent(target, 'latitude', form.latitude);
+  addNumberFieldIfPresent(target, 'longitude', form.longitude);
+};
+
+const addPatientFields = (target, form) => {
+  if (form.age) target.age = form.age;
+  addNumberFieldIfPresent(target, 'weight', form.weight);
+  addNumberFieldIfPresent(target, 'height', form.height);
+};
+
+const buildUpdateData = (form, role) => {
+  const updateData = {
+    fullName: form.fullName,
+    email: form.email,
+    phone: form.phone,
+    address: form.address,
+  };
+
+  if (role === 'PATIENT') {
+    addPatientFields(updateData, form);
+  }
+
+  if (role === 'DOCTOR') {
+    addDoctorFields(updateData, form);
+  }
+
+  return updateData;
+};
+
 // ─── Main AdminProfile Component ───────────────────────────────────
 export default function AdminProfile() {
   const { t } = useTranslation();
-  const { user: authUser, token } = useAuth();
+  const { token } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -224,26 +284,7 @@ export default function AdminProfile() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const updateData = {
-        fullName: form.fullName,
-        email: form.email,
-        phone: form.phone,
-        address: form.address,
-      };
-
-      if (profile?.role === 'PATIENT') {
-        if (form.age) updateData.age = form.age;
-        if (form.weight) updateData.weight = parseFloat(form.weight);
-        if (form.height) updateData.height = parseFloat(form.height);
-      }
-
-      if (profile?.role === 'DOCTOR') {
-        if (form.bio) updateData.bio = form.bio;
-        if (form.clinic) updateData.clinic = form.clinic;
-        if (form.location) updateData.location = form.location;
-        if (form.latitude) updateData.latitude = parseFloat(form.latitude);
-        if (form.longitude) updateData.longitude = parseFloat(form.longitude);
-      }
+      const updateData = buildUpdateData(form, profile?.role);
 
       await api.patch('/users/update-user', updateData);
       setSaved(true);
@@ -282,26 +323,12 @@ export default function AdminProfile() {
     }
   };
 
-  const getRoleDisplay = () => {
-    if (!profile) return '';
-    switch (profile.role) {
-      case 'ADMIN': return 'Administrateur';
-      case 'DOCTOR': return 'Médecin';
-      case 'PATIENT': return 'Patient';
-      default: return profile.role;
-    }
-  };
-
   const getUserInitial = () => {
     if (profile?.fullName) return profile.fullName.charAt(0).toUpperCase();
     return 'A';
   };
 
-  const getUserType = () => {
-    if (profile?.role === 'ADMIN') return 'admin';
-    if (profile?.role === 'DOCTOR') return 'doctor';
-    return 'patient';
-  };
+  const roleUi = getRoleUi(profile?.role);
 
   if (loading) {
     return (
@@ -360,7 +387,7 @@ export default function AdminProfile() {
                 />
               ) : (
                 <div className={`w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-bold text-white ${
-                  getUserType() === 'admin' ? 'bg-red-500' : getUserType() === 'doctor' ? 'bg-blue-500' : 'bg-green-500'
+                  roleUi.bgClass
                 }`}>
                   {getUserInitial()}
                 </div>
@@ -392,10 +419,8 @@ export default function AdminProfile() {
             
             <div>
               <p className="font-bold text-lg text-gray-900">{profile?.fullName}</p>
-              <p className={`font-medium text-sm ${
-                getUserType() === 'admin' ? 'text-red-500' : getUserType() === 'doctor' ? 'text-blue-500' : 'text-green-500'
-              }`}>
-                {getRoleDisplay()}
+              <p className={`font-medium text-sm ${roleUi.textClass}`}>
+                {roleUi.label}
               </p>
               <p className="text-gray-400 text-sm mt-0.5">{profile?.email}</p>
             </div>
@@ -427,8 +452,9 @@ export default function AdminProfile() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Téléphone (8 chiffres)</label>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Téléphone (8 chiffres)</label>
               <input
+                id="phone"
                 type="tel"
                 value={form.phone}
                 onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
@@ -438,8 +464,9 @@ export default function AdminProfile() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+              <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
               <input
+                id="address"
                 value={form.address}
                 onChange={e => setForm(p => ({ ...p, address: e.target.value }))}
                 className="input-field"
@@ -474,8 +501,9 @@ export default function AdminProfile() {
             <h2 className="font-bold text-gray-900 mb-4">Informations médicales</h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Âge</label>
+                <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-1">Âge</label>
                 <input
+                  id="age"
                   type="number"
                   value={form.age}
                   onChange={e => setForm(p => ({ ...p, age: e.target.value }))}
@@ -484,8 +512,9 @@ export default function AdminProfile() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Poids (kg)</label>
+                <label htmlFor="weight" className="block text-sm font-medium text-gray-700 mb-1">Poids (kg)</label>
                 <input
+                  id="weight"
                   type="number"
                   step="0.1"
                   value={form.weight}
@@ -495,8 +524,9 @@ export default function AdminProfile() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Taille (cm)</label>
+                <label htmlFor="height" className="block text-sm font-medium text-gray-700 mb-1">Taille (cm)</label>
                 <input
+                  id="height"
                   type="number"
                   step="0.1"
                   value={form.height}
@@ -515,8 +545,9 @@ export default function AdminProfile() {
             <h2 className="font-bold text-gray-900 mb-4">Informations professionnelles</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
                 <textarea
+                  id="bio"
                   value={form.bio}
                   onChange={e => setForm(p => ({ ...p, bio: e.target.value }))}
                   className="input-field"
@@ -525,8 +556,9 @@ export default function AdminProfile() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Cabinet</label>
+                <label htmlFor="clinic" className="block text-sm font-medium text-gray-700 mb-1">Cabinet</label>
                 <input
+                  id="clinic"
                   value={form.clinic}
                   onChange={e => setForm(p => ({ ...p, clinic: e.target.value }))}
                   className="input-field"
@@ -534,8 +566,9 @@ export default function AdminProfile() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Localisation</label>
+                <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">Localisation</label>
                 <input
+                  id="location"
                   value={form.location}
                   onChange={e => setForm(p => ({ ...p, location: e.target.value }))}
                   className="input-field"
@@ -544,8 +577,9 @@ export default function AdminProfile() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
+                  <label htmlFor="latitude" className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
                   <input
+                    id="latitude"
                     type="number"
                     step="any"
                     value={form.latitude}
@@ -555,8 +589,9 @@ export default function AdminProfile() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
+                  <label htmlFor="longitude" className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
                   <input
+                    id="longitude"
                     type="number"
                     step="any"
                     value={form.longitude}
@@ -567,8 +602,9 @@ export default function AdminProfile() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+                <label htmlFor="doctor-status" className="block text-sm font-medium text-gray-700 mb-1">Statut</label>
                 <p className={`text-sm font-medium ${profile.specialist.isValidated ? 'text-green-600' : 'text-orange-500'}`}>
+                  <span id="doctor-status" className="sr-only">Statut du spécialiste</span>
                   {profile.specialist.isValidated ? '✓ Validé' : '⏳ En attente de validation'}
                 </p>
               </div>

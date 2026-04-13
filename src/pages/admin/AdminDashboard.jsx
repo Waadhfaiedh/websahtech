@@ -25,46 +25,52 @@ export default function AdminDashboard() {
   const totalDocuments = data?.medicalDocumentNumber ?? 0;
 
   const recentActivity = [
-    { type: 'new_specialist', text: 'Nouvelle inscription: Dr. Samira Touati (Neurologue)', time: '2h', color: 'bg-blue-500' },
-    { type: 'new_report', text: 'Rapport IA généré pour Mohamed Cherif', time: '4h', color: 'bg-purple-500' },
-    { type: 'new_patient', text: 'Nouveau patient inscrit: Omar Zitouni', time: '6h', color: 'bg-green-500' },
-    { type: 'post', text: 'Nouvelle publication: "5 exercices essentiels..."', time: '8h', color: 'bg-orange-500' },
-    { type: 'flag', text: 'Publication signalée par un utilisateur', time: '1j', color: 'bg-red-500' },
-    { type: 'new_specialist', text: 'Dr. Karim Meziane — compte activé', time: '2j', color: 'bg-blue-500' },
+    { id: 'activity_1', type: 'new_specialist', text: 'Nouvelle inscription: Dr. Samira Touati (Neurologue)', time: '2h', color: 'bg-blue-500' },
+    { id: 'activity_2', type: 'new_report', text: 'Rapport IA généré pour Mohamed Cherif', time: '4h', color: 'bg-purple-500' },
+    { id: 'activity_3', type: 'new_patient', text: 'Nouveau patient inscrit: Omar Zitouni', time: '6h', color: 'bg-green-500' },
+    { id: 'activity_4', type: 'post', text: 'Nouvelle publication: "5 exercices essentiels..."', time: '8h', color: 'bg-orange-500' },
+    { id: 'activity_5', type: 'flag', text: 'Publication signalée par un utilisateur', time: '1j', color: 'bg-red-500' },
+    { id: 'activity_6', type: 'new_specialist', text: 'Dr. Karim Meziane — compte activé', time: '2j', color: 'bg-blue-500' },
   ];
 
   const stats = [
     {
+      id: 'total_specialists',
       title: t('admin.total_specialists'),
       value: totalSpecialists,
       color: 'blue',
       icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
     },
     {
+      id: 'pending_specialists',
       title: t('admin.pending_specialists'),
       value: pendingSpecialists,
       color: 'orange',
       icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
     },
     {
+      id: 'total_patients',
       title: t('admin.total_patients'),
       value: totalPatients,
       color: 'green',
       icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
     },
     {
+      id: 'active_specialists',
       title: 'Total Spécialistes Validés',
       value: activeSpecialists,
       color: 'purple',
       icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
     },
     {
+      id: 'total_posts',
       title: t('admin.total_posts'),
       value: totalPosts,
       color: 'purple',
       icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" /></svg>
     },
     {
+      id: 'total_documents',
       title: 'Documents Médicaux',
       value: totalDocuments,
       color: 'blue',
@@ -93,7 +99,7 @@ export default function AdminDashboard() {
 
         {/* Stats grid */}
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-          {stats.map((s, i) => <StatCard key={i} {...s} />)}
+          {stats.map((s) => <StatCard key={s.id} {...s} />)}
         </div>
 
         <div className="grid grid-cols-3 gap-6">
@@ -101,8 +107,8 @@ export default function AdminDashboard() {
           <div className="col-span-2 card">
             <h2 className="font-bold text-gray-900 mb-4">{t('admin.recent_activity')}</h2>
             <div className="space-y-3">
-              {recentActivity.map((act, i) => (
-                <div key={i} className="flex items-center gap-3">
+              {recentActivity.map((act) => (
+                <div key={act.id} className="flex items-center gap-3">
                   <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${act.color}`} />
                   <p className="text-sm text-gray-700 flex-1">{act.text}</p>
                   <span className="text-xs text-gray-400 flex-shrink-0">{act.time}</span>

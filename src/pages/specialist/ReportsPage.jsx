@@ -17,6 +17,16 @@ export default function ReportsPage() {
   const [editingComment, setEditingComment] = useState(null);
   const [tempComment, setTempComment] = useState('');
 
+  const getButtonClasses = (level, isActive) => {
+    if (isActive) {
+      if (level === 'all') return 'bg-gray-800 text-white border-gray-800';
+      if (level === 'green') return 'bg-green-500 text-white border-green-500';
+      if (level === 'orange') return 'bg-orange-500 text-white border-orange-500';
+      return 'bg-red-500 text-white border-red-500';
+    }
+    return 'bg-white text-gray-600 border-gray-200 hover:border-gray-300';
+  };
+
   const filtered = mockReports.filter(r => {
     const matchSeverity = severityFilter === 'all' || r.riskLevel === severityFilter;
     const matchPatient = patientFilter === 'all' || String(r.patientId) === patientFilter;
@@ -47,9 +57,7 @@ export default function ReportsPage() {
           <div className="flex gap-1 ml-auto">
             {['all', 'green', 'orange', 'red'].map(level => (
               <button key={level} onClick={() => setSeverityFilter(level)}
-                className={`px-4 py-2 rounded-lg text-xs font-medium transition-all border ${severityFilter === level
-                  ? level === 'all' ? 'bg-gray-800 text-white border-gray-800' : level === 'green' ? 'bg-green-500 text-white border-green-500' : level === 'orange' ? 'bg-orange-500 text-white border-orange-500' : 'bg-red-500 text-white border-red-500'
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`}>
+                className={`px-4 py-2 rounded-lg text-xs font-medium transition-all border ${getButtonClasses(level, severityFilter === level)}`}>
                 {level === 'all' ? 'Tous' : riskLabels[level]}
               </button>
             ))}
