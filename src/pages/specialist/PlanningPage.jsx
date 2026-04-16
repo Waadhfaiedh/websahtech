@@ -17,13 +17,24 @@ export default function PlanningPage() {
   const [updatingAppointmentId, setUpdatingAppointmentId] = useState(null);
   const [appointmentFilter, setAppointmentFilter] = useState("ALL");
   const [creatingSlot, setCreatingSlot] = useState(false);
+  const [updatingSlot, setUpdatingSlot] = useState(false);
+  const [deletingSlot, setDeletingSlot] = useState(false);
   const [showAddSlot, setShowAddSlot] = useState(false);
+  const [showSlotDetails, setShowSlotDetails] = useState(false);
+  const [activeSlot, setActiveSlot] = useState(null);
   const [selectedDayKey, setSelectedDayKey] = useState("");
   const [slotForm, setSlotForm] = useState({
     date: "",
     startTime: "08:00",
     endTime: "17:00",
     place: "",
+  });
+  const [slotEditForm, setSlotEditForm] = useState({
+    date: "",
+    startTime: "08:00",
+    endTime: "17:00",
+    place: "",
+    isBooked: false,
   });
 
   const formatDateKey = (value) => {
@@ -169,6 +180,32 @@ export default function PlanningPage() {
     return Number(hour);
   };
 
+  const toTimeInputValue = (value) => {
+    if (!value) return "08:00";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return "08:00";
+    const hours = String(d.getHours()).padStart(2, "0");
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+    return `${hours}:${minutes}`;
+  };
+
+  const openSlotDetails = (slot) => {
+    setActiveSlot(slot);
+    setSlotEditForm({
+      date: formatDateKey(slot.date || slot.startTime),
+      startTime: toTimeInputValue(slot.startTime),
+      endTime: toTimeInputValue(slot.endTime),
+      place: slot.place === "-" ? "" : slot.place,
+      isBooked: Boolean(slot.isBooked),
+    });
+    setShowSlotDetails(true);
+  };
+
+  const closeSlotDetails = () => {
+    setShowSlotDetails(false);
+    setActiveSlot(null);
+  };
+
   const selectedDaySlots = selectedDayKey
     ? slotsByDay[selectedDayKey] || []
     : [];
@@ -281,6 +318,70 @@ export default function PlanningPage() {
     }
   };
 
+  const handleUpdateSlot = async () => {
+    if (!activeSlot) return;
+    if (
+      !slotEditForm.date ||
+      !slotEditForm.startTime ||
+      !slotEditForm.endTime ||
+      !slotEditForm.place.trim()
+    ) {
+      toast.error("Merci de remplir tous les champs");
+      return;
+    }
+
+    const startHour = toHourNumber(slotEditForm.startTime);
+    const endHour = toHourNumber(slotEditForm.endTime);
+    if (Number.isNaN(startHour) || Number.isNaN(endHour)) {
+      toast.error("Format d'heure invalide");
+      return;
+    }
+
+    if (startHour >= endHour) {
+      toast.error("L'heure de fin doit etre superieure a l'heure de debut");
+      return;
+    }
+
+    try {
+      setUpdatingSlot(true);
+      await api.patch(`/doctors/daily-slots/${activeSlot.id}`, {
+        date: slotEditForm.date,
+        startTime: startHour,
+        endTime: endHour,
+        place: slotEditForm.place.trim(),
+        isBooked: slotEditForm.isBooked,
+      });
+      toast.success("Creneau mis a jour avec succes");
+      closeSlotDetails();
+      await fetchSlots();
+    } catch (err) {
+      console.error("Failed to update daily slot:", err);
+      toast.error(
+        err.response?.data?.message || "Impossible de modifier le creneau",
+      );
+    } finally {
+      setUpdatingSlot(false);
+    }
+  };
+
+  const handleDeleteSlot = async () => {
+    if (!activeSlot) return;
+    try {
+      setDeletingSlot(true);
+      await api.delete(`/doctors/daily-slots/${activeSlot.id}`);
+      toast.success("Creneau supprime avec succes");
+      closeSlotDetails();
+      await fetchSlots();
+    } catch (err) {
+      console.error("Failed to delete daily slot:", err);
+      toast.error(
+        err.response?.data?.message || "Impossible de supprimer le creneau",
+      );
+    } finally {
+      setDeletingSlot(false);
+    }
+  };
+
   return (
     <SpecialistLayout>
       <div className="p-8 animate-fadeIn">
@@ -383,10 +484,15 @@ export default function PlanningPage() {
           {!loadingSlots && selectedDaySlots.length > 0 && (
             <div className="max-h-[380px] overflow-y-auto pr-1 space-y-3">
               {selectedDaySlots.map((slot) => (
-                <div key={slot.id} className="card flex items-center gap-4">
+                <button
+                  key={slot.id}
+                  type="button"
+                  onClick={() => openSlotDetails(slot)}
+                  className="card w-full flex items-center gap-4 text-left group hover:border-primary/30 hover:shadow-md transition-all"
+                >
                   <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
                     <svg
-                      className="w-5 h-5 text-primary"
+                      className="w-5 h-5 text-primary group-hover:scale-110 transition-transform"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -418,7 +524,11 @@ export default function PlanningPage() {
                     </div>
                     <div>
                       <p className="text-xs text-gray-400">Etat</p>
-                      <span className="badge-green">Disponible</span>
+                      {slot.isBooked ? (
+                        <span className="badge-orange">Reserve</span>
+                      ) : (
+                        <span className="badge-green">Disponible</span>
+                      )}
                     </div>
                     <div>
                       <p className="text-xs text-gray-400">Lieu</p>
@@ -427,7 +537,7 @@ export default function PlanningPage() {
                       </p>
                     </div>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -673,6 +783,158 @@ export default function PlanningPage() {
             >
               {creatingSlot ? t("common.loading") : t("common.add")}
             </button>
+          </div>
+        </Modal>
+
+        <Modal
+          isOpen={showSlotDetails}
+          onClose={closeSlotDetails}
+          title="Details du creneau"
+          size="lg"
+        >
+          <div className="space-y-5">
+            <div className="rounded-xl p-4 border border-primary/15 bg-gradient-to-r from-primary/5 via-blue-50 to-white">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-primary/70 font-semibold">
+                    Creneau selectionne
+                  </p>
+                  <p className="text-lg font-bold text-gray-900 mt-1">
+                    {activeSlot?.dateLabel} • {activeSlot?.startLabel} -{" "}
+                    {activeSlot?.endLabel}
+                  </p>
+                </div>
+                {slotEditForm.isBooked ? (
+                  <span className="badge-orange">Reserve</span>
+                ) : (
+                  <span className="badge-green">Disponible</span>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="slot-edit-date"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Date
+                </label>
+                <input
+                  id="slot-edit-date"
+                  type="date"
+                  value={slotEditForm.date}
+                  onChange={(e) =>
+                    setSlotEditForm((p) => ({ ...p, date: e.target.value }))
+                  }
+                  className="input-field"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="slot-edit-place"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Lieu
+                </label>
+                <input
+                  id="slot-edit-place"
+                  type="text"
+                  value={slotEditForm.place}
+                  onChange={(e) =>
+                    setSlotEditForm((p) => ({ ...p, place: e.target.value }))
+                  }
+                  className="input-field"
+                  placeholder="Cabinet / Clinique"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="slot-edit-start-time"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Heure debut
+                </label>
+                <input
+                  id="slot-edit-start-time"
+                  type="time"
+                  value={slotEditForm.startTime}
+                  onChange={(e) =>
+                    setSlotEditForm((p) => ({
+                      ...p,
+                      startTime: e.target.value,
+                    }))
+                  }
+                  className="input-field"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="slot-edit-end-time"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Heure fin
+                </label>
+                <input
+                  id="slot-edit-end-time"
+                  type="time"
+                  value={slotEditForm.endTime}
+                  onChange={(e) =>
+                    setSlotEditForm((p) => ({ ...p, endTime: e.target.value }))
+                  }
+                  className="input-field"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between rounded-xl border border-gray-200 p-3">
+              <div>
+                <p className="font-medium text-gray-800">Statut du creneau</p>
+                <p className="text-sm text-gray-500">
+                  Marquer ce creneau comme reserve ou disponible
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setSlotEditForm((p) => ({ ...p, isBooked: !p.isBooked }))
+                }
+                className={`w-14 h-8 rounded-full p-1 transition-colors ${slotEditForm.isBooked ? "bg-primary" : "bg-gray-300"}`}
+              >
+                <span
+                  className={`block w-6 h-6 rounded-full bg-white transition-transform ${slotEditForm.isBooked ? "translate-x-6" : "translate-x-0"}`}
+                />
+              </button>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+              <button
+                type="button"
+                onClick={handleDeleteSlot}
+                disabled={updatingSlot || deletingSlot}
+                className="btn-danger"
+              >
+                {deletingSlot ? "Suppression..." : "Supprimer le creneau"}
+              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={closeSlotDetails}
+                  disabled={updatingSlot || deletingSlot}
+                  className="btn-secondary"
+                >
+                  Fermer
+                </button>
+                <button
+                  type="button"
+                  onClick={handleUpdateSlot}
+                  disabled={updatingSlot || deletingSlot}
+                  className="btn-primary disabled:opacity-60"
+                >
+                  {updatingSlot ? "Mise a jour..." : "Enregistrer"}
+                </button>
+              </div>
+            </div>
           </div>
         </Modal>
       </div>
