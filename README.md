@@ -70,11 +70,20 @@ cd sahtech
 # Install dependencies
 npm install
 
+# Configure backend URL
+cp .env.example .env
+
 # Start development server
 npm run dev
 ```
 
 The app will be available at **http://localhost:5173**
+
+The frontend reads backend URL from `.env`:
+
+```bash
+VITE_API_BASE_URL=http://localhost:3000
+```
 
 ### Build for production
 

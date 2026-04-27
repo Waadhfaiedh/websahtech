@@ -359,6 +359,27 @@ export default function AdminProfile() {
     }
   };
 
+  // ─── Toggle security (2FA/SFA) ────────────────────────────────
+  const handleToggleSecurity = async () => {
+    setSaving(true);
+    try {
+      const res = await api.patch("/users/update-otp", {});
+      setProfile((prev) => ({
+        ...prev,
+        security: prev?.security === "MFA" ? "SFA" : "MFA",
+      }));
+      toast.success(res.data?.message || "Paramètres de sécurité mis à jour");
+    } catch (err) {
+      console.error("Failed to update security:", err);
+      toast.error(
+        err.response?.data?.message ||
+          "Erreur lors de la mise à jour des paramètres de sécurité",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const getUserInitial = () => {
     if (profile?.fullName) return profile.fullName.charAt(0).toUpperCase();
     return "A";
@@ -775,6 +796,36 @@ export default function AdminProfile() {
             </div>
           </div>
         )}
+
+        {/* Security Settings */}
+        <div className="card mb-6">
+          <h2 className="font-bold text-gray-900 mb-4">
+            Paramètres de sécurité
+          </h2>
+          <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div>
+              <p className="font-medium text-gray-900">
+                Authentification à deux facteurs
+              </p>
+              <p className="text-sm text-gray-600 mt-1">
+                {profile?.security === "MFA"
+                  ? "Authentification multi-facteurs (2FA) activée"
+                  : "Authentification simple (SFA) activée"}
+              </p>
+            </div>
+            <button
+              onClick={handleToggleSecurity}
+              disabled={saving}
+              className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                profile?.security === "MFA"
+                  ? "bg-orange-500 text-white hover:bg-orange-600"
+                  : "bg-green-500 text-white hover:bg-green-600"
+              } disabled:opacity-50`}
+            >
+              {profile?.security === "MFA" ? "Désactiver 2FA" : "Activer 2FA"}
+            </button>
+          </div>
+        </div>
 
         {/* Password change */}
         <div className="card">

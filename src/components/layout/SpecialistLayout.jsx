@@ -5,14 +5,11 @@ import { useTranslation } from "react-i18next";
 import { io } from "socket.io-client";
 import { toast } from "react-toastify";
 import { useAuth } from "../../context/AuthContext";
-import api from "../../services/api";
+import api, { API_BASE_URL } from "../../services/api";
 import Logo from "../common/Logo";
 import LanguageSwitcher from "../common/LanguageSwitcher";
 
-const socketBaseUrl = (api.defaults.baseURL || "http://localhost:3000").replace(
-  /\/$/,
-  "",
-);
+const socketBaseUrl = (api.defaults.baseURL || API_BASE_URL).replace(/\/$/, "");
 
 function playNotificationSound() {
   try {

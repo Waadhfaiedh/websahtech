@@ -4,12 +4,9 @@ import { io } from "socket.io-client";
 import { toast } from "react-toastify";
 import SpecialistLayout from "../../components/layout/SpecialistLayout";
 import { useAuth } from "../../context/AuthContext";
-import api from "../../services/api";
+import api, { API_BASE_URL } from "../../services/api";
 
-const socketBaseUrl = (api.defaults.baseURL || "http://localhost:3000").replace(
-  /\/$/,
-  "",
-);
+const socketBaseUrl = (api.defaults.baseURL || API_BASE_URL).replace(/\/$/, "");
 
 function getCurrentUserId(user, specialist) {
   return user?.id || user?.userId || specialist?.id || specialist?.userId || "";

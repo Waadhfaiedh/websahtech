@@ -7,7 +7,7 @@ import {
   useMemo,
   useCallback,
 } from "react";
-import axios from "axios";
+import api from "../services/api";
 
 const AuthContext = createContext();
 
@@ -37,7 +37,7 @@ export function AuthProvider({ children }) {
 
   const loadProfile = useCallback(async (token) => {
     try {
-      const { data } = await axios.get("http://localhost:3000/users/profile", {
+      const { data } = await api.get("/users/profile", {
         headers: { Authorization: `Bearer ${token}` },
       });
       // map API response to specialist format the dashboard expects
@@ -50,6 +50,7 @@ export function AuthProvider({ children }) {
           role: data.role,
           imageUrl: data.imageUrl,
           canModerate: data.admin?.canModerate ?? false,
+          security: data.security ?? "SFA",
         });
         setSpecialist(null);
       } else {
@@ -60,6 +61,7 @@ export function AuthProvider({ children }) {
           phone: data.phone,
           role: data.role,
           imageUrl: data.imageUrl,
+          security: data.security ?? "SFA",
           // doctor specific
           specialty: data.specialist?.speciality ?? "",
           clinic: data.specialist?.clinic ?? "",
@@ -80,23 +82,29 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const login = useCallback(async (email, password) => {
-    const { data } = await axios.post("http://localhost:3000/users/signin", {
-      email,
-      password,
-    });
-    return data;
-  }, []);
+  const login = useCallback(
+    async (email, password) => {
+      const { data } = await api.post("/users/signin", {
+        email,
+        password,
+      });
+      // If no 2FA required, immediately store user and load profile
+      if (!data.require2FA) {
+        localStorage.setItem("sahtech_user", JSON.stringify(data));
+        setUser(data);
+        await loadProfile(data.accessToken);
+      }
+      return data;
+    },
+    [loadProfile],
+  );
 
   const verifyOtp = useCallback(
     async (userId, code) => {
-      const { data } = await axios.post(
-        "http://localhost:3000/users/signin/verify",
-        {
-          userId,
-          code,
-        },
-      );
+      const { data } = await api.post("/users/signin/verify", {
+        userId,
+        code,
+      });
       localStorage.setItem("sahtech_user", JSON.stringify(data));
       setUser(data);
       // load profile after login

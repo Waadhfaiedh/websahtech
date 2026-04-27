@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../context/AuthContext";
 import Logo from "../../components/common/Logo";
 import LanguageSwitcher from "../../components/common/LanguageSwitcher";
-import axios from "axios";
+import api from "../../services/api";
 import { toast } from "react-toastify";
 
 export default function LoginPage() {
@@ -36,6 +36,11 @@ export default function LoginPage() {
         setUserEmail(result.email);
         setShowOtp(true); // show OTP input
         toast.success(result.message || "Code OTP envoyé");
+      } else {
+        // No 2FA required, navigate based on role
+        if (result.role === "ADMIN") navigate("/admin/dashboard");
+        else if (result.role === "DOCTOR") navigate("/specialist/dashboard");
+        else navigate("/specialist/dashboard");
       }
     } catch (err) {
       const message = err.response?.data?.message || t("auth.error");
@@ -71,7 +76,7 @@ export default function LoginPage() {
   // ─── Resend OTP ───────────────────────────────────────────────
   const handleResendOtp = async () => {
     try {
-      const res = await axios.post("http://localhost:3000/users/resend-otp", {
+      const res = await api.post("/users/resend-otp", {
         userId,
         email: userEmail,
         type: "TWO_FACTOR",
@@ -268,6 +273,16 @@ export default function LoginPage() {
                     )}
                   </button>
                 </form>
+
+                <p className="text-center text-gray-600 mt-6">
+                  Vous n'avez pas de compte?{" "}
+                  <Link
+                    to="/signup"
+                    className="text-primary font-semibold hover:underline"
+                  >
+                    S'inscrire
+                  </Link>
+                </p>
               </>
             ) : (
               // ─── OTP form ────────────────────────────────────
