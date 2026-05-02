@@ -9,6 +9,7 @@ import SignupPage from "./pages/auth/SignupPage";
 import SpecialistDashboard from "./pages/specialist/SpecialistDashboard";
 import PatientsPage from "./pages/specialist/PatientsPage";
 import PatientDetailPage from "./pages/specialist/PatientDetailPage";
+import SessionDetailPage from "./pages/specialist/SessionDetailPage";
 import ReportsPage from "./pages/specialist/ReportsPage";
 import ChatPage from "./pages/specialist/ChatPage";
 import PostsPage from "./pages/specialist/PostsPage";
@@ -71,6 +72,14 @@ export default function App() {
           element={
             <PrivateRoute allowedRoles={["DOCTOR"]}>
               <PatientDetailPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/specialist/patients/:patientId/sessions/:sessionId"
+          element={
+            <PrivateRoute allowedRoles={["DOCTOR"]}>
+              <SessionDetailPage />
             </PrivateRoute>
           }
         />

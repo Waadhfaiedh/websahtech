@@ -554,9 +554,9 @@ export default function SignupPage() {
                       onChange={(e) => handleField("gender", e.target.value)}
                       className="input-field"
                     >
-                      <option value="">Sélectionner...</option>
-                      <option value="M">Homme</option>
-                      <option value="F">Femme</option>
+                      <option value="OTHER">Sélectionner...</option>
+                      <option value="MALE">Homme</option>
+                      <option value="FEMALE">Femme</option>
                     </select>
                   </div>
 
@@ -624,7 +624,7 @@ export default function SignupPage() {
                             handleField("licenseNumber", e.target.value)
                           }
                           className="input-field"
-                          placeholder="LIC123456"
+                          placeholder="1234/12"
                           required
                         />
                       </div>

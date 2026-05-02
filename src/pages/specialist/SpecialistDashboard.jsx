@@ -17,16 +17,14 @@ const riskLabels = { green: "Faible", orange: "Modéré", red: "Élevé" };
 export default function SpecialistDashboard() {
   const { t } = useTranslation();
   const { specialist } = useAuth();
-  const [stats, setStats] = useState({
+  const [dashboardData, setDashboardData] = useState({
     patientsCount: 0,
     appointmentsCount: 0,
+    pendingReports: 0,
+    unreadMessages: 0,
+    upcomingRDVs: [],
   });
   const [loading, setLoading] = useState(true);
-  const [upcomingRDVs, setUpcomingRDVs] = useState([]);
-
-  // These will be implemented when APIs are ready
-  const [pendingReports, setPendingReports] = useState(0);
-  const [unreadMessages, setUnreadMessages] = useState(0);
 
   useEffect(() => {
     fetchDashboardData();
@@ -36,27 +34,14 @@ export default function SpecialistDashboard() {
     try {
       setLoading(true);
 
-      // Fetch stats from API
       const statsRes = await api.get("/doctors/get-forms");
-      setStats({
+      setDashboardData({
         patientsCount: statsRes.data.patientsCount || 0,
         appointmentsCount: statsRes.data.appointmentsCount || 0,
+        pendingReports: 0,
+        unreadMessages: statsRes.data.unreadedcount || 0,
+        upcomingRDVs: [],
       });
-
-      // TODO: Fetch upcoming appointments when API is ready
-      // const appointmentsRes = await api.get('/doctors/get-appointments');
-      // setUpcomingRDVs(appointmentsRes.data || []);
-
-      // For now, using empty array for upcoming RDVs
-      setUpcomingRDVs([]);
-
-      // TODO: Fetch pending reports when API is ready
-      // const reportsRes = await api.get('/doctors/pending-reports');
-      // setPendingReports(reportsRes.data.count || 0);
-
-      // TODO: Fetch unread messages when API is ready
-      // const messagesRes = await api.get('/doctors/unread-messages');
-      // setUnreadMessages(messagesRes.data.count || 0);
     } catch (err) {
       console.error("Failed to load dashboard data:", err);
       toast.error(
@@ -148,7 +133,7 @@ export default function SpecialistDashboard() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard
             title={t("dashboard.total_patients")}
-            value={stats.patientsCount}
+            value={dashboardData.patientsCount}
             color="blue"
             icon={
               <svg
@@ -168,7 +153,7 @@ export default function SpecialistDashboard() {
           />
           <StatCard
             title={t("dashboard.upcoming_rdvs")}
-            value={stats.appointmentsCount}
+            value={dashboardData.appointmentsCount}
             color="green"
             icon={
               <svg
@@ -188,7 +173,7 @@ export default function SpecialistDashboard() {
           />
           <StatCard
             title={t("dashboard.pending_reports")}
-            value={pendingReports}
+            value={dashboardData.pendingReports}
             color="orange"
             icon={
               <svg
@@ -208,7 +193,7 @@ export default function SpecialistDashboard() {
           />
           <StatCard
             title={t("dashboard.unread_messages")}
-            value={unreadMessages}
+            value={dashboardData.unreadMessages}
             color="purple"
             icon={
               <svg
@@ -273,8 +258,8 @@ export default function SpecialistDashboard() {
               <h3 className="text-sm font-semibold text-gray-700 mb-3">
                 RDV à venir
               </h3>
-              {upcomingRDVs.length > 0 ? (
-                upcomingRDVs.slice(0, 3).map((rdv) => (
+              {dashboardData.upcomingRDVs.length > 0 ? (
+                dashboardData.upcomingRDVs.slice(0, 3).map((rdv) => (
                   <div key={rdv.id} className="flex items-center gap-2 mb-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
                     <div className="flex-1 min-w-0">

@@ -3,6 +3,8 @@ import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import SpecialistLayout from "../../components/layout/SpecialistLayout";
 import Badge from "../../components/common/Badge";
+import NewSessionModal from "../../components/modals/NewSessionModal";
+import EvolutionCharts from "../../components/charts/EvolutionCharts";
 import api from "../../services/api";
 import { toast } from "react-toastify";
 
@@ -18,6 +20,9 @@ export default function PatientDetailPage() {
   const [loading, setLoading] = useState(true);
   const [treatmentPlan, setTreatmentPlan] = useState("");
   const [editingPlan, setEditingPlan] = useState(false);
+  const [sessions, setSessions] = useState([]);
+  const [loadingSessions, setLoadingSessions] = useState(false);
+  const [showNewSessionModal, setShowNewSessionModal] = useState(false);
 
   // Try to get patient from location state first, otherwise fetch
   useEffect(() => {
@@ -30,6 +35,9 @@ export default function PatientDetailPage() {
       // Fetch patient by ID if not passed
       fetchPatientById();
     }
+
+    // Fetch sessions for this patient
+    fetchSessions();
   }, [id, location.state]);
 
   const fetchPatientById = async () => {
@@ -39,7 +47,7 @@ export default function PatientDetailPage() {
       const res = await api.get("/doctors/get-patients");
       const patientsData = res.data.patients ?? res.data.data ?? res.data;
       const foundPatient = patientsData.find(
-        (p) => p.userId === parseInt(id) || p.userId === id,
+        (p) => p.userId === Number.parseInt(id) || p.userId === id,
       );
 
       if (foundPatient) {
@@ -55,6 +63,25 @@ export default function PatientDetailPage() {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSessions = async () => {
+    try {
+      setLoadingSessions(true);
+      const res = await api.get(`/doctors/patients/${id}/sessions`);
+      const sessionsData = res.data.sessions || res.data || [];
+      console.log("Sessions response:", sessionsData);
+      if (sessionsData.length > 0) {
+        console.log("First session structure:", sessionsData[0]);
+        console.log("Available fields:", Object.keys(sessionsData[0]));
+      }
+      setSessions(sessionsData);
+    } catch (err) {
+      console.error("Failed to load sessions:", err);
+      // Don't show error toast if sessions endpoint doesn't exist yet
+    } finally {
+      setLoadingSessions(false);
     }
   };
 
@@ -79,6 +106,35 @@ export default function PatientDetailPage() {
   };
 
   const getPatientAge = () => patient?.patient?.age ?? "—";
+
+  const openDocument = async (fileUrl, fallbackName = "document") => {
+    if (!fileUrl) return;
+
+    try {
+      const response = await api.get(fileUrl, { responseType: "blob" });
+      const blob = response.data;
+      const objectUrl = globalThis.URL.createObjectURL(blob);
+      const contentType = blob.type || "";
+      const isPreviewable =
+        contentType.startsWith("image/") || contentType === "application/pdf";
+
+      if (isPreviewable) {
+        window.open(objectUrl, "_blank", "noopener,noreferrer");
+      } else {
+        const anchor = document.createElement("a");
+        anchor.href = objectUrl;
+        anchor.download = fallbackName;
+        anchor.click();
+      }
+
+      setTimeout(() => globalThis.URL.revokeObjectURL(objectUrl), 1000);
+    } catch (error) {
+      console.error("Failed to open document:", error);
+      toast.error(
+        "Impossible d'ouvrir le document. Le backend doit fournir une URL publique ou signée.",
+      );
+    }
+  };
 
   if (loading) {
     return (
@@ -105,6 +161,8 @@ export default function PatientDetailPage() {
     { key: "treatment", label: "Plan de traitement" },
     { key: "notes", label: "Notes de suivi" },
     { key: "reports", label: t("patients.ai_reports") },
+    { key: "dossier", label: "Dossier médical" },
+    { key: "evolution", label: "Évolution" },
   ];
 
   return (
@@ -246,10 +304,15 @@ export default function PatientDetailPage() {
                         {item.title}
                       </p>
                       {item.fileUrl && (
-                        <a
-                          href={item.fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openDocument(
+                              item.fileUrl,
+                              item.title ||
+                                `document-${item.category || index}`,
+                            )
+                          }
                           className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
                         >
                           <svg
@@ -265,8 +328,8 @@ export default function PatientDetailPage() {
                               d="M12 10v6m0 0l-3-3m3 3l3-3M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z"
                             />
                           </svg>
-                          Voir le document
-                        </a>
+                          Voir / télécharger le document
+                        </button>
                       )}
                       <span className="text-xs text-gray-400 ml-2">
                         {item.category === "pdf" ? "PDF" : "Image"}
@@ -359,7 +422,157 @@ export default function PatientDetailPage() {
             </p>
           </div>
         )}
+
+        {activeTab === "dossier" && (
+          <div className="space-y-6">
+            {/* Header with button */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900">
+                Dossier médical
+              </h2>
+              <button
+                onClick={() => setShowNewSessionModal(true)}
+                className="btn-primary flex items-center gap-2"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                Nouvelle session
+              </button>
+            </div>
+
+            {/* Sessions list */}
+            {loadingSessions ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : sessions && sessions.length > 0 ? (
+              <div className="space-y-3">
+                {sessions
+                  .toSorted(
+                    (a, b) =>
+                      new Date(b.sessionDate || b.date) -
+                      new Date(a.sessionDate || a.date),
+                  )
+                  .map((session) => {
+                    const sessionId =
+                      session.sessionId || session.id || session._id;
+                    const sessionDate = session.sessionDate || session.date;
+                    return (
+                      <div
+                        key={sessionId}
+                        onClick={() =>
+                          navigate(
+                            `/specialist/patients/${id}/sessions/${sessionId}`,
+                          )
+                        }
+                        className="card cursor-pointer hover:shadow-md hover:border-primary transition group"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <span className="text-sm font-medium text-gray-900">
+                                Session du{" "}
+                                {sessionDate
+                                  ? new Date(sessionDate).toLocaleDateString(
+                                      "fr-FR",
+                                    )
+                                  : "Date inconnue"}
+                              </span>
+                              {session.notes && (
+                                <span className="text-xs text-gray-500">
+                                  {session.notes}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex gap-2 flex-wrap">
+                              {session.examenClinique && (
+                                <Badge label="Examen Clinique" color="active" />
+                              )}
+                              {session.diagnostic && (
+                                <Badge label="Diagnostic" color="active" />
+                              )}
+                              {session.physiotherapie && (
+                                <Badge label="Physiothérapie" color="active" />
+                              )}
+                              {session.conduiteATenir && (
+                                <Badge label="Conduite" color="active" />
+                              )}
+                              {session.examenComplementaire?.length > 0 && (
+                                <Badge
+                                  label="Examen Complémentaire"
+                                  color="active"
+                                />
+                              )}
+                            </div>
+                          </div>
+                          <svg
+                            className="w-5 h-5 text-gray-400 group-hover:text-primary transition"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 5l7 7-7 7"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            ) : (
+              <div className="card">
+                <div className="text-center py-8 text-gray-400">
+                  <svg
+                    className="w-12 h-12 mx-auto mb-3 text-gray-300"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                  <p>Aucune session créée pour ce patient</p>
+                  <button
+                    onClick={() => setShowNewSessionModal(true)}
+                    className="text-primary hover:underline text-sm font-medium mt-2"
+                  >
+                    Créer la première session
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === "evolution" && <EvolutionCharts patientId={id} />}
       </div>
+
+      {/* New Session Modal */}
+      <NewSessionModal
+        isOpen={showNewSessionModal}
+        onClose={() => setShowNewSessionModal(false)}
+        patientId={id}
+        onSessionCreated={() => fetchSessions()}
+      />
     </SpecialistLayout>
   );
 }

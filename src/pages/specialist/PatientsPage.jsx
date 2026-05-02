@@ -52,14 +52,22 @@ export default function PatientsPage() {
     (p) =>
       p.fullName?.toLowerCase().includes(search.toLowerCase()) ||
       p.email?.toLowerCase().includes(search.toLowerCase()) ||
-      p.patient?.medicalHistory?.[0]?.title
+      p.patient?.appointments?.[0]?.reason
         ?.toLowerCase()
         .includes(search.toLowerCase()),
   );
 
   const getPrimaryCondition = (patient) => {
-    const medicalHistory = patient.patient?.medicalHistory;
-    return medicalHistory?.length ? medicalHistory[0].title : "—";
+    const appointments = patient.patient?.appointments;
+    return appointments?.length ? appointments[0].reason : "—";
+  };
+
+  const getLastVisitDate = (patient) => {
+    const lastAppointment = patient.patient?.appointments?.[0];
+    if (!lastAppointment?.AvailableSlot?.date) return "—";
+    return new Date(lastAppointment.AvailableSlot.date).toLocaleDateString(
+      "fr-FR"
+    );
   };
 
   const getPatientAge = (patient) => patient.patient?.age ?? "—";
@@ -154,7 +162,9 @@ export default function PatientsPage() {
                   <span className="text-xs font-medium text-gray-500 w-20 flex-shrink-0">
                     {t("patients.last_visit")}
                   </span>
-                  <span className="text-xs text-gray-600">—</span>
+                  <span className="text-xs text-gray-600">
+                    {getLastVisitDate(patient)}
+                  </span>
                 </div>
               </div>
             </Link>
