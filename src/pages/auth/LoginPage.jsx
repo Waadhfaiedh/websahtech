@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../context/AuthContext";
@@ -17,12 +17,30 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
 
   // OTP step
   const [showOtp, setShowOtp] = useState(false);
   const [otpCode, setOtpCode] = useState("");
   const [userId, setUserId] = useState("");
   const [userEmail, setUserEmail] = useState("");
+
+  // Cooldown timer effect
+  useEffect(() => {
+    if (cooldown <= 0) return;
+
+    const interval = setInterval(() => {
+      setCooldown((prev) => {
+        if (prev <= 1) {
+          setError("");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [cooldown]);
 
   // ─── Step 1: signin ──────────────────────────────────────────
   const handleSubmit = async (e) => {
@@ -43,9 +61,15 @@ export default function LoginPage() {
         else navigate("/specialist/dashboard");
       }
     } catch (err) {
-      const message = err.response?.data?.message || t("auth.error");
-      setError(message);
-      toast.error(message);
+      if (err.isRateLimit) {
+        setError(err.message);
+        setCooldown(err.retryAfter);
+        toast.error(err.message);
+      } else {
+        const message = err.response?.data?.message || t("auth.error");
+        setError(message);
+        toast.error(message);
+      }
     } finally {
       setLoading(false);
     }
@@ -65,9 +89,15 @@ export default function LoginPage() {
       else if (user.role === "DOCTOR") navigate("/specialist/dashboard");
       else navigate("/specialist/dashboard");
     } catch (err) {
-      const message = err.response?.data?.message || "Invalid OTP code";
-      setError(message);
-      toast.error(message);
+      if (err.isRateLimit) {
+        setError(err.message);
+        setCooldown(err.retryAfter);
+        toast.error(err.message);
+      } else {
+        const message = err.response?.data?.message || "Invalid OTP code";
+        setError(message);
+        toast.error(message);
+      }
     } finally {
       setLoading(false);
     }
@@ -260,10 +290,16 @@ export default function LoginPage() {
 
                   <button
                     type="submit"
-                    disabled={loading}
-                    className="btn-primary w-full justify-center py-3 text-base disabled:opacity-70"
+                    disabled={loading || cooldown > 0}
+                    className={`btn-primary w-full justify-center py-3 text-base ${
+                      cooldown > 0
+                        ? "opacity-50 cursor-not-allowed"
+                        : "disabled:opacity-70"
+                    }`}
                   >
-                    {loading ? (
+                    {cooldown > 0 ? (
+                      `Réessayer dans ${cooldown}s`
+                    ) : loading ? (
                       <>
                         <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{" "}
                         Connexion...
@@ -336,10 +372,16 @@ export default function LoginPage() {
 
                   <button
                     type="submit"
-                    disabled={loading}
-                    className="btn-primary w-full justify-center py-3 text-base disabled:opacity-70"
+                    disabled={loading || cooldown > 0}
+                    className={`btn-primary w-full justify-center py-3 text-base ${
+                      cooldown > 0
+                        ? "opacity-50 cursor-not-allowed"
+                        : "disabled:opacity-70"
+                    }`}
                   >
-                    {loading ? (
+                    {cooldown > 0 ? (
+                      `Réessayer dans ${cooldown}s`
+                    ) : loading ? (
                       <>
                         <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{" "}
                         Vérification...

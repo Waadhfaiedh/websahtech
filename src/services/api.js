@@ -19,6 +19,22 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    // Handle rate limiting (429)
+    if (error.response?.status === 429) {
+      const retryAfterStr = error.response.data?.retryAfter || "60 seconds";
+      const retryAfterNum = parseInt(retryAfterStr.match(/\d+/)?.[0] || "60");
+
+      return Promise.reject({
+        isRateLimit: true,
+        message:
+          "Trop de tentatives. Veuillez réessayer dans " +
+          retryAfterNum +
+          " secondes.",
+        retryAfter: retryAfterNum,
+      });
+    }
+
+    // Handle token refresh on 401
     if (error.response?.status === 401) {
       const user = JSON.parse(localStorage.getItem("sahtech_user") || "{}");
       if (user.refreshToken) {
