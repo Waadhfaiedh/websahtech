@@ -26,7 +26,7 @@ export function AuthProvider({ children }) {
           setUser(parsed);
           // load profile on app start
           if (parsed.accessToken) {
-            loadProfile(parsed.accessToken);
+            await loadProfile(parsed.accessToken);
           }
         }
       } catch {}

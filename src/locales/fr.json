@@ -24,6 +24,14 @@
     "subtitle": "Plateforme de gestion médicale spécialisée",
     "error": "Identifiants incorrects. Veuillez réessayer."
   },
+  "access": {
+    "admin_badge": "Accès admin",
+    "admin_title": "Les privilèges administrateur sont désactivés",
+    "admin_message": "Ce compte administrateur ne peut pas encore modérer. Demandez à un autre administrateur d'activer l'accès à la modération avant d'utiliser l'espace admin.",
+    "specialist_badge": "Validation en attente",
+    "specialist_title": "Votre compte attend une validation",
+    "specialist_message": "Votre compte médecin est en attente d'approbation par un administrateur. Vous pourrez accéder à l'espace spécialiste une fois validé."
+  },
   "dashboard": {
     "welcome": "Bienvenue",
     "total_patients": "Total Patients",

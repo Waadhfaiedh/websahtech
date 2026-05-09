@@ -8,6 +8,7 @@ import { useAuth } from "../../context/AuthContext";
 import api, { API_BASE_URL } from "../../services/api";
 import Logo from "../common/Logo";
 import LanguageSwitcher from "../common/LanguageSwitcher";
+import AccessRestriction from "../common/AccessRestriction";
 
 const socketBaseUrl = (api.defaults.baseURL || API_BASE_URL).replace(/\/$/, "");
 
@@ -343,6 +344,17 @@ export default function SpecialistLayout({ children }) {
       socketRef.current = null;
     };
   }, [currentUserId, location.pathname, navigate, t, user?.accessToken]);
+
+  if (specialist?.isValidated === false) {
+    return (
+      <AccessRestriction
+        variant="specialist"
+        title={t("access.specialist_title")}
+        message={t("access.specialist_message")}
+        onAction={handleLogout}
+      />
+    );
+  }
 
   return (
     <div className="flex h-screen bg-surface overflow-hidden">

@@ -24,6 +24,14 @@
     "subtitle": "Specialized medical management platform",
     "error": "Incorrect credentials. Please try again."
   },
+  "access": {
+    "admin_badge": "Admin access",
+    "admin_title": "Admin privileges are disabled",
+    "admin_message": "This admin account cannot moderate yet. Ask another administrator to enable moderation access before using the admin area.",
+    "specialist_badge": "Validation pending",
+    "specialist_title": "Your account is waiting for validation",
+    "specialist_message": "Your doctor account is pending admin approval. You will be able to access the specialist area once an administrator validates it."
+  },
   "dashboard": {
     "welcome": "Welcome",
     "total_patients": "Total Patients",
