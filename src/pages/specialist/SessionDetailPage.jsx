@@ -73,7 +73,7 @@ const buildPhysiotherapieBilanPayload = (bilan = {}) => ({
   intensiteEVA: bilan.intensiteEVA,
   typeDouleur: bilan.typeDouleur,
   facteurAggravant: bilan.facteurAggravant,
-  facteurSoulagement: bilan.facteurSoulagement,
+  facteursoulageant: bilan.facteursoulageant,
   debutDouleur: bilan.debutDouleur,
   retentissementAVQ: bilan.retentissementAVQ,
   retentissementPro: bilan.retentissementProfessionnel,

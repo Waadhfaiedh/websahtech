@@ -102,7 +102,7 @@ Request Body:
   "intensiteEVA": 7,
   "typeDouleur": "mecanique",
   "facteurAggravant": "Overhead movements",
-  "facteurSoulagement": "Rest",
+  "facteursoulageant": "Rest",
   "debutDouleur": "progressif",
   "retentissementAVQ": true,
   "retentissementProfessionnel": false,

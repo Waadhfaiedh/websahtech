@@ -288,7 +288,7 @@ const buildInitialData = (session, patient) => {
     intensiteEVA: examenClinique.intensiteEVA ?? 5,
     typeDouleur: examenClinique.typeDouleur ?? "mecanique",
     facteurAggravant: examenClinique.facteurAggravant ?? "",
-    facteurSoulagement: examenClinique.facteurSoulagement ?? "",
+    facteursoulageant: examenClinique.facteursoulageant ?? "",
     debutDouleur: examenClinique.debutDouleur ?? "progressif",
 
     retentissementAVQ: examenClinique.retentissementAVQ ?? false,
@@ -599,7 +599,7 @@ export default function ExamenCliniqueForm({ session, patient, onSave }) {
           data.intensiteEVA === "" ? null : Number(data.intensiteEVA),
         typeDouleur: data.typeDouleur,
         facteurAggravant: data.facteurAggravant,
-        facteurSoulagement: data.facteurSoulagement,
+        facteursoulageant: data.facteursoulageant,
         debutDouleur: data.debutDouleur,
         retentissementAVQ: data.retentissementAVQ,
         retentissementPro: data.retentissementProfessionnel,
@@ -1079,16 +1079,16 @@ export default function ExamenCliniqueForm({ session, patient, onSave }) {
           </div>
           <div>
             <label
-              htmlFor="facteurSoulagement"
+              htmlFor="facteursoulageant"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Facteur soulagement
+              Facteur soulageant
             </label>
             <input
-              id="facteurSoulagement"
+              id="facteursoulageant"
               type="text"
-              name="facteurSoulagement"
-              value={data.facteurSoulagement}
+              name="facteursoulageant"
+              value={data.facteursoulageant}
               onChange={handleInputChange}
               className="input-field"
               placeholder="Ce qui soulage..."
@@ -1909,7 +1909,7 @@ ExamenCliniqueForm.propTypes = {
       intensiteEVA: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       typeDouleur: PropTypes.string,
       facteurAggravant: PropTypes.string,
-      facteurSoulagement: PropTypes.string,
+      facteursoulageant: PropTypes.string,
       debutDouleur: PropTypes.string,
       retentissementAVQ: PropTypes.bool,
       retentissementPro: PropTypes.bool,
