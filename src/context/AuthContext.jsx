@@ -7,7 +7,7 @@ import {
   useMemo,
   useCallback,
 } from "react";
-import api from "../services/api";
+import api, { setAuthLogoutHandler } from "../services/api";
 
 const AuthContext = createContext();
 
@@ -120,6 +120,17 @@ export function AuthProvider({ children }) {
     setSpecialist(null);
     setAdmin(null);
   }, []);
+
+  useEffect(() => {
+    setAuthLogoutHandler(() => {
+      logout();
+      globalThis.location.replace("/login");
+    });
+
+    return () => {
+      setAuthLogoutHandler(null);
+    };
+  }, [logout]);
 
   const updateSpecialist = useCallback((updates) => {
     setSpecialist((prev) => ({ ...prev, ...updates }));

@@ -100,7 +100,7 @@ Request Body:
   "siegeDouleur": "Right shoulder",
   "irradiation": "Down the arm",
   "intensiteEVA": 7,
-  "typeRythme": "mecanique",
+  "typeDouleur": "mecanique",
   "facteurAggravant": "Overhead movements",
   "facteurSoulagement": "Rest",
   "debutDouleur": "progressif",
@@ -403,7 +403,7 @@ The token is automatically added by the axios interceptor in `src/services/api.j
 | -------------- | -------------------------------------------------------------------- | ------------------ |
 | sexe           | "MALE" \| "FEMALE" \| "OTHER"                                        | Uppercase strings  |
 | membreDominant | "DROIT" \| "GAUCHE"                                                  | French uppercase   |
-| typeRythme     | "mecanique" \| "inflammatoire" \| "mixte"                            | Lowercase          |
+| typeDouleur    | "mecanique" \| "inflammatoire" \| "mixte"                            | Lowercase          |
 | debutDouleur   | "progressif" \| "brutal"                                             | Lowercase          |
 | severite       | "legere" \| "moderee" \| "severe"                                    | Lowercase          |
 | typeEpaule     | "douloureuse" \| "hyperalgique" \| "pseudo-paralytique" \| "bloquee" | Lowercase          |

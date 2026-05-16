@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import PropTypes from "prop-types";
 import { toast } from "react-toastify";
 import api from "../../services/api";
@@ -12,10 +12,12 @@ export default function ExamenComplementaireForm({ session, patient, onSave }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({
     type: "radiographie",
+    bilanBiologiqueType: [],
+    bilanBiologiqueAutre: "",
     description: "",
     resultat: "",
     date: new Date().toISOString().split("T")[0],
-    file: null,
+    files: [],
   });
 
   const EXAM_TYPES = [
@@ -25,6 +27,16 @@ export default function ExamenComplementaireForm({ session, patient, onSave }) {
     { value: "arthroscanner", label: "Arthroscanner" },
     { value: "bilanBiologique", label: "Bilan biologique" },
     { value: "autre", label: "Autre" },
+  ];
+
+  const BILAN_BIOLOGIQUE_TYPES = [
+    { value: "nfs", label: "NFS" },
+    { value: "vs", label: "VS" },
+    { value: "crp", label: "CRP" },
+    { value: "glycemie", label: "Glycémie" },
+    { value: "uree", label: "Urée" },
+    { value: "creat", label: "Créat" },
+    { value: "autre", label: "Autres" },
   ];
 
   const getExamTypeLabel = (examType) => {
@@ -73,38 +85,130 @@ export default function ExamenComplementaireForm({ session, patient, onSave }) {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
+      ...(name === "type" && value !== "bilanBiologique"
+        ? { bilanBiologiqueType: [], bilanBiologiqueAutre: "", files: [] }
+        : {}),
     }));
   };
 
+  const handleBilanTypeToggle = (value, checked) => {
+    setFormData((prev) => {
+      const current = Array.isArray(prev.bilanBiologiqueType)
+        ? prev.bilanBiologiqueType.slice()
+        : [];
+      if (checked) {
+        if (!current.includes(value)) current.push(value);
+      } else {
+        const idx = current.indexOf(value);
+        if (idx > -1) current.splice(idx, 1);
+      }
+      return { ...prev, bilanBiologiqueType: current };
+    });
+  };
+
   const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Validate file type
-      const validTypes = [
-        "application/pdf",
-        "image/jpeg",
-        "image/png",
-        "image/jpg",
-      ];
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    const validTypes = [
+      "application/pdf",
+      "image/jpeg",
+      "image/png",
+      "image/jpg",
+    ];
+    const maxSize = 5 * 1024 * 1024;
+    const accepted = [];
+    for (const file of files) {
       if (!validTypes.includes(file.type)) {
-        toast.error("Format non supporté. Utilisez PDF ou image.");
-        return;
+        toast.error(`Format non supporté: ${file.name}`);
+        continue;
       }
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Fichier trop volumineux (max 5MB)");
-        return;
+      if (file.size > maxSize) {
+        toast.error(`Fichier trop volumineux: ${file.name} (max 5MB)`);
+        continue;
       }
-      setFormData((prev) => ({
-        ...prev,
-        file: file,
-      }));
+      accepted.push(file);
     }
+    if (!accepted.length) return;
+    setFormData((prev) => ({ ...prev, files: [...prev.files, ...accepted] }));
+  };
+
+  const fileInputRef = useRef(null);
+
+  const processSelectedFiles = (filesList) => {
+    const files = Array.from(filesList || []);
+    if (!files.length) return;
+
+    const validTypes = [
+      "application/pdf",
+      "image/jpeg",
+      "image/png",
+      "image/jpg",
+    ];
+    const maxSize = 5 * 1024 * 1024;
+    const accepted = [];
+    for (const file of files) {
+      if (!validTypes.includes(file.type)) {
+        toast.error(`Format non supporté: ${file.name}`);
+        continue;
+      }
+      if (file.size > maxSize) {
+        toast.error(`Fichier trop volumineux: ${file.name} (max 5MB)`);
+        continue;
+      }
+      accepted.push(file);
+    }
+    if (!accepted.length) return;
+    setFormData((prev) => ({ ...prev, files: [...prev.files, ...accepted] }));
+  };
+
+  const removeFile = (index) => {
+    setFormData((prev) => {
+      const next = prev.files.slice();
+      next.splice(index, 1);
+      return { ...prev, files: next };
+    });
+  };
+
+  const getBilanBiologiqueValidationError = () => {
+    if (formData.type !== "bilanBiologique") {
+      return null;
+    }
+
+    if (
+      !Array.isArray(formData.bilanBiologiqueType) ||
+      formData.bilanBiologiqueType.length === 0
+    ) {
+      return "Veuillez choisir au moins un type de bilan biologique";
+    }
+
+    if (
+      formData.bilanBiologiqueType.includes("autre") &&
+      !formData.bilanBiologiqueAutre.trim()
+    ) {
+      return "Veuillez préciser le type de bilan biologique";
+    }
+
+    if (!formData.resultat.trim()) {
+      return "Veuillez renseigner le résultat";
+    }
+
+    if (!Array.isArray(formData.files) || formData.files.length === 0) {
+      return "Veuillez ajouter au moins un fichier pour le bilan biologique";
+    }
+
+    return null;
   };
 
   const handleAddExam = async () => {
     if (!formData.description.trim()) {
       toast.error("Veuillez remplir la description");
+      return;
+    }
+
+    const bilanError = getBilanBiologiqueValidationError();
+    if (bilanError) {
+      toast.error(bilanError);
       return;
     }
 
@@ -114,11 +218,30 @@ export default function ExamenComplementaireForm({ session, patient, onSave }) {
       // Create FormData for multipart upload
       const multipartData = new FormData();
       multipartData.append("type", formData.type);
+      if (formData.type === "bilanBiologique") {
+        // send selected bilan types as comma-separated string
+        multipartData.append(
+          "bilanBiologiqueType",
+          Array.isArray(formData.bilanBiologiqueType)
+            ? formData.bilanBiologiqueType.join(",")
+            : formData.bilanBiologiqueType,
+        );
+        if (
+          Array.isArray(formData.bilanBiologiqueType) &&
+          formData.bilanBiologiqueType.includes("autre")
+        ) {
+          multipartData.append(
+            "bilanBiologiqueAutre",
+            formData.bilanBiologiqueAutre,
+          );
+        }
+      }
       multipartData.append("description", formData.description);
       multipartData.append("resultat", formData.resultat);
       multipartData.append("date", formData.date);
-      if (formData.file) {
-        multipartData.append("file", formData.file);
+      if (formData.files && formData.files.length) {
+        // append each file under the same key so backend can accept multiple files
+        formData.files.forEach((f) => multipartData.append("files", f));
       }
 
       // The onSave will be called with the multipart data
@@ -127,10 +250,12 @@ export default function ExamenComplementaireForm({ session, patient, onSave }) {
       // Reset form
       setFormData({
         type: "radiographie",
+        bilanBiologiqueType: [],
+        bilanBiologiqueAutre: "",
         description: "",
         resultat: "",
         date: new Date().toISOString().split("T")[0],
-        file: null,
+        files: [],
       });
       setShowAddForm(false);
 
@@ -300,6 +425,60 @@ export default function ExamenComplementaireForm({ session, patient, onSave }) {
               />
             </div>
 
+            {formData.type === "bilanBiologique" && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Type de bilan biologique
+                  </label>
+                  <div className="flex flex-wrap gap-3">
+                    {BILAN_BIOLOGIQUE_TYPES.map((type) => (
+                      <label
+                        key={type.value}
+                        className="inline-flex items-center gap-2 text-sm"
+                      >
+                        <input
+                          type="checkbox"
+                          name="bilanBiologiqueType"
+                          value={type.value}
+                          checked={
+                            Array.isArray(formData.bilanBiologiqueType) &&
+                            formData.bilanBiologiqueType.includes(type.value)
+                          }
+                          onChange={(e) =>
+                            handleBilanTypeToggle(type.value, e.target.checked)
+                          }
+                          className="form-checkbox"
+                        />
+                        <span>{type.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {Array.isArray(formData.bilanBiologiqueType) &&
+                  formData.bilanBiologiqueType.includes("autre") && (
+                    <div>
+                      <label
+                        htmlFor="bilanBiologiqueAutre"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Préciser autre bilan
+                      </label>
+                      <input
+                        id="bilanBiologiqueAutre"
+                        type="text"
+                        name="bilanBiologiqueAutre"
+                        value={formData.bilanBiologiqueAutre}
+                        onChange={handleInputChange}
+                        className="input-field"
+                        placeholder="Ex: Bilan hépatique"
+                      />
+                    </div>
+                  )}
+              </>
+            )}
+
             <div>
               <label
                 htmlFor="description"
@@ -338,12 +517,28 @@ export default function ExamenComplementaireForm({ session, patient, onSave }) {
 
             <div>
               <label
-                htmlFor="exam-file"
+                htmlFor="exam-files"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                Fichier (optionnel)
+                Fichiers (optionnel)
               </label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition">
+              <div
+                className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition cursor-pointer"
+                onClick={() =>
+                  fileInputRef.current && fileInputRef.current.click()
+                }
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.dataTransfer.dropEffect = "copy";
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const dropped = e.dataTransfer?.files ?? [];
+                  processSelectedFiles(dropped);
+                }}
+              >
                 <svg
                   className="mx-auto h-12 w-12 text-gray-400"
                   stroke="currentColor"
@@ -357,22 +552,35 @@ export default function ExamenComplementaireForm({ session, patient, onSave }) {
                     strokeLinejoin="round"
                   />
                 </svg>
-                <label htmlFor="exam-file" className="block">
+                <label htmlFor="exam-files" className="block">
                   <span className="text-sm text-gray-500">
                     PDF ou image (max 5MB)
                   </span>
                   <input
-                    id="exam-file"
+                    id="exam-files"
+                    ref={fileInputRef}
                     type="file"
-                    onChange={handleFileChange}
+                    onChange={(e) => processSelectedFiles(e.target.files)}
                     accept="image/*,application/pdf"
+                    multiple
                     className="hidden"
                   />
                 </label>
-                {formData.file && (
-                  <p className="text-sm text-green-600 mt-2">
-                    ✓ {formData.file.name}
-                  </p>
+                {formData.files && formData.files.length > 0 && (
+                  <ul className="mt-2 space-y-1 text-sm text-green-600">
+                    {formData.files.map((f, i) => (
+                      <li key={i} className="flex items-center justify-between">
+                        <span>✓ {f.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeFile(i)}
+                          className="text-red-500 ml-3"
+                        >
+                          Retirer
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </div>
             </div>

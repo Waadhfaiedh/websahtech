@@ -52,6 +52,61 @@ const SECTION_KEYS = {
   physiotherapie: "physiotherapie",
 };
 
+const buildPhysiotherapieBilanPayload = (bilan = {}) => ({
+  age: bilan.age === "" ? null : Number(bilan.age),
+  sexe: bilan.sexe,
+  taille: bilan.taille === "" ? null : Number(bilan.taille),
+  poids: bilan.poids === "" ? null : Number(bilan.poids),
+  membreDominant: bilan.membreDominant,
+  profession: bilan.profession,
+  membreAtteint: bilan.membreAtteint,
+  frequenceSportPratiquee: bilan.frequenceSportPratiquee,
+  intensitePratique: bilan.intensitePratique,
+  antecedentsMedicauxEnabled: bilan.antecedentsMedicauxEnabled,
+  antecedentsMedicauxDetails: bilan.antecedentsMedicauxDetails,
+  antecedentsChirurgicauxEnabled: bilan.antecedentsChirurgicauxEnabled,
+  antecedentsChirurgicauxDetails: bilan.antecedentsChirurgicauxDetails,
+  plainte: bilan.plainte,
+  historique: bilan.historique,
+  siegeDouleur: bilan.siegeDouleur,
+  irradiation: bilan.irradiation,
+  intensiteEVA: bilan.intensiteEVA,
+  typeDouleur: bilan.typeDouleur,
+  facteurAggravant: bilan.facteurAggravant,
+  facteurSoulagement: bilan.facteurSoulagement,
+  debutDouleur: bilan.debutDouleur,
+  retentissementAVQ: bilan.retentissementAVQ,
+  retentissementPro: bilan.retentissementProfessionnel,
+  retentissementSommeil: bilan.retentissementSommeil,
+  constantScore: JSON.stringify(bilan.constantScore),
+  quickDashScore: JSON.stringify(bilan.quickDASH),
+  dashArabeScore: JSON.stringify(bilan.dashArabeScore),
+  antepulsionActive: bilan.mobiliteArticulaire?.antepulsion_active,
+  antepulsionPassive: bilan.mobiliteArticulaire?.antepulsion_passive,
+  abductionActive: bilan.mobiliteArticulaire?.abduction_active,
+  abductionPassive: bilan.mobiliteArticulaire?.abduction_passive,
+  retractionActive: bilan.mobiliteArticulaire?.retraction_active,
+  retractionPassive: bilan.mobiliteArticulaire?.retraction_passive,
+  rotationExterneActive: bilan.mobiliteArticulaire?.rot_ext_active,
+  rotationExternePassive: bilan.mobiliteArticulaire?.rot_ext_passive,
+  rotationInterneActive: bilan.mobiliteArticulaire?.rot_int_active,
+  rotationInternePassive: bilan.mobiliteArticulaire?.rot_int_passive,
+  deltoideTesting: bilan.testingMusculaire?.deltoides,
+  susEpineuxTesting: bilan.testingMusculaire?.sus_epineux,
+  infraEpineuxTesting: bilan.testingMusculaire?.infra_epineux,
+  subScapulaireTesting: bilan.testingMusculaire?.sub_scapulaire,
+  testJobe: bilan.testsSpecifiques?.jobe,
+  testPatte: bilan.testsSpecifiques?.patte,
+  testGerber: bilan.testsSpecifiques?.gerber,
+  testNeer: bilan.testsSpecifiques?.neer,
+  testHawkins: bilan.testsSpecifiques?.hawkins,
+  mainBouche: bilan.bilanFonctionnel?.mainBouche,
+  mainTete: bilan.bilanFonctionnel?.mainTete,
+  mainNuque: bilan.bilanFonctionnel?.mainNuque,
+  mainDos: bilan.bilanFonctionnel?.mainDos,
+  observations: bilan.observations,
+});
+
 export default function SessionDetailPage() {
   const { patientId, sessionId } = useParams();
   const navigate = useNavigate();
@@ -60,14 +115,7 @@ export default function SessionDetailPage() {
   const [patient, setPatient] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Load session and patient data on mount
-  useEffect(() => {
-    fetchSessionData();
-    fetchPatientData();
-  }, [sessionId, patientId]);
-
   const fetchSessionData = async () => {
-    // Guard: prevent API call if sessionId is undefined
     if (!sessionId) {
       console.error("SessionId is undefined. Cannot fetch session data.");
       toast.error("Erreur: l'identifiant de session est manquant");
@@ -77,10 +125,7 @@ export default function SessionDetailPage() {
 
     try {
       setLoading(true);
-      console.log("Fetching session with ID:", sessionId);
-      // Fetch session details using doctor-prefixed endpoint
       const sessionRes = await api.get(`/doctors/sessions/${sessionId}`);
-      console.log("Session data received:", sessionRes.data);
       setSession(sessionRes.data);
     } catch (err) {
       console.error("Failed to load session:", err);
@@ -100,24 +145,26 @@ export default function SessionDetailPage() {
     }
 
     try {
-      // Fetch all patients and find the one matching this patientId
       const res = await api.get("/doctors/get-patients");
       const patientsData = res.data.patients ?? res.data.data ?? res.data;
       const foundPatient = patientsData.find(
         (p) =>
-          p.userId === Number.parseInt(patientId) || p.userId === patientId,
+          p.userId === Number.parseInt(patientId, 10) || p.userId === patientId,
       );
 
       if (foundPatient) {
-        console.log("Patient data loaded:", foundPatient);
         setPatient(foundPatient);
-      } else {
-        console.warn("Patient not found with ID:", patientId);
       }
     } catch (err) {
       console.error("Failed to load patient data:", err);
     }
   };
+
+  // Load session and patient data on mount
+  useEffect(() => {
+    fetchSessionData();
+    fetchPatientData();
+  }, [sessionId, patientId]);
 
   const handleSectionChange = (sectionId) => {
     setActiveSection(sectionId);
@@ -149,47 +196,7 @@ export default function SessionDetailPage() {
         endpoint = `/doctors/sessions/${sessionId}/physiotherapie/${subTab}`;
 
         if (subTab === "bilan") {
-          payload = {
-            plainte: data.bilan?.plainte,
-            historique: data.bilan?.historique,
-            intensiteEVA: data.bilan?.intensiteEVA,
-            constantScore: JSON.stringify(data.bilan?.constantScore),
-            quickDashScore: JSON.stringify(data.bilan?.quickDASH),
-            dashArabeScore: JSON.stringify(data.bilan?.dashArabeScore),
-            antepulsionActive:
-              data.bilan?.mobiliteArticulaire?.antepulsion_active,
-            antepulsionPassive:
-              data.bilan?.mobiliteArticulaire?.antepulsion_passive,
-            abductionActive: data.bilan?.mobiliteArticulaire?.abduction_active,
-            abductionPassive:
-              data.bilan?.mobiliteArticulaire?.abduction_passive,
-            retractionActive:
-              data.bilan?.mobiliteArticulaire?.retraction_active,
-            retractionPassive:
-              data.bilan?.mobiliteArticulaire?.retraction_passive,
-            rotationExterneActive:
-              data.bilan?.mobiliteArticulaire?.rot_ext_active,
-            rotationExternePassive:
-              data.bilan?.mobiliteArticulaire?.rot_ext_passive,
-            rotationInterneActive:
-              data.bilan?.mobiliteArticulaire?.rot_int_active,
-            rotationInternePassive:
-              data.bilan?.mobiliteArticulaire?.rot_int_passive,
-            deltoideTesting: data.bilan?.testingMusculaire?.deltoides,
-            susEpineuxTesting: data.bilan?.testingMusculaire?.sus_epineux,
-            infraEpineuxTesting: data.bilan?.testingMusculaire?.infra_epineux,
-            subScapulaireTesting: data.bilan?.testingMusculaire?.sub_scapulaire,
-            testJobe: data.bilan?.testsSpecifiques?.jobe,
-            testPatte: data.bilan?.testsSpecifiques?.patte,
-            testGerber: data.bilan?.testsSpecifiques?.gerber,
-            testNeer: data.bilan?.testsSpecifiques?.neer,
-            testHawkins: data.bilan?.testsSpecifiques?.hawkins,
-            mainBouche: data.bilan?.bilanFonctionnel?.mainBouche,
-            mainTete: data.bilan?.bilanFonctionnel?.mainTete,
-            mainNuque: data.bilan?.bilanFonctionnel?.mainNuque,
-            mainDos: data.bilan?.bilanFonctionnel?.mainDos,
-            observations: data.bilan?.observations,
-          };
+          payload = buildPhysiotherapieBilanPayload(data.bilan);
         } else if (subTab === "protocole") {
           payload = {
             objectifsCourt: data.protocole?.objectifsCourt,

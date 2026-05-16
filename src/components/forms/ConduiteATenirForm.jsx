@@ -26,7 +26,6 @@ function ConduiteATenirForm({ session, patient, onSave }) {
     // Recommandations
     reposRelatif: conduiteATenir.reposRelatif ?? false,
     recommandations: conduiteATenir.recommandations ?? "",
-    prochainRDV: conduiteATenir.prochainRDV ?? "",
     objectifs: conduiteATenir.objectifs ?? "",
   });
 
@@ -267,22 +266,7 @@ function ConduiteATenirForm({ session, patient, onSave }) {
             />
           </div>
 
-          <div>
-            <label
-              htmlFor="prochainRDV"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Prochain rendez-vous
-            </label>
-            <input
-              id="prochainRDV"
-              type="date"
-              name="prochainRDV"
-              value={data.prochainRDV}
-              onChange={handleInputChange}
-              className="input-field"
-            />
-          </div>
+          {/* Prochain rendez-vous removed per request */}
 
           <div>
             <label

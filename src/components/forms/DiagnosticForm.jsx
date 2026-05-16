@@ -45,7 +45,7 @@ export default function DiagnosticForm({ session, patient, onSave }) {
   const TYPES_EPAULE = [
     {
       id: "douloureuse_simple",
-      label: "Douloureuse simple",
+      label: "Douloureuse simple (tendinopathie simple de l'épaule)",
       icon: "😟",
       description: "Douleur modérée avec fonction conservée",
     },
@@ -62,7 +62,7 @@ export default function DiagnosticForm({ session, patient, onSave }) {
       description: "Perte fonctionnelle avec faiblesse",
     },
     {
-      id: "bloquee",
+      id: "épaule bloquee (capsulite retractile)",
       label: "Bloquée",
       icon: "🔒",
       description: "Incapacité totale de mouvement",
