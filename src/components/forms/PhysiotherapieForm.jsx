@@ -505,11 +505,13 @@ export default function PhysiotherapieForm({ session, patient, onSave }) {
     ondesDeChoc: protocoleReeducation.ondesDeChoc ?? false,
     cryotherapie: protocoleReeducation.cryotherapie ?? false,
     thermotherapie: protocoleReeducation.thermotherapie ?? false,
+    electrophysioAutre: protocoleReeducation.electrophysioAutre ?? "",
     // Thérapies manuelles antalgiques
     massageDecontracturant: protocoleReeducation.massageDecontracturant ?? false,
     mtp: protocoleReeducation.mtp ?? false,
     triggerPoints: protocoleReeducation.triggerPoints ?? false,
     drainageLymphatique: protocoleReeducation.drainageLymphatique ?? false,
+    therapieManuAutre: protocoleReeducation.therapieManuAutre ?? "",
     // Balnéothérapie
     balneotherapie: protocoleReeducation.balneotherapie ?? false,
     balneotherapiePrecisions: protocoleReeducation.balneotherapiePrecisions ?? "",
@@ -528,6 +530,7 @@ export default function PhysiotherapieForm({ session, patient, onSave }) {
     etirementsCapsulairesInf: protocoleReeducation.etirementsCapsulairesInf ?? false,
     pompagesCapsulaires: protocoleReeducation.pompagesCapsulaires ?? false,
     leveesDeTension: protocoleReeducation.leveesDeTension ?? false,
+    techManuAutre: protocoleReeducation.techManuAutre ?? "",
     // Renforcement — types
     renf_isometrique: protocoleReeducation.renf_isometrique ?? false,
     renf_concentrique: protocoleReeducation.renf_concentrique ?? false,
@@ -541,6 +544,7 @@ export default function PhysiotherapieForm({ session, patient, onSave }) {
     muscle_stabilisateursScap: protocoleReeducation.muscle_stabilisateursScap ?? false,
     muscle_grandPecGrandDorsal: protocoleReeducation.muscle_grandPecGrandDorsal ?? false,
     muscle_bicepsTriceps: protocoleReeducation.muscle_bicepsTriceps ?? false,
+    renforcementAutre: protocoleReeducation.renforcementAutre ?? "",
     // Contrôle moteur
     stabilisationScapDyn: protocoleReeducation.stabilisationScapDyn ?? false,
     recentrageGH: protocoleReeducation.recentrageGH ?? false,
@@ -549,6 +553,7 @@ export default function PhysiotherapieForm({ session, patient, onSave }) {
     proprioDynamique: protocoleReeducation.proprioDynamique ?? false,
     travailPostural: protocoleReeducation.travailPostural ?? false,
     correctionCompensations: protocoleReeducation.correctionCompensations ?? false,
+    controleMoteurAutre: protocoleReeducation.controleMoteurAutre ?? "",
     // Réathlétisation (phase 4)
     gestesSpecifiques: protocoleReeducation.gestesSpecifiques ?? false,
     pliometrieMS: protocoleReeducation.pliometrieMS ?? false,
@@ -4324,6 +4329,13 @@ export default function PhysiotherapieForm({ session, patient, onSave }) {
                     </label>
                   ))}
                 </div>
+                <input
+                  type="text"
+                  value={protocolData.electrophysioAutre}
+                  onChange={(e) => handleProtocolChange("electrophysioAutre", e.target.value)}
+                  className="input-field mt-2"
+                  placeholder="Autre électrophysiothérapie..."
+                />
               </div>
 
               {/* Thérapies manuelles antalgiques */}
@@ -4346,6 +4358,13 @@ export default function PhysiotherapieForm({ session, patient, onSave }) {
                     </label>
                   ))}
                 </div>
+                <input
+                  type="text"
+                  value={protocolData.therapieManuAutre}
+                  onChange={(e) => handleProtocolChange("therapieManuAutre", e.target.value)}
+                  className="input-field mt-2"
+                  placeholder="Autre thérapie manuelle antalgique..."
+                />
               </div>
 
               {/* Balnéothérapie */}
@@ -4451,6 +4470,13 @@ export default function PhysiotherapieForm({ session, patient, onSave }) {
                     </select>
                   )}
                 </div>
+                <input
+                  type="text"
+                  value={protocolData.techManuAutre}
+                  onChange={(e) => handleProtocolChange("techManuAutre", e.target.value)}
+                  className="input-field mt-2"
+                  placeholder="Autre technique manuelle..."
+                />
               </div>
 
               {/* B. Renforcement musculaire */}
@@ -4504,6 +4530,13 @@ export default function PhysiotherapieForm({ session, patient, onSave }) {
                     </div>
                   </div>
                 </div>
+                <input
+                  type="text"
+                  value={protocolData.renforcementAutre}
+                  onChange={(e) => handleProtocolChange("renforcementAutre", e.target.value)}
+                  className="input-field mt-2"
+                  placeholder="Autre exercice de renforcement..."
+                />
               </div>
 
               {/* C. Contrôle moteur & stabilité */}
@@ -4532,6 +4565,13 @@ export default function PhysiotherapieForm({ session, patient, onSave }) {
                     </label>
                   ))}
                 </div>
+                <input
+                  type="text"
+                  value={protocolData.controleMoteurAutre}
+                  onChange={(e) => handleProtocolChange("controleMoteurAutre", e.target.value)}
+                  className="input-field mt-2"
+                  placeholder="Autre exercice de contrôle moteur..."
+                />
               </div>
 
               {/* D. Réathlétisation — phase 4 only */}
