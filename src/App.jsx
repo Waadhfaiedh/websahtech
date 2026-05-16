@@ -22,6 +22,7 @@ import ProfilePage from "./pages/specialist/ProfilePage";
 // Admin
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminSpecialists from "./pages/admin/AdminSpecialists";
+import AdminAdmins from "./pages/admin/AdminAdmins";
 import AdminPatients from "./pages/admin/AdminPatients";
 import AdminPosts from "./pages/admin/AdminPosts";
 import AdminProfile from "./pages/admin/AdminProfile";
@@ -162,6 +163,14 @@ export default function App() {
           element={
             <PrivateRoute allowedRoles={["ADMIN"]}>
               <AdminSpecialists />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/admins"
+          element={
+            <PrivateRoute allowedRoles={["ADMIN"]}>
+              <AdminAdmins />
             </PrivateRoute>
           }
         />

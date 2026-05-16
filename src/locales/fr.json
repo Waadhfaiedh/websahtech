@@ -12,6 +12,7 @@
     "profile": "Mon profil",
     "logout": "Se déconnecter",
     "specialists": "Spécialistes",
+    "admins": "Administrateurs",
     "moderation": "Modération",
     "admin_dashboard": "Tableau de bord admin"
   },
@@ -164,6 +165,7 @@
     "total_reports": "Rapports IA générés",
     "recent_activity": "Activité récente",
     "specialist_management": "Gestion des spécialistes",
+    "admin_management": "Gestion des administrateurs",
     "patient_management": "Gestion des patients",
     "content_moderation": "Modération du contenu",
     "view": "Voir",

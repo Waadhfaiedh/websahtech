@@ -43,7 +43,7 @@ const getYouTubeEmbedUrl = (url) => {
   if (!url) return null;
   // https://www.youtube.com/watch?v=ID  or  https://youtu.be/ID
   const match = url.match(
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/,
   );
   return match ? `https://www.youtube.com/embed/${match[1]}` : null;
 };
@@ -62,9 +62,18 @@ const VideoBlock = ({ videoUrl }) => {
   if (!videoUrl || videoError) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 gap-2">
-        <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-            d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
+        <svg
+          className="w-10 h-10"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"
+          />
         </svg>
         <span className="text-xs text-gray-400">Pas de vidéo</span>
       </div>
@@ -94,11 +103,24 @@ const VideoBlock = ({ videoUrl }) => {
         rel="noopener noreferrer"
         className="w-full h-full flex flex-col items-center justify-center gap-2 text-primary hover:text-primary/70 transition-colors"
       >
-        <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-            d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-            d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <svg
+          className="w-10 h-10"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
         </svg>
         <span className="text-xs font-medium">Voir la vidéo</span>
       </a>
@@ -123,7 +145,13 @@ VideoBlock.propTypes = {
 
 // ── My-exercise card ──────────────────────────────────────────────────────────
 
-const MyExerciseCard = ({ exercise, onAssign, assignLabel }) => {
+const MyExerciseCard = ({
+  exercise,
+  onAssign,
+  assignLabel,
+  onEdit,
+  onDelete,
+}) => {
   const categories = toArrStatic(exercise.category);
   const sides = toArrStatic(exercise.side);
   const assigned = exercise.assignedTo ?? [];
@@ -131,7 +159,6 @@ const MyExerciseCard = ({ exercise, onAssign, assignLabel }) => {
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-200 flex flex-col overflow-hidden group">
-
       {/* ── Video / thumbnail ── */}
       <div className="relative w-full h-44 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden flex-shrink-0">
         <VideoBlock videoUrl={exercise.videoUrl} />
@@ -147,7 +174,10 @@ const MyExerciseCard = ({ exercise, onAssign, assignLabel }) => {
         {sides.length > 0 && (
           <div className="absolute top-2 right-2 flex gap-1">
             {sides.map((s) => (
-              <span key={s} className="text-[10px] bg-black/50 text-white px-2 py-0.5 rounded-full font-medium backdrop-blur-sm">
+              <span
+                key={s}
+                className="text-[10px] bg-black/50 text-white px-2 py-0.5 rounded-full font-medium backdrop-blur-sm"
+              >
                 {SIDE_LABELS[s] ?? s}
               </span>
             ))}
@@ -157,15 +187,19 @@ const MyExerciseCard = ({ exercise, onAssign, assignLabel }) => {
 
       {/* ── Body ── */}
       <div className="flex flex-col flex-1 p-4 gap-3">
-
         {/* Name */}
-        <h3 className="font-bold text-gray-900 text-sm leading-snug">{exercise.name}</h3>
+        <h3 className="font-bold text-gray-900 text-sm leading-snug">
+          {exercise.name}
+        </h3>
 
         {/* Categories */}
         {categories.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {categories.map((cat) => (
-              <span key={cat} className="text-[10px] bg-primary/10 text-primary px-2.5 py-0.5 rounded-full font-semibold">
+              <span
+                key={cat}
+                className="text-[10px] bg-primary/10 text-primary px-2.5 py-0.5 rounded-full font-semibold"
+              >
                 {CATEGORY_LABELS[cat] ?? cat}
               </span>
             ))}
@@ -178,7 +212,9 @@ const MyExerciseCard = ({ exercise, onAssign, assignLabel }) => {
             {exercise.description}
           </p>
         ) : (
-          <p className="text-xs text-gray-300 italic flex-1">Aucune description</p>
+          <p className="text-xs text-gray-300 italic flex-1">
+            Aucune description
+          </p>
         )}
 
         {/* ── Assigned patients ── */}
@@ -193,7 +229,7 @@ const MyExerciseCard = ({ exercise, onAssign, assignLabel }) => {
               {/* Avatar stack row */}
               <div className="flex items-center">
                 <div className="flex -space-x-2">
-                  {assigned.slice(0, MAX_AVATARS).map((p) => (
+                  {assigned.slice(0, MAX_AVATARS).map((p) =>
                     p.user.imageUrl ? (
                       <img
                         key={p.userId}
@@ -212,8 +248,8 @@ const MyExerciseCard = ({ exercise, onAssign, assignLabel }) => {
                           {p.user.fullName?.charAt(0) ?? "?"}
                         </span>
                       </div>
-                    )
-                  ))}
+                    ),
+                  )}
                   {assigned.length > MAX_AVATARS && (
                     <div className="w-7 h-7 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center">
                       <span className="text-[10px] text-gray-500 font-semibold">
@@ -226,7 +262,10 @@ const MyExerciseCard = ({ exercise, onAssign, assignLabel }) => {
               {/* Patient name list (up to 3) */}
               <div className="flex flex-col gap-0.5">
                 {assigned.slice(0, 3).map((p) => (
-                  <span key={p.userId} className="text-[11px] text-gray-600 leading-tight truncate">
+                  <span
+                    key={p.userId}
+                    className="text-[11px] text-gray-600 leading-tight truncate"
+                  >
                     • {p.user.fullName}
                   </span>
                 ))}
@@ -246,12 +285,41 @@ const MyExerciseCard = ({ exercise, onAssign, assignLabel }) => {
             onClick={() => onAssign(exercise)}
             className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold bg-primary text-white px-3 py-2 rounded-lg hover:bg-primary/90 transition-colors"
           >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
             </svg>
             {assignLabel}
           </button>
         )}
+        {/* Edit / Delete actions */}
+        <div className="mt-2 flex gap-2">
+          {onEdit && (
+            <button
+              onClick={() => onEdit(exercise)}
+              className="flex-1 py-2 rounded-lg border text-sm font-medium hover:bg-primary/5"
+            >
+              Éditer
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={() => onDelete(exercise.exerciseId, exercise.name)}
+              className="flex-1 py-2 rounded-lg border text-sm font-medium text-red-600 hover:bg-red-50"
+            >
+              Supprimer
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -264,12 +332,23 @@ MyExerciseCard.propTypes = {
     description: PropTypes.string,
     videoUrl: PropTypes.string,
     isPublic: PropTypes.bool,
-    category: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
-    side: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
-    assignedTo: PropTypes.arrayOf(PropTypes.shape({
-      userId: PropTypes.string,
-      user: PropTypes.shape({ fullName: PropTypes.string, imageUrl: PropTypes.string }),
-    })),
+    category: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.arrayOf(PropTypes.string),
+    ]),
+    side: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.arrayOf(PropTypes.string),
+    ]),
+    assignedTo: PropTypes.arrayOf(
+      PropTypes.shape({
+        userId: PropTypes.string,
+        user: PropTypes.shape({
+          fullName: PropTypes.string,
+          imageUrl: PropTypes.string,
+        }),
+      }),
+    ),
   }).isRequired,
   onAssign: PropTypes.func,
   assignLabel: PropTypes.string,
@@ -289,7 +368,6 @@ const PublicExerciseCard = ({ exercise, onAssign, assignLabel }) => {
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-200 flex flex-col overflow-hidden group">
-
       {/* ── Video / thumbnail ── */}
       <div className="relative w-full h-44 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden flex-shrink-0">
         <VideoBlock videoUrl={exercise.videoUrl} />
@@ -298,7 +376,10 @@ const PublicExerciseCard = ({ exercise, onAssign, assignLabel }) => {
         {sides.length > 0 && (
           <div className="absolute top-2 right-2 flex gap-1">
             {sides.map((s) => (
-              <span key={s} className="text-[10px] bg-black/50 text-white px-2 py-0.5 rounded-full font-medium backdrop-blur-sm">
+              <span
+                key={s}
+                className="text-[10px] bg-black/50 text-white px-2 py-0.5 rounded-full font-medium backdrop-blur-sm"
+              >
                 {SIDE_LABELS[s] ?? s}
               </span>
             ))}
@@ -308,7 +389,6 @@ const PublicExerciseCard = ({ exercise, onAssign, assignLabel }) => {
 
       {/* ── Body ── */}
       <div className="flex flex-col flex-1 p-4 gap-3">
-
         {/* Name */}
         <h3 className="font-bold text-gray-900 text-sm leading-snug">
           {exercise.name}
@@ -318,8 +398,10 @@ const PublicExerciseCard = ({ exercise, onAssign, assignLabel }) => {
         {categories.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {categories.map((cat) => (
-              <span key={cat}
-                className="inline-flex items-center text-[10px] bg-primary/10 text-primary px-2.5 py-0.5 rounded-full font-semibold">
+              <span
+                key={cat}
+                className="inline-flex items-center text-[10px] bg-primary/10 text-primary px-2.5 py-0.5 rounded-full font-semibold"
+              >
                 {CATEGORY_LABELS[cat] ?? cat}
               </span>
             ))}
@@ -332,7 +414,9 @@ const PublicExerciseCard = ({ exercise, onAssign, assignLabel }) => {
             {exercise.description}
           </p>
         ) : (
-          <p className="text-xs text-gray-300 italic flex-1">Aucune description</p>
+          <p className="text-xs text-gray-300 italic flex-1">
+            Aucune description
+          </p>
         )}
 
         {/* ── Footer ── */}
@@ -341,7 +425,11 @@ const PublicExerciseCard = ({ exercise, onAssign, assignLabel }) => {
           {specialist && (
             <div className="flex items-center gap-2">
               {specialist.imageUrl ? (
-                <img src={specialist.imageUrl} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-2 ring-primary/20" />
+                <img
+                  src={specialist.imageUrl}
+                  alt=""
+                  className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-2 ring-primary/20"
+                />
               ) : (
                 <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 ring-2 ring-primary/20">
                   <span className="text-[11px] text-primary font-bold">
@@ -350,7 +438,9 @@ const PublicExerciseCard = ({ exercise, onAssign, assignLabel }) => {
                 </div>
               )}
               <div>
-                <p className="text-[10px] text-gray-400 leading-none">Créé par</p>
+                <p className="text-[10px] text-gray-400 leading-none">
+                  Créé par
+                </p>
                 <p className="text-xs text-gray-700 font-semibold leading-tight mt-0.5">
                   {specialist.fullName}
                 </p>
@@ -364,8 +454,18 @@ const PublicExerciseCard = ({ exercise, onAssign, assignLabel }) => {
               onClick={() => onAssign(exercise)}
               className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold bg-primary text-white px-3 py-2 rounded-lg hover:bg-primary/90 transition-colors"
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <svg
+                className="w-3.5 h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
               </svg>
               {assignLabel}
             </button>
@@ -382,8 +482,14 @@ PublicExerciseCard.propTypes = {
     name: PropTypes.string.isRequired,
     description: PropTypes.string,
     videoUrl: PropTypes.string,
-    category: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
-    side: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
+    category: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.arrayOf(PropTypes.string),
+    ]),
+    side: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.arrayOf(PropTypes.string),
+    ]),
     specialist: PropTypes.object,
   }).isRequired,
   onAssign: PropTypes.func,
@@ -415,6 +521,20 @@ export default function ExercisesPage() {
   // Modals
   const [showAdd, setShowAdd] = useState(false);
   const [showAssign, setShowAssign] = useState(null);
+  const [editingExercise, setEditingExercise] = useState(null);
+  // Delete confirmation modal state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null); // { exerciseId, name }
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Assign modal state
+  const [assignPatients, setAssignPatients] = useState([]);
+  const [assignPatientsLoading, setAssignPatientsLoading] = useState(false);
+  const [assignPatientsError, setAssignPatientsError] = useState(null);
+  const [assignSearchQuery, setAssignSearchQuery] = useState("");
+  const [assigningExerciseLoading, setAssigningExerciseLoading] =
+    useState(false);
+
   const EMPTY_FORM = {
     name: "",
     description: "",
@@ -427,6 +547,30 @@ export default function ExercisesPage() {
   };
   const [addForm, setAddForm] = useState(EMPTY_FORM);
   const [addLoading, setAddLoading] = useState(false);
+
+  // Helper to open the add modal for editing
+  const openEdit = (exercise) => {
+    setEditingExercise(exercise);
+    setAddForm({
+      name: exercise.name || "",
+      description: exercise.description || "",
+      videoUrl: exercise.videoUrl || "",
+      videoFile: null,
+      videoMode: exercise.videoUrl ? "url" : "file",
+      categories: Array.isArray(exercise.category)
+        ? exercise.category
+        : exercise.category
+          ? [exercise.category]
+          : [],
+      sides: Array.isArray(exercise.side)
+        ? exercise.side
+        : exercise.side
+          ? [exercise.side]
+          : [],
+      isPublic: !!exercise.isPublic,
+    });
+    setShowAdd(true);
+  };
 
   // Fetch my exercises
   useEffect(() => {
@@ -467,6 +611,37 @@ export default function ExercisesPage() {
     fetchPublic();
   }, [activeTab, publicFetched]);
 
+  // Fetch doctor's patients when showAssign modal opens
+  useEffect(() => {
+    if (!showAssign) {
+      setAssignPatients([]);
+      setAssignSearchQuery("");
+      return;
+    }
+
+    const fetchPatients = async () => {
+      try {
+        setAssignPatientsLoading(true);
+        setAssignPatientsError(null);
+        const response = await api.get("/doctors/get-patients");
+        console.log("[get-patients] response:", response.data);
+
+        // Extract patients array from response: { patients, count }
+        const patientsArray = response.data?.patients || [];
+        setAssignPatients(patientsArray);
+      } catch (err) {
+        const errorMsg =
+          err.response?.data?.message || "Failed to load patients";
+        setAssignPatientsError(errorMsg);
+        toast.error(errorMsg);
+      } finally {
+        setAssignPatientsLoading(false);
+      }
+    };
+
+    fetchPatients();
+  }, [showAssign]);
+
   // Normalize any value (string | string[] | null) to a string[]
   const toArr = (val) => {
     if (!val) return [];
@@ -505,6 +680,43 @@ export default function ExercisesPage() {
         : [...p.sides, side],
     }));
 
+  // Filter patients by search query
+  const filteredAssignPatients = useMemo(() => {
+    if (!Array.isArray(assignPatients)) return [];
+    return assignPatients.filter((p) => {
+      const query = assignSearchQuery.toLowerCase().trim();
+      if (query === "") return true;
+      const fullName = (p.fullName || "").toLowerCase();
+      const email = (p.email || "").toLowerCase();
+      return fullName.includes(query) || email.includes(query);
+    });
+  }, [assignPatients, assignSearchQuery]);
+
+  const handleAssignExercise = async (patientId) => {
+    if (!showAssign) return;
+
+    try {
+      setAssigningExerciseLoading(true);
+      await api.patch("/doctors/assign-exercise", {
+        patientId,
+        exerciceId: showAssign.exerciseId, // Note: backend uses 'exerciceId' (typo)
+      });
+      toast.success(`Exercice assigné au patient !`);
+      setShowAssign(null);
+      setAssignSearchQuery("");
+
+      // Refresh my exercises list
+      const response = await api.get("/doctors/exercises");
+      setMyExercises(response.data);
+    } catch (err) {
+      toast.error(
+        err.response?.data?.message || "Erreur lors de l'assignation",
+      );
+    } finally {
+      setAssigningExerciseLoading(false);
+    }
+  };
+
   const handleAdd = async () => {
     if (!addForm.name.trim()) {
       toast.error("Le nom est obligatoire.");
@@ -521,7 +733,7 @@ export default function ExercisesPage() {
 
     // Determine video source based on actual values, not mode toggle state
     const trimmedUrl = addForm.videoUrl.trim();
-    const hasUrl  = trimmedUrl.length > 0;
+    const hasUrl = trimmedUrl.length > 0;
     const hasFile = !!addForm.videoFile;
 
     if (!hasUrl && !hasFile) {
@@ -532,35 +744,97 @@ export default function ExercisesPage() {
     try {
       setAddLoading(true);
 
-      const fd = new FormData();
-      fd.append("name", addForm.name.trim());
-      fd.append("description", addForm.description.trim());
-      fd.append("isPublic", String(addForm.isPublic));
-      addForm.categories.forEach((c) => fd.append("category", c));
-      addForm.sides.forEach((s) => fd.append("side", s));
-
+      // If a file is selected, use multipart/form-data. Otherwise send JSON (arrays and booleans validate properly server-side).
       if (hasFile) {
+        const fd = new FormData();
+        fd.append("name", addForm.name.trim());
+        fd.append("description", addForm.description.trim());
+        // send arrays as JSON strings so the backend can parse them when using multipart
+        fd.append("category", JSON.stringify(addForm.categories));
+        fd.append("side", JSON.stringify(addForm.sides));
+        fd.append("isPublic", String(Boolean(addForm.isPublic)));
         fd.append("video", addForm.videoFile);
+
+        if (editingExercise) {
+          const res = await api.patch(
+            `/doctors/exercises/${editingExercise.exerciseId}`,
+            fd,
+          );
+          setMyExercises((prev) =>
+            prev.map((e) =>
+              e.exerciseId === res.data.exerciseId ? res.data : e,
+            ),
+          );
+          toast.success("Exercice mis à jour avec succès !");
+        } else {
+          const res = await api.post("/doctors/exercises", fd);
+          setMyExercises((prev) => [res.data, ...prev]);
+          toast.success("Exercice créé avec succès !");
+        }
       } else {
-        fd.append("videoUrl", trimmedUrl);
+        // JSON payload
+        const payload = {
+          name: addForm.name.trim(),
+          description: addForm.description.trim(),
+          isPublic: Boolean(addForm.isPublic),
+          category: addForm.categories,
+          side: addForm.sides,
+          videoUrl: trimmedUrl || null,
+        };
+
+        if (editingExercise) {
+          const res = await api.patch(
+            `/doctors/exercises/${editingExercise.exerciseId}`,
+            payload,
+          );
+          setMyExercises((prev) =>
+            prev.map((e) =>
+              e.exerciseId === res.data.exerciseId ? res.data : e,
+            ),
+          );
+          toast.success("Exercice mis à jour avec succès !");
+        } else {
+          const res = await api.post("/doctors/exercises", payload);
+          setMyExercises((prev) => [res.data, ...prev]);
+          toast.success("Exercice créé avec succès !");
+        }
       }
 
-      // Debug: log what will be sent
-      console.log("[handleAdd] FormData entries:");
-      for (const [key, val] of fd.entries()) {
-        console.log(" ", key, "→", val instanceof File ? `File(${val.name})` : val);
-      }
-
-      const res = await api.post("/doctors/exercises", fd);
-
-      setMyExercises((prev) => [res.data, ...prev]);
-      toast.success("Exercice créé avec succès !");
       setShowAdd(false);
       setAddForm(EMPTY_FORM);
+      setEditingExercise(null);
     } catch (err) {
       toast.error(err.response?.data?.message || "Erreur lors de la création.");
     } finally {
       setAddLoading(false);
+    }
+  };
+
+  // open delete confirmation modal
+  const handleDeleteExercise = (exerciseId, name) => {
+    if (!exerciseId) return;
+    setDeleteTarget({ exerciseId, name });
+    setShowDeleteConfirm(true);
+  };
+
+  // confirm deletion (called from modal)
+  const confirmDelete = async () => {
+    if (!deleteTarget?.exerciseId) return;
+    try {
+      setDeleteLoading(true);
+      await api.delete(`/doctors/exercises/${deleteTarget.exerciseId}`);
+      setMyExercises((prev) =>
+        prev.filter((e) => e.exerciseId !== deleteTarget.exerciseId),
+      );
+      toast.success("Exercice supprimé.");
+      setShowDeleteConfirm(false);
+      setDeleteTarget(null);
+    } catch (err) {
+      toast.error(
+        err.response?.data?.message || "Erreur lors de la suppression.",
+      );
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -572,8 +846,18 @@ export default function ExercisesPage() {
           action={
             activeTab === "my" && (
               <button onClick={() => setShowAdd(true)} className="btn-primary">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
                 </svg>
                 {t("exercises.add_exercise")}
               </button>
@@ -603,7 +887,9 @@ export default function ExercisesPage() {
             {myLoading && (
               <div className="flex items-center justify-center py-12">
                 <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                <span className="ml-3 text-gray-600">{t("common.loading")}</span>
+                <span className="ml-3 text-gray-600">
+                  {t("common.loading")}
+                </span>
               </div>
             )}
             {myError && (
@@ -624,6 +910,8 @@ export default function ExercisesPage() {
                     exercise={ex}
                     assignLabel={t("exercises.assign")}
                     onAssign={setShowAssign}
+                    onEdit={openEdit}
+                    onDelete={handleDeleteExercise}
                   />
                 ))}
               </div>
@@ -636,15 +924,20 @@ export default function ExercisesPage() {
           <div>
             {/* Filters bar */}
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6 space-y-4">
-
               {/* Name search */}
               <div className="relative">
                 <svg
                   className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
                 </svg>
                 <input
                   value={searchName}
@@ -693,7 +986,9 @@ export default function ExercisesPage() {
                     {ALL_SIDES.map((side) => (
                       <button
                         key={side}
-                        onClick={() => setFilterSide(filterSide === side ? "" : side)}
+                        onClick={() =>
+                          setFilterSide(filterSide === side ? "" : side)
+                        }
                         className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-all ${
                           filterSide === side
                             ? "bg-primary text-white border-primary"
@@ -710,27 +1005,48 @@ export default function ExercisesPage() {
               {/* Active filter chips + clear */}
               {(filterCategory || filterSide || searchName) && (
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <span className="text-xs text-gray-400">Filtres actifs :</span>
+                  <span className="text-xs text-gray-400">
+                    Filtres actifs :
+                  </span>
                   {searchName && (
                     <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full">
                       "{searchName}"
-                      <button onClick={() => setSearchName("")} className="hover:text-primary/60">×</button>
+                      <button
+                        onClick={() => setSearchName("")}
+                        className="hover:text-primary/60"
+                      >
+                        ×
+                      </button>
                     </span>
                   )}
                   {filterCategory && (
                     <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full">
                       {CATEGORY_LABELS[filterCategory]}
-                      <button onClick={() => setFilterCategory("")} className="hover:text-primary/60">×</button>
+                      <button
+                        onClick={() => setFilterCategory("")}
+                        className="hover:text-primary/60"
+                      >
+                        ×
+                      </button>
                     </span>
                   )}
                   {filterSide && (
                     <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full">
                       {SIDE_LABELS[filterSide]}
-                      <button onClick={() => setFilterSide("")} className="hover:text-primary/60">×</button>
+                      <button
+                        onClick={() => setFilterSide("")}
+                        className="hover:text-primary/60"
+                      >
+                        ×
+                      </button>
                     </span>
                   )}
                   <button
-                    onClick={() => { setSearchName(""); setFilterCategory(""); setFilterSide(""); }}
+                    onClick={() => {
+                      setSearchName("");
+                      setFilterCategory("");
+                      setFilterSide("");
+                    }}
                     className="text-xs text-gray-400 hover:text-red-500 underline ml-1"
                   >
                     Tout effacer
@@ -743,7 +1059,9 @@ export default function ExercisesPage() {
             {publicLoading && (
               <div className="flex items-center justify-center py-12">
                 <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                <span className="ml-3 text-gray-600">{t("common.loading")}</span>
+                <span className="ml-3 text-gray-600">
+                  {t("common.loading")}
+                </span>
               </div>
             )}
             {publicError && (
@@ -751,19 +1069,32 @@ export default function ExercisesPage() {
                 {publicError}
               </div>
             )}
-            {!publicLoading && !publicError && filteredExercises.length === 0 && (
-              <div className="text-center py-16 text-gray-400">
-                <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p className="text-sm">Aucun exercice trouvé</p>
-              </div>
-            )}
+            {!publicLoading &&
+              !publicError &&
+              filteredExercises.length === 0 && (
+                <div className="text-center py-16 text-gray-400">
+                  <svg
+                    className="w-12 h-12 mx-auto mb-3 text-gray-300"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <p className="text-sm">Aucun exercice trouvé</p>
+                </div>
+              )}
             {!publicLoading && !publicError && filteredExercises.length > 0 && (
               <>
                 <p className="text-xs text-gray-400 mb-3">
-                  {filteredExercises.length} exercice{filteredExercises.length > 1 ? "s" : ""} trouvé{filteredExercises.length > 1 ? "s" : ""}
+                  {filteredExercises.length} exercice
+                  {filteredExercises.length > 1 ? "s" : ""} trouvé
+                  {filteredExercises.length > 1 ? "s" : ""}
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                   {filteredExercises.map((ex) => (
@@ -781,17 +1112,30 @@ export default function ExercisesPage() {
         )}
 
         {/* ── Add modal ── */}
-        <Modal isOpen={showAdd} onClose={() => { setShowAdd(false); setAddForm(EMPTY_FORM); }} title={t("exercises.add_exercise")}>
+        <Modal
+          isOpen={showAdd}
+          onClose={() => {
+            setShowAdd(false);
+            setAddForm(EMPTY_FORM);
+            setEditingExercise(null);
+          }}
+          title={
+            editingExercise
+              ? "Modifier l'exercice"
+              : t("exercises.add_exercise")
+          }
+        >
           <div className="space-y-5 max-h-[75vh] overflow-y-auto pr-1">
-
             {/* Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nom 
+                Nom
               </label>
               <input
                 value={addForm.name}
-                onChange={(e) => setAddForm((p) => ({ ...p, name: e.target.value }))}
+                onChange={(e) =>
+                  setAddForm((p) => ({ ...p, name: e.target.value }))
+                }
                 className="input-field"
                 placeholder="Ex : Flexion du poignet"
               />
@@ -799,10 +1143,14 @@ export default function ExercisesPage() {
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Description
+              </label>
               <textarea
                 value={addForm.description}
-                onChange={(e) => setAddForm((p) => ({ ...p, description: e.target.value }))}
+                onChange={(e) =>
+                  setAddForm((p) => ({ ...p, description: e.target.value }))
+                }
                 rows={3}
                 className="input-field resize-none"
                 placeholder="Instructions de l'exercice…"
@@ -868,7 +1216,14 @@ export default function ExercisesPage() {
                   <button
                     key={opt.val}
                     type="button"
-                    onClick={() => setAddForm((p) => ({ ...p, videoMode: opt.val, videoUrl: "", videoFile: null }))}
+                    onClick={() =>
+                      setAddForm((p) => ({
+                        ...p,
+                        videoMode: opt.val,
+                        videoUrl: "",
+                        videoFile: null,
+                      }))
+                    }
                     className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-all ${
                       addForm.videoMode === opt.val
                         ? "bg-primary text-white border-primary"
@@ -883,7 +1238,9 @@ export default function ExercisesPage() {
               {addForm.videoMode === "url" ? (
                 <input
                   value={addForm.videoUrl}
-                  onChange={(e) => setAddForm((p) => ({ ...p, videoUrl: e.target.value }))}
+                  onChange={(e) =>
+                    setAddForm((p) => ({ ...p, videoUrl: e.target.value }))
+                  }
                   className="input-field"
                   placeholder="https://youtube.com/…"
                 />
@@ -894,17 +1251,38 @@ export default function ExercisesPage() {
                     accept="video/*"
                     id="video-upload"
                     className="hidden"
-                    onChange={(e) => setAddForm((p) => ({ ...p, videoFile: e.target.files?.[0] ?? null }))}
+                    onChange={(e) =>
+                      setAddForm((p) => ({
+                        ...p,
+                        videoFile: e.target.files?.[0] ?? null,
+                      }))
+                    }
                   />
-                  <label htmlFor="video-upload" className="cursor-pointer flex flex-col items-center gap-2">
-                    <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                        d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
+                  <label
+                    htmlFor="video-upload"
+                    className="cursor-pointer flex flex-col items-center gap-2"
+                  >
+                    <svg
+                      className="w-8 h-8 text-gray-300"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"
+                      />
                     </svg>
                     {addForm.videoFile ? (
-                      <span className="text-sm text-primary font-medium">{addForm.videoFile.name}</span>
+                      <span className="text-sm text-primary font-medium">
+                        {addForm.videoFile.name}
+                      </span>
                     ) : (
-                      <span className="text-sm text-gray-400">Cliquer pour sélectionner (max 200 Mo)</span>
+                      <span className="text-sm text-gray-400">
+                        Cliquer pour sélectionner (max 200 Mo)
+                      </span>
                     )}
                   </label>
                 </div>
@@ -914,10 +1292,14 @@ export default function ExercisesPage() {
             {/* isPublic toggle */}
             <label className="flex items-center gap-3 cursor-pointer select-none">
               <div
-                onClick={() => setAddForm((p) => ({ ...p, isPublic: !p.isPublic }))}
+                onClick={() =>
+                  setAddForm((p) => ({ ...p, isPublic: !p.isPublic }))
+                }
                 className={`relative w-11 h-6 rounded-full transition-colors ${addForm.isPublic ? "bg-primary" : "bg-gray-200"}`}
               >
-                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${addForm.isPublic ? "translate-x-5" : ""}`} />
+                <span
+                  className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${addForm.isPublic ? "translate-x-5" : ""}`}
+                />
               </div>
               <span className="text-sm font-medium text-gray-700">
                 Exercice public{addForm.isPublic ? " — visible par tous" : ""}
@@ -933,12 +1315,53 @@ export default function ExercisesPage() {
               {addLoading ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Création…
+                  {editingExercise ? "Mise à jour…" : "Création…"}
                 </span>
+              ) : editingExercise ? (
+                "Modifier"
               ) : (
                 t("common.add")
               )}
             </button>
+          </div>
+        </Modal>
+        {/* ── Delete confirmation modal ── */}
+        <Modal
+          isOpen={showDeleteConfirm}
+          onClose={() => {
+            setShowDeleteConfirm(false);
+            setDeleteTarget(null);
+          }}
+          title={
+            deleteTarget
+              ? `Supprimer : ${deleteTarget.name}`
+              : "Supprimer l'exercice"
+          }
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Cette action est irréversible. Confirmez la suppression de
+              l'exercice.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setDeleteTarget(null);
+                }}
+                className="flex-1 py-2 rounded-lg border text-sm font-medium"
+                disabled={deleteLoading}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 py-2 rounded-lg bg-red-600 text-white text-sm font-medium disabled:opacity-60"
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? "Suppression…" : "Supprimer"}
+              </button>
+            </div>
           </div>
         </Modal>
 
@@ -948,26 +1371,116 @@ export default function ExercisesPage() {
           onClose={() => setShowAssign(null)}
           title={`Assigner : ${showAssign?.title ?? showAssign?.name}`}
         >
-          <div className="space-y-3">
+          <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
             <p className="text-sm text-gray-600">Sélectionner un patient :</p>
-            {mockPatients.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => {
-                  alert(`Exercice assigné à ${p.name} !`);
-                  setShowAssign(null);
-                }}
-                className="w-full text-left px-4 py-3 rounded-xl border border-gray-100 hover:border-primary hover:bg-primary/5 transition-all flex items-center gap-3"
+
+            {/* Search input */}
+            <div className="relative">
+              <svg
+                className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                  <span className="text-primary text-sm font-bold">{p.name.charAt(0)}</span>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              <input
+                value={assignSearchQuery}
+                onChange={(e) => setAssignSearchQuery(e.target.value)}
+                className="input-field pl-11 py-2.5"
+                placeholder="Rechercher par nom ou email..."
+              />
+            </div>
+
+            {/* Loading state */}
+            {assignPatientsLoading && (
+              <div className="flex items-center justify-center py-8">
+                <div className="w-6 h-6 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+                <span className="ml-2 text-sm text-gray-600">
+                  {t("common.loading")}
+                </span>
+              </div>
+            )}
+
+            {/* No patients */}
+            {!assignPatientsLoading &&
+              !assignPatientsError &&
+              assignPatients.length === 0 && (
+                <div className="text-center py-8 text-gray-400">
+                  <svg
+                    className="w-10 h-10 mx-auto mb-2 text-gray-300"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M17 20h5v-2a3 3 0 00-5.856-1.487M15 10a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                  <p className="text-sm">Aucun patient trouvé</p>
                 </div>
-                <div>
-                  <p className="font-medium text-sm text-gray-900">{p.name}</p>
-                  <p className="text-xs text-gray-500">{p.condition}</p>
+              )}
+
+            {/* No results after search */}
+            {!assignPatientsLoading &&
+              !assignPatientsError &&
+              assignPatients.length > 0 &&
+              filteredAssignPatients.length === 0 && (
+                <div className="text-center py-8 text-gray-400">
+                  <p className="text-sm">
+                    Aucun patient ne correspond à votre recherche
+                  </p>
                 </div>
-              </button>
-            ))}
+              )}
+
+            {/* Patient list */}
+            {!assignPatientsLoading &&
+              !assignPatientsError &&
+              filteredAssignPatients.length > 0 && (
+                <div className="space-y-2">
+                  {filteredAssignPatients.map((p) => {
+                    const lastAppointment = p.patient?.appointments?.[0];
+                    return (
+                      <button
+                        key={p.userId}
+                        onClick={() => handleAssignExercise(p.userId)}
+                        disabled={assigningExerciseLoading}
+                        className="w-full text-left px-4 py-3 rounded-xl border border-gray-100 hover:border-primary hover:bg-primary/5 transition-all flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                          <span className="text-primary text-sm font-bold">
+                            {p.fullName?.charAt(0) ?? "?"}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm text-gray-900">
+                            {p.fullName}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">
+                            {p.email}
+                          </p>
+                          {lastAppointment?.reason && (
+                            <p className="text-xs text-gray-400 truncate mt-0.5">
+                              Motif: {lastAppointment.reason}
+                            </p>
+                          )}
+                        </div>
+                        {assigningExerciseLoading && (
+                          <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
           </div>
         </Modal>
       </div>

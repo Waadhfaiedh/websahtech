@@ -12,6 +12,7 @@
     "profile": "ملفي الشخصي",
     "logout": "تسجيل الخروج",
     "specialists": "المتخصصون",
+    "admins": "المديرون",
     "moderation": "إدارة المحتوى",
     "admin_dashboard": "لوحة تحكم المدير"
   },
@@ -164,6 +165,7 @@
     "total_reports": "تقارير الذكاء الاصطناعي",
     "recent_activity": "النشاط الأخير",
     "specialist_management": "إدارة المتخصصين",
+    "admin_management": "إدارة المدراء",
     "patient_management": "إدارة المرضى",
     "content_moderation": "إدارة المحتوى",
     "view": "عرض",

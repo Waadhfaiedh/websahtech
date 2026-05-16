@@ -12,6 +12,7 @@
     "profile": "My Profile",
     "logout": "Logout",
     "specialists": "Specialists",
+    "admins": "Admins",
     "moderation": "Moderation",
     "admin_dashboard": "Admin Dashboard"
   },
@@ -164,6 +165,7 @@
     "total_reports": "AI Reports Generated",
     "recent_activity": "Recent Activity",
     "specialist_management": "Specialist Management",
+    "admin_management": "Admin Management",
     "patient_management": "Patient Management",
     "content_moderation": "Content Moderation",
     "view": "View",

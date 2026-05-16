@@ -1,4 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
+import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../context/AuthContext";
 import Logo from "../common/Logo";
@@ -40,6 +41,25 @@ const navItems = [
           strokeLinejoin="round"
           strokeWidth={2}
           d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      </svg>
+    ),
+  },
+  {
+    key: "admins",
+    path: "/admin/admins",
+    icon: (
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0zm-3-8l1.8 3.6L18 7.4l-2.5 2.4L16 13l-4-2.1L8 13l.5-3.2L6 7.4l5.2-.8L12 3z"
         />
       </svg>
     ),
@@ -206,3 +226,7 @@ export default function AdminLayout({ children }) {
     </div>
   );
 }
+
+AdminLayout.propTypes = {
+  children: PropTypes.node.isRequired,
+};

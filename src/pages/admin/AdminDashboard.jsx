@@ -263,6 +263,11 @@ export default function AdminDashboard() {
             <div className="space-y-2">
               {[
                 {
+                  label: t("admin.admin_management"),
+                  path: "/admin/admins",
+                  color: "text-violet-600 bg-violet-50",
+                },
+                {
                   label: t("admin.specialist_management"),
                   path: "/admin/specialists",
                   color: "text-blue-600 bg-blue-50",
