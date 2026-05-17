@@ -749,9 +749,8 @@ export default function ExercisesPage() {
         const fd = new FormData();
         fd.append("name", addForm.name.trim());
         fd.append("description", addForm.description.trim());
-        // send arrays as JSON strings so the backend can parse them when using multipart
-        fd.append("category", JSON.stringify(addForm.categories));
-        fd.append("side", JSON.stringify(addForm.sides));
+        addForm.categories.forEach((cat) => fd.append("category", cat));
+        addForm.sides.forEach((side) => fd.append("side", side));
         fd.append("isPublic", String(Boolean(addForm.isPublic)));
         fd.append("video", addForm.videoFile);
 
