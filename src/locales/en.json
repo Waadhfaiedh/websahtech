@@ -14,7 +14,9 @@
     "specialists": "Specialists",
     "admins": "Admins",
     "moderation": "Moderation",
-    "admin_dashboard": "Admin Dashboard"
+    "admin_dashboard": "Admin Dashboard",
+    "reviews": "Reviews",
+    "feedback": "Reviews & Complaints"
   },
   "auth": {
     "login": "Login",
@@ -24,6 +26,124 @@
     "welcome": "Welcome to SAHTECH",
     "subtitle": "Specialized medical management platform",
     "error": "Incorrect credentials. Please try again."
+  },
+  "landing": {
+    "nav": {
+      "platform": "Platform",
+      "features": "Features",
+      "stories": "Stories",
+      "contact": "Contact",
+      "login": "Sign in",
+      "signup": "Sign up"
+    },
+    "hero": {
+      "badge": "AI-powered medical platform",
+      "title_1": "Manage your practice",
+      "title_2": "with intelligence.",
+      "subtitle": "SAHTECH connects specialists and patients through AI video analysis, appointment management, and advanced monitoring tools.",
+      "cta_primary": "Get started",
+      "cta_secondary": "Discover the platform",
+      "ai_pill": "AI analysis",
+      "chat_pill": "Secure chat",
+      "planning_pill": "Built-in planning"
+    },
+    "trust": {
+      "title": "Trusted by leading clinics"
+    },
+    "twosides": {
+      "eyebrow": "One platform, two experiences",
+      "title_1": "Specialists & patients,",
+      "title_2": "intelligently connected.",
+      "specialist_title": "For specialists",
+      "specialist_text": "Clinical tools, AI analysis, record management and secure messaging — all in one place.",
+      "patient_title": "For patients",
+      "patient_text": "Personalized follow-up, direct communication with your doctor, and access to your documents.",
+      "footer": "Designed in collaboration with practitioners to meet the real needs of the medical field."
+    },
+    "stats": {
+      "title": "A platform already adopted",
+      "subtitle": "Numbers that show SAHTECH's concrete impact on daily medical practice.",
+      "specialists": "Active specialists on the platform",
+      "patients": "Patients followed monthly",
+      "satisfaction": "User satisfaction rate",
+      "support": "Continuous support available"
+    },
+    "features": {
+      "eyebrow": "Features",
+      "title": "Everything you need, nothing more.",
+      "ai_title": "AI video analysis",
+      "ai_text": "Our AI analyzes movements and posture to detect anomalies and generate detailed clinical reports.",
+      "chat_title": "Secure messaging",
+      "chat_text": "Communicate with your patients and colleagues with full confidentiality and end-to-end encryption.",
+      "planning_title": "Smart scheduling",
+      "planning_text": "Appointment management, automatic reminders, and syncing with your personal calendar.",
+      "security_title": "Medical-grade security",
+      "security_text": "GDPR, HIPAA and HDS compliant. Your data and your patients' data are protected at the highest level."
+    },
+    "testimonial": {
+      "quote": "SAHTECH transformed my practice. The AI video analysis saves me hours every week, and my patients love being able to chat with me directly.",
+      "name": "Dr. Karim Meziane",
+      "role": "Physiotherapist, Tunis"
+    },
+    "stories": {
+      "title": "They say it better than we can.",
+      "subtitle": "See how SAHTECH is changing the daily lives of healthcare professionals.",
+      "story_1_text": "I was able to follow my patients remotely during difficult weeks. The platform is intuitive and reliable.",
+      "story_1_name": "Dr. Samira Touati",
+      "story_1_role": "Neurologist",
+      "story_1_initial": "ST",
+      "story_2_text": "The automatic AI report generation lets me focus on what really matters: my patients.",
+      "story_2_name": "Dr. Mohamed Cherif",
+      "story_2_role": "Sports doctor",
+      "story_2_initial": "MC",
+      "story_3_text": "The integrated planning and messaging replaced three different tools. A real time-saver.",
+      "story_3_name": "Dr. Omar Zitouni",
+      "story_3_role": "Cardiologist",
+      "story_3_initial": "OZ"
+    },
+    "learn": {
+      "title": "Where are you in your journey?",
+      "subtitle": "Whether you're an independent practitioner, a clinic, or a patient, SAHTECH adapts to your profile.",
+      "specialists_title": "Specialists",
+      "specialists_text": "Optimize your practice with tools designed for you.",
+      "clinics_title": "Clinics & Offices",
+      "clinics_text": "Coordinate your teams and improve the patient journey.",
+      "patients_title": "Patients",
+      "patients_text": "Track your health and stay connected with your caregivers.",
+      "developers_title": "Partners",
+      "developers_text": "Integrate SAHTECH into your existing systems via our API.",
+      "cta_title": "Ready to get started?",
+      "cta_signup": "Create an account",
+      "cta_login": "Sign in"
+    },
+    "certs": {
+      "title": "Certified compliance and security"
+    },
+    "footer": {
+      "tagline": "The medical platform that brings specialists and patients closer through technology.",
+      "product": "Product",
+      "features": "Features",
+      "platform": "Platform",
+      "security": "Security",
+      "pricing": "Pricing",
+      "company": "Company",
+      "about": "About",
+      "team": "Team",
+      "careers": "Careers",
+      "contact": "Contact",
+      "resources": "Resources",
+      "docs": "Docs",
+      "support": "Support",
+      "blog": "Blog",
+      "faq": "FAQ",
+      "legal": "Legal",
+      "terms": "Terms",
+      "privacy": "Privacy",
+      "cookies": "Cookies",
+      "gdpr": "GDPR",
+      "rights": "All rights reserved",
+      "made_in": "Designed in Tunisia"
+    }
   },
   "access": {
     "admin_badge": "Admin access",

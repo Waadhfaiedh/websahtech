@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import LandingPage from "./pages/LandingPage";
 import { useAuth } from "./context/AuthContext";
 
 // Auth
@@ -18,6 +19,7 @@ import ExercisesPage from "./pages/specialist/ExercisesPage";
 import SearchPage from "./pages/specialist/SearchPage";
 import PlanningPage from "./pages/specialist/PlanningPage";
 import ProfilePage from "./pages/specialist/ProfilePage";
+import FeedbackPage from "./pages/specialist/FeedbackPage";
 
 // Admin
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -26,6 +28,7 @@ import AdminAdmins from "./pages/admin/AdminAdmins";
 import AdminPatients from "./pages/admin/AdminPatients";
 import AdminPosts from "./pages/admin/AdminPosts";
 import AdminProfile from "./pages/admin/AdminProfile";
+import AdminReviews from "./pages/admin/AdminReviews";
 
 // Routes
 import { PrivateRoute } from "./routes/PrivateRoute";
@@ -49,7 +52,7 @@ export default function App() {
         {/* Public */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route path="/" element={<RootRedirect />} />
+        <Route path="/" element={<LandingPage />} />
 
         {/* Specialist routes */}
         <Route
@@ -148,6 +151,14 @@ export default function App() {
             </PrivateRoute>
           }
         />
+        <Route
+          path="/specialist/feedback"
+          element={
+              <PrivateRoute allowedRoles={["DOCTOR"]}>
+                <FeedbackPage />
+              </PrivateRoute>
+          }
+        />
 
         {/* Admin routes */}
         <Route
@@ -195,6 +206,14 @@ export default function App() {
           element={
             <PrivateRoute allowedRoles={["ADMIN"]}>
               <AdminProfile />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/reviews"
+          element={
+            <PrivateRoute allowedRoles={["ADMIN"]}>
+              <AdminReviews />
             </PrivateRoute>
           }
         />

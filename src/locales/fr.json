@@ -14,7 +14,9 @@
     "specialists": "Spécialistes",
     "admins": "Administrateurs",
     "moderation": "Modération",
-    "admin_dashboard": "Tableau de bord admin"
+    "admin_dashboard": "Tableau de bord admin",
+    "reviews": "Avis",
+    "feedback": "Avis & Réclamations"
   },
   "auth": {
     "login": "Connexion",
@@ -24,6 +26,124 @@
     "welcome": "Bienvenue sur SAHTECH",
     "subtitle": "Plateforme de gestion médicale spécialisée",
     "error": "Identifiants incorrects. Veuillez réessayer."
+  },
+  "landing": {
+    "nav": {
+      "platform": "Plateforme",
+      "features": "Fonctionnalités",
+      "stories": "Témoignages",
+      "contact": "Contact",
+      "login": "Connexion",
+      "signup": "S'inscrire"
+    },
+    "hero": {
+      "badge": "Plateforme médicale propulsée par l'IA",
+      "title_1": "Gérez votre pratique",
+      "title_2": "avec intelligence.",
+      "subtitle": "SAHTECH connecte spécialistes et patients grâce à l'analyse vidéo par IA, la gestion des rendez-vous et des outils de suivi avancés.",
+      "cta_primary": "Commencer",
+      "cta_secondary": "Découvrir la plateforme",
+      "ai_pill": "Analyse IA",
+      "chat_pill": "Chat sécurisé",
+      "planning_pill": "Planning intégré"
+    },
+    "trust": {
+      "title": "Ils nous font confiance"
+    },
+    "twosides": {
+      "eyebrow": "Une plateforme, deux expériences",
+      "title_1": "Spécialistes & patients,",
+      "title_2": "réunis intelligemment.",
+      "specialist_title": "Pour les spécialistes",
+      "specialist_text": "Outils cliniques, analyse IA, gestion des dossiers et messagerie sécurisée — tout en un.",
+      "patient_title": "Pour les patients",
+      "patient_text": "Suivi personnalisé, communication directe avec votre médecin et accès à vos documents.",
+      "footer": "Conçu en collaboration avec des praticiens pour répondre aux vrais besoins du terrain médical."
+    },
+    "stats": {
+      "title": "Une plateforme déjà adoptée",
+      "subtitle": "Des chiffres qui démontrent l'impact concret de SAHTECH sur le quotidien médical.",
+      "specialists": "Spécialistes actifs sur la plateforme",
+      "patients": "Patients suivis chaque mois",
+      "satisfaction": "Taux de satisfaction des utilisateurs",
+      "support": "Support disponible en continu"
+    },
+    "features": {
+      "eyebrow": "Fonctionnalités",
+      "title": "Tout ce dont vous avez besoin, rien de plus.",
+      "ai_title": "Analyse vidéo par IA",
+      "ai_text": "Notre IA analyse les mouvements et postures pour détecter les anomalies et générer des rapports cliniques détaillés.",
+      "chat_title": "Messagerie sécurisée",
+      "chat_text": "Communiquez avec vos patients et confrères en toute confidentialité, avec chiffrement de bout en bout.",
+      "planning_title": "Planning intelligent",
+      "planning_text": "Gestion des rendez-vous, rappels automatiques et synchronisation avec votre agenda personnel.",
+      "security_title": "Sécurité médicale",
+      "security_text": "Conformité RGPD, HIPAA et HDS. Vos données et celles de vos patients sont protégées au plus haut niveau."
+    },
+    "testimonial": {
+      "quote": "SAHTECH a transformé ma pratique. L'analyse vidéo par IA me fait gagner des heures chaque semaine, et mes patients adorent pouvoir échanger directement avec moi.",
+      "name": "Dr. Karim Meziane",
+      "role": "Kinésithérapeute, Tunis"
+    },
+    "stories": {
+      "title": "Ils en parlent mieux que nous.",
+      "subtitle": "Découvrez comment SAHTECH change le quotidien des professionnels de santé.",
+      "story_1_text": "J'ai pu suivre mes patients à distance pendant des semaines difficiles. La plateforme est intuitive et fiable.",
+      "story_1_name": "Dr. Samira Touati",
+      "story_1_role": "Neurologue",
+      "story_1_initial": "ST",
+      "story_2_text": "La génération automatique de rapports IA me permet de me concentrer sur ce qui compte vraiment : mes patients.",
+      "story_2_name": "Dr. Mohamed Cherif",
+      "story_2_role": "Médecin du sport",
+      "story_2_initial": "MC",
+      "story_3_text": "Le planning intégré et la messagerie ont complètement remplacé trois outils différents. Un vrai gain de temps.",
+      "story_3_name": "Dr. Omar Zitouni",
+      "story_3_role": "Cardiologue",
+      "story_3_initial": "OZ"
+    },
+    "learn": {
+      "title": "Et vous, où en êtes-vous ?",
+      "subtitle": "Que vous soyez praticien indépendant, clinique ou patient, SAHTECH s'adapte à votre profil.",
+      "specialists_title": "Spécialistes",
+      "specialists_text": "Optimisez votre cabinet avec des outils pensés pour vous.",
+      "clinics_title": "Cliniques & Cabinets",
+      "clinics_text": "Coordonnez vos équipes et améliorez le parcours patient.",
+      "patients_title": "Patients",
+      "patients_text": "Suivez votre santé et restez en lien avec vos soignants.",
+      "developers_title": "Partenaires",
+      "developers_text": "Intégrez SAHTECH à vos systèmes existants via notre API.",
+      "cta_title": "Prêt à commencer ?",
+      "cta_signup": "Créer un compte",
+      "cta_login": "Se connecter"
+    },
+    "certs": {
+      "title": "Conformité et sécurité certifiées"
+    },
+    "footer": {
+      "tagline": "La plateforme médicale qui rapproche spécialistes et patients par la technologie.",
+      "product": "Produit",
+      "features": "Fonctionnalités",
+      "platform": "Plateforme",
+      "security": "Sécurité",
+      "pricing": "Tarifs",
+      "company": "Société",
+      "about": "À propos",
+      "team": "Équipe",
+      "careers": "Carrières",
+      "contact": "Contact",
+      "resources": "Ressources",
+      "docs": "Documentation",
+      "support": "Support",
+      "blog": "Blog",
+      "faq": "FAQ",
+      "legal": "Légal",
+      "terms": "Conditions",
+      "privacy": "Confidentialité",
+      "cookies": "Cookies",
+      "gdpr": "RGPD",
+      "rights": "Tous droits réservés",
+      "made_in": "Conçu en Tunisie"
+    }
   },
   "access": {
     "admin_badge": "Accès admin",
@@ -190,4 +310,5 @@
     "view_all": "Voir tout",
     "back": "Retour"
   }
+  
 }
