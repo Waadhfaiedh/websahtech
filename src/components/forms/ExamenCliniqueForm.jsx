@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import PropTypes from "prop-types";
+import PatientInterrogatoireCard from "./PatientInterrogatoireCard";
 
 const parseStoredJson = (value, fallback) => {
   if (!value) return fallback;
@@ -201,7 +202,6 @@ const buildInitialData = (session, patient) => {
   const physiotherapie = session?.physiotherapie ?? {};
   const bilanKinesitherapique =
     physiotherapie.bilanKinesitherapique ?? physiotherapie.bilan ?? {};
-  const patientInfo = patient?.patient ?? {};
   const { firstName, lastName } = splitFullName(patient?.fullName);
 
   const activeMobilite = parseStoredJson(examenClinique.mobiliteActive, {});
@@ -266,22 +266,6 @@ const buildInitialData = (session, patient) => {
   return {
     patientFirstName: firstName,
     patientLastName: lastName,
-    age: examenClinique.age ?? patientInfo.age ?? "",
-    sexe: examenClinique.sexe ?? patient?.gender ?? "MALE",
-    taille: examenClinique.taille ?? patientInfo.height ?? "",
-    poids: examenClinique.poids ?? patientInfo.weight ?? "",
-    membreDominant: examenClinique.membreDominant ?? "DROIT",
-    membreAtteint: examenClinique.membreAtteint ?? "DROIT",
-    frequenceSportPratiquee: examenClinique.frequenceSportPratiquee ?? "",
-    intensitePratique: examenClinique.intensitePratique ?? 5,
-    antecedentsMedicauxEnabled:
-      examenClinique.antecedentsMedicauxEnabled ?? false,
-    antecedentsMedicauxDetails: examenClinique.antecedentsMedicauxDetails ?? "",
-    antecedentsChirurgicauxEnabled:
-      examenClinique.antecedentsChirurgicauxEnabled ?? false,
-    antecedentsChirurgicauxDetails:
-      examenClinique.antecedentsChirurgicauxDetails ?? "",
-    profession: examenClinique.profession ?? "",
 
     siegeDouleur: examenClinique.siegeDouleur ?? "",
     irradiation: examenClinique.irradiation ?? "",
@@ -292,7 +276,8 @@ const buildInitialData = (session, patient) => {
     debutDouleur: examenClinique.debutDouleur ?? "progressif",
 
     retentissementAVQ: examenClinique.retentissementAVQ ?? false,
-    retentissementProfessionnel: examenClinique.retentissementPro ?? false,
+    retentissementProfessionnel:
+      examenClinique.retentissementProfessionnel ?? examenClinique.retentissementPro ?? false,
     retentissementSommeil: examenClinique.retentissementSommeil ?? false,
 
     mobilite: {
@@ -428,7 +413,7 @@ function Modal({ children, onClose }) {
   return createPortal(content, document.body);
 }
 
-export default function ExamenCliniqueForm({ session, patient, onSave }) {
+export default function ExamenCliniqueForm({ session, patient, interrogatoire, patientId, onInterrogatoireUpdate, onPatientMeasurementsUpdate, onSave }) {
   const [saving, setSaving] = useState(false);
   const [data, setData] = useState(() => buildInitialData(session, patient));
   const [infoTest, setInfoTest] = useState(null);
@@ -580,29 +565,16 @@ export default function ExamenCliniqueForm({ session, patient, onSave }) {
     try {
       setSaving(true);
       await onSave({
-        age: data.age === "" ? null : Number(data.age),
-        sexe: data.sexe,
-        taille: data.taille === "" ? null : Number(data.taille),
-        poids: data.poids === "" ? null : Number(data.poids),
-        membreDominant: data.membreDominant,
-        profession: data.profession,
-        membreAtteint: data.membreAtteint,
-        frequenceSportPratiquee: data.frequenceSportPratiquee,
-        intensitePratique: data.intensitePratique,
-        antecedentsMedicauxEnabled: data.antecedentsMedicauxEnabled,
-        antecedentsMedicauxDetails: data.antecedentsMedicauxDetails,
-        antecedentsChirurgicauxEnabled: data.antecedentsChirurgicauxEnabled,
-        antecedentsChirurgicauxDetails: data.antecedentsChirurgicauxDetails,
         siegeDouleur: data.siegeDouleur,
         irradiation: data.irradiation,
         intensiteEVA:
           data.intensiteEVA === "" ? null : Number(data.intensiteEVA),
         typeDouleur: data.typeDouleur,
         facteurAggravant: data.facteurAggravant,
-        facteursoulageant: data.facteursoulageant,
+        facteurSoulageant: data.facteursoulageant,
         debutDouleur: data.debutDouleur,
         retentissementAVQ: data.retentissementAVQ,
-        retentissementPro: data.retentissementProfessionnel,
+        retentissementProfessionnel: data.retentissementProfessionnel,
         retentissementSommeil: data.retentissementSommeil,
         mobiliteActive: JSON.stringify({
           antepu_active: data.mobilite.antepu_active,
@@ -681,299 +653,14 @@ export default function ExamenCliniqueForm({ session, patient, onSave }) {
 
   return (
     <div className="space-y-6">
-      {/* Interrogatoire */}
-      <div className="card">
-        <h3 className="font-bold text-gray-900 mb-4">Interrogatoire</h3>
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="patientFirstName"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Prénom du patient
-              </label>
-              <input
-                id="patientFirstName"
-                type="text"
-                value={data.patientFirstName}
-                readOnly
-                className="input-field bg-gray-50"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="patientLastName"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Nom du patient
-              </label>
-              <input
-                id="patientLastName"
-                type="text"
-                value={data.patientLastName}
-                readOnly
-                className="input-field bg-gray-50"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-            <div>
-              <label
-                htmlFor="taille"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Taille (cm)
-              </label>
-              <input
-                id="taille"
-                type="text"
-                value={data.taille}
-                readOnly
-                className="input-field bg-gray-50"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="poids"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Poids (kg)
-              </label>
-              <input
-                id="poids"
-                type="text"
-                value={data.poids}
-                readOnly
-                className="input-field bg-gray-50"
-              />
-            </div>
-            <div
-              className={`self-start rounded-lg border px-3 py-2 ${bmiInfo.isNormal ? "border-green-200 bg-green-50" : "border-amber-200 bg-amber-50"}`}
-            >
-              <p className="text-[11px] font-medium text-gray-500 mb-0.5">
-                IMC
-              </p>
-              <p className="text-xl font-bold text-gray-900 leading-tight">
-                {bmiInfo.value === null ? "—" : bmiInfo.value.toFixed(1)}
-              </p>
-              <p
-                className={`text-xs font-medium ${bmiInfo.isNormal ? "text-green-700" : "text-amber-700"}`}
-              >
-                {bmiInfo.category}
-              </p>
-              <p className="text-[11px] text-gray-500 mt-0.5">
-                Norme: 18,5 - 24,9
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="age"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Âge
-              </label>
-              <input
-                id="age"
-                type="number"
-                name="age"
-                value={data.age}
-                onChange={handleInputChange}
-                className="input-field"
-                placeholder="Âge"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="sexe"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Sexe
-              </label>
-              <select
-                id="sexe"
-                name="sexe"
-                value={data.sexe}
-                onChange={handleInputChange}
-                className="input-field"
-              >
-                <option value="MALE">Homme</option>
-                <option value="FEMALE">Femme</option>
-                <option value="OTHER">Autre</option>
-              </select>
-            </div>
-            <div>
-              <label
-                htmlFor="membreDominant"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Membre dominant
-              </label>
-              <select
-                id="membreDominant"
-                name="membreDominant"
-                value={data.membreDominant}
-                onChange={handleInputChange}
-                className="input-field"
-              >
-                <option value="DROIT">Droit</option>
-                <option value="GAUCHE">Gauche</option>
-              </select>
-            </div>
-            <div>
-              <label
-                htmlFor="membreAtteint"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Membre atteint
-              </label>
-              <select
-                id="membreAtteint"
-                name="membreAtteint"
-                value={data.membreAtteint}
-                onChange={handleInputChange}
-                className="input-field"
-              >
-                <option value="DROIT">Droit</option>
-                <option value="GAUCHE">Gauche</option>
-                <option value="BILATERAL">Bilatéral</option>
-                <option value="AUCUN">Aucun</option>
-              </select>
-            </div>
-            <div>
-              <label
-                htmlFor="frequenceSportPratiquee"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Fréquence de sport pratiquée
-              </label>
-              <input
-                id="frequenceSportPratiquee"
-                type="text"
-                name="frequenceSportPratiquee"
-                value={data.frequenceSportPratiquee}
-                onChange={handleInputChange}
-                className="input-field"
-                placeholder="Ex: 3 fois par semaine"
-              />
-            </div>
-            <div className="md:col-span-2">
-              <label
-                htmlFor="intensitePratique"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Intensité de pratique: {data.intensitePratique}/10
-              </label>
-              <input
-                id="intensitePratique"
-                type="range"
-                name="intensitePratique"
-                value={data.intensitePratique}
-                onChange={handleInputChange}
-                min="0"
-                max="10"
-                className="w-full"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-3 rounded-xl border border-gray-100 p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h4 className="font-medium text-gray-800">
-                    Antécédents médicaux
-                  </h4>
-                  <p className="text-xs text-gray-500">
-                    Afficher une zone de saisie si oui
-                  </p>
-                </div>
-                <select
-                  name="antecedentsMedicauxEnabled"
-                  value={data.antecedentsMedicauxEnabled ? "oui" : "non"}
-                  onChange={(e) =>
-                    setData((prev) => ({
-                      ...prev,
-                      antecedentsMedicauxEnabled: e.target.value === "oui",
-                    }))
-                  }
-                  className="input-field w-28"
-                >
-                  <option value="non">Non</option>
-                  <option value="oui">Oui</option>
-                </select>
-              </div>
-              {data.antecedentsMedicauxEnabled && (
-                <textarea
-                  name="antecedentsMedicauxDetails"
-                  value={data.antecedentsMedicauxDetails}
-                  onChange={handleInputChange}
-                  className="input-field min-h-28"
-                  placeholder="Décrire les antécédents médicaux"
-                />
-              )}
-            </div>
-
-            <div className="space-y-3 rounded-xl border border-gray-100 p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h4 className="font-medium text-gray-800">
-                    Antécédents chirurgicaux
-                  </h4>
-                  <p className="text-xs text-gray-500">
-                    Afficher une zone de saisie si oui
-                  </p>
-                </div>
-                <select
-                  name="antecedentsChirurgicauxEnabled"
-                  value={data.antecedentsChirurgicauxEnabled ? "oui" : "non"}
-                  onChange={(e) =>
-                    setData((prev) => ({
-                      ...prev,
-                      antecedentsChirurgicauxEnabled: e.target.value === "oui",
-                    }))
-                  }
-                  className="input-field w-28"
-                >
-                  <option value="non">Non</option>
-                  <option value="oui">Oui</option>
-                </select>
-              </div>
-              {data.antecedentsChirurgicauxEnabled && (
-                <textarea
-                  name="antecedentsChirurgicauxDetails"
-                  value={data.antecedentsChirurgicauxDetails}
-                  onChange={handleInputChange}
-                  className="input-field min-h-28"
-                  placeholder="Décrire les antécédents chirurgicaux"
-                />
-              )}
-            </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="profession"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Profession
-            </label>
-            <input
-              id="profession"
-              type="text"
-              name="profession"
-              value={data.profession}
-              onChange={handleInputChange}
-              className="input-field"
-              placeholder="Profession"
-            />
-          </div>
-        </div>
-      </div>
+      {/* Profil patient partagé */}
+      <PatientInterrogatoireCard
+        interrogatoire={interrogatoire}
+        patientId={patientId}
+        patient={patient}
+        onUpdate={onInterrogatoireUpdate}
+        onMeasurementsUpdate={onPatientMeasurementsUpdate}
+      />
 
       {/* Douleur */}
       <div className="card">
@@ -1951,5 +1638,8 @@ ExamenCliniqueForm.propTypes = {
     }),
     gender: PropTypes.string,
   }),
+  interrogatoire: PropTypes.object,
+  patientId: PropTypes.string,
+  onInterrogatoireUpdate: PropTypes.func,
   onSave: PropTypes.func.isRequired,
 };

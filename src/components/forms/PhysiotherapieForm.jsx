@@ -1,7 +1,14 @@
 ﻿import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import PropTypes from "prop-types";
+import PatientInterrogatoireCard from "./PatientInterrogatoireCard";
+import {
+  normalizeBilanPayload,
+  normalizeProtocolePayload,
+  normalizeResultatPayload,
+} from "./physioPayload";
 
-export default function PhysiotherapieForm({ session, patient, onSave }) {
+export default function PhysiotherapieForm({ session, patient, interrogatoire, patientId, onInterrogatoireUpdate, onPatientMeasurementsUpdate, onSave }) {
   const [activeSubTab, setActiveSubTab] = useState("bilan");
   const [saving, setSaving] = useState(false);
   const examenClinique =
@@ -103,388 +110,265 @@ export default function PhysiotherapieForm({ session, patient, onSave }) {
       defaultQuickDash,
     );
 
-    const rawSexe = examenClinique.sexe ?? patient?.gender ?? "mâle";
-    let sexeValue = rawSexe;
-    if (rawSexe === "MALE") sexeValue = "mâle";
-    else if (rawSexe === "FEMALE") sexeValue = "femelle";
-    const rawMembreDominant = examenClinique.membreDominant ?? "DROIT";
-    const membreDominantValue =
-      rawMembreDominant === "DROIT" || rawMembreDominant === "droite"
-        ? "droite"
-        : "gauche";
-    const rawMembreAtteint = examenClinique.membreAtteint ?? "DROIT";
-    const membreAtteintValue =
-      rawMembreAtteint === "DROIT" || rawMembreAtteint === "droite"
-        ? "droite"
-        : "gauche";
+    // ── Unpack backend JSON objects (stored as Json? columns) ───────────────
+    const bPO  = bilanKinesitherapique.pointsOsseux       ?? {};
+    const bLig = bilanKinesitherapique.ligaments           ?? {};
+    const bMP  = bilanKinesitherapique.musclesPalpation    ?? {};
+    const bTD  = bilanKinesitherapique.tendonsMTP          ?? {};
+    const bMS  = bilanKinesitherapique.morphoStatique      ?? {};
+    const bST  = bilanKinesitherapique.scapuloThoracique   ?? {};
+    const bAC  = bilanKinesitherapique.acromioClaviculaire ?? {};
+    const bSC  = bilanKinesitherapique.sternoClaviculaire  ?? {};
+    const bRC  = bilanKinesitherapique.rachisCervical      ?? {};
+    const bCo  = bilanKinesitherapique.coude               ?? {};
+    const bAmy = bilanKinesitherapique.amyotrophie         ?? {};
+    const bCon = bilanKinesitherapique.contractures        ?? {};
+    const bRet = bilanKinesitherapique.retractions         ?? {};
+    const bSyn = bilanKinesitherapique.syntheseMusculaire  ?? {};
+    const bBF  = bilanKinesitherapique.bilanFonctionnel    ?? {};
+    const bBFS = bBF.testsSimples ?? {};
 
     return {
-      patientFirstName: firstName,
-      patientLastName: lastName,
-      age: examenClinique.age ?? patientInfo.age ?? patient?.age ?? "",
-      sexe: sexeValue,
-      taille:
-        examenClinique.taille ?? patientInfo.height ?? patient?.height ?? "",
-      poids:
-        examenClinique.poids ?? patientInfo.weight ?? patient?.weight ?? "",
-      membreDominant: membreDominantValue,
-      membreAtteint: membreAtteintValue,
-      frequenceSportPratiquee: examenClinique.frequenceSportPratiquee ?? "",
-      intensitePratique: examenClinique.intensitePratique ?? 5,
-      antecedentsMedicauxEnabled:
-        examenClinique.antecedentsMedicauxEnabled ?? false,
-      antecedentsMedicauxDetails:
-        examenClinique.antecedentsMedicauxDetails ?? "",
-      antecedentsChirurgicauxEnabled:
-        examenClinique.antecedentsChirurgicauxEnabled ?? false,
-      antecedentsChirurgicauxDetails:
-        examenClinique.antecedentsChirurgicauxDetails ?? "",
-      profession: examenClinique.profession ?? "",
-      plainte: bilanKinesitherapique.plainte ?? examenClinique.plainte ?? "",
-      historique:
-        bilanKinesitherapique.historique ?? examenClinique.historique ?? "",
-      siegeDouleur:
-        bilanKinesitherapique.siegeDouleur ?? examenClinique.siegeDouleur ?? "",
-      irradiation:
-        bilanKinesitherapique.irradiation ?? examenClinique.irradiation ?? "",
-      intensiteEVA:
-        bilanKinesitherapique.intensiteEVA ?? examenClinique.intensiteEVA ?? 5,
-      typeDouleur:
-        bilanKinesitherapique.typeDouleur ??
-        examenClinique.typeDouleur ??
-        "mecanique",
-      facteurAggravant:
-        bilanKinesitherapique.facteurAggravant ??
-        examenClinique.facteurAggravant ??
-        "",
-      facteursoulageant:
-        bilanKinesitherapique.facteursoulageant ??
-        examenClinique.facteursoulageant ??
-        "",
-      debutDouleur:
-        bilanKinesitherapique.debutDouleur ??
-        examenClinique.debutDouleur ??
-        "progressif",
-      retentissementAVQ:
-        bilanKinesitherapique.retentissementAVQ ??
-        examenClinique.retentissementAVQ ??
-        false,
-      retentissementProfessionnel:
-        bilanKinesitherapique.retentissementProfessionnel ??
-        examenClinique.retentissementPro ??
-        false,
-      retentissementSommeil:
-        bilanKinesitherapique.retentissementSommeil ??
-        examenClinique.retentissementSommeil ??
-        false,
-      constantScore: initialBilanConstantScore,
-      quickDASH: initialBilanQuickDash,
-      dashArabeScore: parseStoredJson(
-        bilanKinesitherapique.dashArabeScore,
-        defaultQuickDash,
-      ),
+      // ── Douleur ─────────────────────────────────────────────────────────────
+      siegeDouleur:  bilanKinesitherapique.siegeDouleur  ?? examenClinique.siegeDouleur  ?? "",
+      irradiation:   bilanKinesitherapique.irradiation   ?? examenClinique.irradiation   ?? "",
+      intensiteEVA:  bilanKinesitherapique.intensiteEVA  ?? examenClinique.intensiteEVA  ?? 5,
+      typeDouleur:   bilanKinesitherapique.typeDouleur   ?? examenClinique.typeDouleur   ?? "mecanique",
+      facteurAggravant:  bilanKinesitherapique.facteurAggravant  ?? examenClinique.facteurAggravant  ?? "",
+      facteursoulageant: bilanKinesitherapique.facteurSoulageant ?? examenClinique.facteurSoulageant ?? "",
+      debutDouleur:      bilanKinesitherapique.debutDouleur      ?? examenClinique.debutDouleur      ?? "progressif",
+      retentissementAVQ:           bilanKinesitherapique.retentissementAVQ           ?? examenClinique.retentissementAVQ           ?? false,
+      retentissementProfessionnel: bilanKinesitherapique.retentissementProfessionnel ?? examenClinique.retentissementProfessionnel ?? false,
+      retentissementSommeil:       bilanKinesitherapique.retentissementSommeil       ?? examenClinique.retentissementSommeil       ?? false,
+
+      // ── Scores ───────────────────────────────────────────────────────────────
+      constantScore:  initialBilanConstantScore,
+      quickDASH:      initialBilanQuickDash,
+      dashArabeScore: parseStoredJson(bilanKinesitherapique.dashArabeScore, defaultQuickDash),
+
+      // ── ROM ──────────────────────────────────────────────────────────────────
       mobiliteArticulaire: {
-        antepulsion_active: bilanKinesitherapique.antepulsionActive ?? 0,
+        antepulsion_active:  bilanKinesitherapique.antepulsionActive  ?? 0,
         antepulsion_passive: bilanKinesitherapique.antepulsionPassive ?? 0,
-        extension_active: bilanKinesitherapique.extensionActive ?? 0,
-        extension_passive: bilanKinesitherapique.extensionPassive ?? 0,
-        abduction_active: bilanKinesitherapique.abductionActive ?? 0,
-        abduction_passive: bilanKinesitherapique.abductionPassive ?? 0,
-        adduction_active: bilanKinesitherapique.adductionActive ?? 0,
-        adduction_passive: bilanKinesitherapique.adductionPassive ?? 0,
-        retraction_active: bilanKinesitherapique.retractionActive ?? 0,
-        retraction_passive: bilanKinesitherapique.retractionPassive ?? 0,
-        rot_ext_active: bilanKinesitherapique.rotationExterneActive ?? 0,
-        rot_ext_passive: bilanKinesitherapique.rotationExternePassive ?? 0,
-        rot_int_active: bilanKinesitherapique.rotationInterneActive ?? 0,
-        rot_int_passive: bilanKinesitherapique.rotationInternePassive ?? 0,
-      },
-      analyseQualitative: {
-        arcDouloureux: bilanKinesitherapique.arcDouloureux ?? false,
-        arcDouloureuxIntervalle:
-          bilanKinesitherapique.arcDouloureuxIntervalle ?? "",
-        finDeCourse: bilanKinesitherapique.finDeCourse ?? "souple",
+        extension_active:    bilanKinesitherapique.extensionActive    ?? 0,
+        extension_passive:   bilanKinesitherapique.extensionPassive   ?? 0,
+        abduction_active:    bilanKinesitherapique.abductionActive    ?? 0,
+        abduction_passive:   bilanKinesitherapique.abductionPassive   ?? 0,
+        adduction_active:    bilanKinesitherapique.adductionActive    ?? 0,
+        adduction_passive:   bilanKinesitherapique.adductionPassive   ?? 0,
+        retraction_active:   bilanKinesitherapique.retractionActive   ?? 0,
+        retraction_passive:  bilanKinesitherapique.retractionPassive  ?? 0,
+        rot_ext_active:      bilanKinesitherapique.rotationExterneActive  ?? 0,
+        rot_ext_passive:     bilanKinesitherapique.rotationExternePassive ?? 0,
+        rot_int_active:      bilanKinesitherapique.rotationInterneActive  ?? 0,
+        rot_int_passive:     bilanKinesitherapique.rotationInternePassive ?? 0,
       },
 
+      // ── Analyse qualitative ──────────────────────────────────────────────────
+      analyseQualitative: {
+        arcDouloureux:           bilanKinesitherapique.arcDouloureux           ?? false,
+        arcDouloureuxIntervalle: bilanKinesitherapique.arcDouloureuxIntervalle ?? "",
+        finDeCourse:             bilanKinesitherapique.finDeCourse             ?? "souple",
+      },
+
+      // ── Tests spécifiques ────────────────────────────────────────────────────
       testsSpecifiques: {
-        jobe: bilanKinesitherapique.testJobe ?? false,
-        patte: bilanKinesitherapique.testPatte ?? false,
-        gerber: bilanKinesitherapique.testGerber ?? false,
-        neer: bilanKinesitherapique.testNeer ?? false,
+        jobe:    bilanKinesitherapique.testJobe    ?? false,
+        patte:   bilanKinesitherapique.testPatte   ?? false,
+        gerber:  bilanKinesitherapique.testGerber  ?? false,
+        neer:    bilanKinesitherapique.testNeer    ?? false,
         hawkins: bilanKinesitherapique.testHawkins ?? false,
       },
+
+      // ── Bilan fonctionnel — read from the stored JSON object ─────────────────
       bilanFonctionnel: {
         testsSimples: {
-          mainBouche:
-            bilanKinesitherapique.bilanFonctionnelMainBoucheStatus ??
-            "effectue",
-          mainTete:
-            bilanKinesitherapique.bilanFonctionnelMainTeteStatus ?? "effectue",
-          mainNuque:
-            bilanKinesitherapique.bilanFonctionnelMainNuqueStatus ?? "effectue",
-          mainDos:
-            bilanKinesitherapique.bilanFonctionnelMainDosStatus ?? "effectue",
+          mainBouche: bBFS.mainBouche ?? "effectue",
+          mainTete:   bBFS.mainTete   ?? "effectue",
+          mainNuque:  bBFS.mainNuque  ?? "effectue",
+          mainDos:    bBFS.mainDos    ?? "effectue",
         },
-        constantScore: {
-          douleur: bilanKinesitherapique.bilanFonctionnelConstantDouleur ?? 0,
-          activites:
-            bilanKinesitherapique.bilanFonctionnelConstantActivites ?? 0,
-          mobilite: bilanKinesitherapique.bilanFonctionnelConstantMobilite ?? 0,
-          force: bilanKinesitherapique.bilanFonctionnelConstantForce ?? 0,
-        },
-        quickDashScore: Object.fromEntries(
-          Array.from({ length: 11 }, (_, i) => [
-            `q${i + 1}`,
-            bilanKinesitherapique[`bilanFonctionnelQuickDash_q${i + 1}`] ?? 1,
-          ]),
-        ),
+        constantScore:  bBF.constantScore  ?? defaultConstantScore,
+        quickDashScore: bBF.quickDashScore ?? defaultQuickDash,
       },
+
       observations: bilanKinesitherapique.observations ?? "",
-      // Cutaneous / Trophic
-      cutanePlaie: bilanKinesitherapique.cutanePlaie ?? false,
-      cutaneCicatrice: bilanKinesitherapique.cutaneCicatrice ?? false,
-      trophiqueOedeme: bilanKinesitherapique.trophiqueOedeme ?? false,
+
+      // ── Cutané-trophique ─────────────────────────────────────────────────────
+      cutanePlaie:          bilanKinesitherapique.cutanePlaie          ?? false,
+      cutaneCicatrice:      bilanKinesitherapique.cutaneCicatrice      ?? false,
+      trophiqueOedeme:      bilanKinesitherapique.trophiqueOedeme      ?? false,
       trophiqueEpanchement: bilanKinesitherapique.trophiqueEpanchement ?? false,
-      // Douleur objective (palpation)
+
+      // ── Palpation — read from JSON objects ───────────────────────────────────
       pointsOsseux: {
-        acromion: {
-          present: bilanKinesitherapique.acromionPresent ?? false,
-          douleur: bilanKinesitherapique.acromionDouleur ?? false,
-        },
-        claviculeDistale: {
-          present: bilanKinesitherapique.claviculeDistalePresent ?? false,
-          douleur: bilanKinesitherapique.claviculeDistaleDouleur ?? false,
-        },
-        articulationAC: {
-          present: bilanKinesitherapique.articulationACPresent ?? false,
-          douleur: bilanKinesitherapique.articulationACDouleur ?? false,
-        },
-        processusCoracoide: {
-          present: bilanKinesitherapique.processusCoracoidePresent ?? false,
-          douleur: bilanKinesitherapique.processusCoracoideDouleur ?? false,
-        },
-        tuberculeMajeur: {
-          present: bilanKinesitherapique.tuberculeMajeurPresent ?? false,
-          douleur: bilanKinesitherapique.tuberculeMajeurDouleur ?? false,
-        },
-        tuberculeMineur: {
-          present: bilanKinesitherapique.tuberculeMineurPresent ?? false,
-          douleur: bilanKinesitherapique.tuberculeMineurDouleur ?? false,
-        },
-        sillonBicipital: {
-          present: bilanKinesitherapique.sillonBicipitalPresent ?? false,
-          douleur: bilanKinesitherapique.sillonBicipitalDouleur ?? false,
-        },
+        acromion:           { present: bPO.acromion?.present           ?? false, douleur: bPO.acromion?.douleur           ?? false },
+        claviculeDistale:   { present: bPO.claviculeDistale?.present   ?? false, douleur: bPO.claviculeDistale?.douleur   ?? false },
+        articulationAC:     { present: bPO.articulationAC?.present     ?? false, douleur: bPO.articulationAC?.douleur     ?? false },
+        processusCoracoide: { present: bPO.processusCoracoide?.present ?? false, douleur: bPO.processusCoracoide?.douleur ?? false },
+        tuberculeMajeur:    { present: bPO.tuberculeMajeur?.present    ?? false, douleur: bPO.tuberculeMajeur?.douleur    ?? false },
+        tuberculeMineur:    { present: bPO.tuberculeMineur?.present    ?? false, douleur: bPO.tuberculeMineur?.douleur    ?? false },
+        sillonBicipital:    { present: bPO.sillonBicipital?.present    ?? false, douleur: bPO.sillonBicipital?.douleur    ?? false },
       },
       ligaments: {
-        acromioClaviculaire: {
-          present: bilanKinesitherapique.acromioClaviculairePresent ?? false,
-          douleur: bilanKinesitherapique.acromioClaviculaireDouleur ?? false,
-        },
-        coracoAcromial: {
-          present: bilanKinesitherapique.coracoAcromialPresent ?? false,
-          douleur: bilanKinesitherapique.coracoAcromialDouleur ?? false,
-        },
-        coracoClaviculaire: {
-          present: bilanKinesitherapique.coracoClaviculairePresent ?? false,
-          douleur: bilanKinesitherapique.coracoClaviculaireDouleur ?? false,
-        },
+        acromioClaviculaire: { present: bLig.acromioClaviculaire?.present ?? false, douleur: bLig.acromioClaviculaire?.douleur ?? false },
+        coracoAcromial:      { present: bLig.coracoAcromial?.present      ?? false, douleur: bLig.coracoAcromial?.douleur      ?? false },
+        coracoClaviculaire:  { present: bLig.coracoClaviculaire?.present  ?? false, douleur: bLig.coracoClaviculaire?.douleur  ?? false },
       },
       musclesPalpation: {
-        deltoide: {
-          douleur: bilanKinesitherapique.deltoideDouleur ?? false,
-          contracture: bilanKinesitherapique.deltoideContracture ?? false,
-        },
-        supra_epineux: {
-          douleur: bilanKinesitherapique.supraEpineuxDouleur ?? false,
-          contracture: bilanKinesitherapique.supraEpineuxContracture ?? false,
-        },
-        infra_epineux: {
-          douleur: bilanKinesitherapique.infraEpineuxDouleur ?? false,
-          contracture: bilanKinesitherapique.infraEpineuxContracture ?? false,
-        },
-        subscapulaire: {
-          douleur: bilanKinesitherapique.subscapulaireDouleur ?? false,
-          contracture: bilanKinesitherapique.subscapulaireContracture ?? false,
-        },
-        trapeze: {
-          douleur: bilanKinesitherapique.trapezeDouleur ?? false,
-          contracture: bilanKinesitherapique.trapezeContracture ?? false,
-        },
-        grandPectoral: {
-          douleur: bilanKinesitherapique.grandPectoralDouleur ?? false,
-          contracture: bilanKinesitherapique.grandPectoralContracture ?? false,
-        },
-        grandDorsal: {
-          douleur: bilanKinesitherapique.grandDorsalDouleur ?? false,
-          contracture: bilanKinesitherapique.grandDorsalContracture ?? false,
-        },
+        deltoide:      { douleur: bMP.deltoide?.douleur      ?? false, contracture: bMP.deltoide?.contracture      ?? false },
+        supra_epineux: { douleur: bMP.supra_epineux?.douleur ?? false, contracture: bMP.supra_epineux?.contracture ?? false },
+        infra_epineux: { douleur: bMP.infra_epineux?.douleur ?? false, contracture: bMP.infra_epineux?.contracture ?? false },
+        subscapulaire: { douleur: bMP.subscapulaire?.douleur ?? false, contracture: bMP.subscapulaire?.contracture ?? false },
+        trapeze:       { douleur: bMP.trapeze?.douleur       ?? false, contracture: bMP.trapeze?.contracture       ?? false },
+        grandPectoral: { douleur: bMP.grandPectoral?.douleur ?? false, contracture: bMP.grandPectoral?.contracture ?? false },
+        grandDorsal:   { douleur: bMP.grandDorsal?.douleur   ?? false, contracture: bMP.grandDorsal?.contracture   ?? false },
       },
       tendonsMTP: {
-        supra_epineux: {
-          douleur: bilanKinesitherapique.tendonSupraDouleur ?? false,
-          epaisseur: bilanKinesitherapique.tendonSupraEpaisseur ?? false,
-        },
-        infra_epineux: {
-          douleur: bilanKinesitherapique.tendonInfraDouleur ?? false,
-          epaisseur: bilanKinesitherapique.tendonInfraEpaisseur ?? false,
-        },
-        subscapulaire: {
-          douleur: bilanKinesitherapique.tendonSubscapulaireDouleur ?? false,
-          epaisseur:
-            bilanKinesitherapique.tendonSubscapulaireEpaisseur ?? false,
-        },
-        long_biceps: {
-          douleur: bilanKinesitherapique.tendonLongBicepsDouleur ?? false,
-          epaisseur: bilanKinesitherapique.tendonLongBicepsEpaisseur ?? false,
-        },
+        supra_epineux: { douleur: bTD.supra_epineux?.douleur ?? false, epaisseur: bTD.supra_epineux?.epaisseur ?? false },
+        infra_epineux: { douleur: bTD.infra_epineux?.douleur ?? false, epaisseur: bTD.infra_epineux?.epaisseur ?? false },
+        subscapulaire: { douleur: bTD.subscapulaire?.douleur ?? false, epaisseur: bTD.subscapulaire?.epaisseur ?? false },
+        long_biceps:   { douleur: bTD.long_biceps?.douleur   ?? false, epaisseur: bTD.long_biceps?.epaisseur   ?? false },
       },
-      peauAdherences: bilanKinesitherapique.peauAdherences ?? false,
+      peauAdherences:      bilanKinesitherapique.peauAdherences      ?? false,
       peauHypersensibilite: bilanKinesitherapique.peauHypersensibilite ?? false,
-      // Morpho-statique
+
+      // ── Morpho-statique — read from morphoStatique JSON object ───────────────
       morpho: {
-        deDosTesCervical: bilanKinesitherapique.deDosTesCervical ?? "",
-        deDosTesCervicalAutre:
-          bilanKinesitherapique.deDosTesCervicalAutre ?? "",
-        deDosEpaules: bilanKinesitherapique.deDosEpaules ?? "",
-        deDosEpaulesAutre: bilanKinesitherapique.deDosEpaulesAutre ?? "",
-        deDosScapulas: bilanKinesitherapique.deDosScapulas ?? "",
-        deDosScapulasAutre: bilanKinesitherapique.deDosScapulasAutre ?? "",
-        deDosAmyotrophie: bilanKinesitherapique.deDosAmyotrophie ?? "",
-        deDosAmyotrophieAutre:
-          bilanKinesitherapique.deDosAmyotrophieAutre ?? "",
-        deDosRachis: bilanKinesitherapique.deDosRachis ?? "",
-        deDosRachisAutre: bilanKinesitherapique.deDosRachisAutre ?? "",
-        deDosBassin: bilanKinesitherapique.deDosBassin ?? "",
-        deDosBassinAutre: bilanKinesitherapique.deDosBassinAutre ?? "",
-        deDosMembresSup: bilanKinesitherapique.deDosMembresSup ?? "",
-        deDosMembresSuperieursAutre:
-          bilanKinesitherapique.deDosMembresSuperieursAutre ?? "",
-        deDosAchille: bilanKinesitherapique.deDosAchille ?? "",
-        deDosAchilleAutre: bilanKinesitherapique.deDosAchilleAutre ?? "",
-        deFaceTete: bilanKinesitherapique.deFaceTete ?? "",
-        deFaceTeteAutre: bilanKinesitherapique.deFaceTeteAutre ?? "",
-        deFaceEpaule: bilanKinesitherapique.deFaceEpaule ?? "",
-        deFaceEpauleAutre: bilanKinesitherapique.deFaceEpauleAutre ?? "",
-        deFaceClavicule: bilanKinesitherapique.deFaceClavicule ?? "",
-        deFaceClaviculeAutre: bilanKinesitherapique.deFaceClaviculeAutre ?? "",
-        deFaceThorax: bilanKinesitherapique.deFaceThorax ?? "",
-        deFaceThoraxAutre: bilanKinesitherapique.deFaceThoraxAutre ?? "",
-        deFaceRachis: bilanKinesitherapique.deFaceRachis ?? "",
-        deFaceRachisAutre: bilanKinesitherapique.deFaceRachisAutre ?? "",
-        deFaceBassin: bilanKinesitherapique.deFaceBassin ?? "",
-        deFaceBassinAutre: bilanKinesitherapique.deFaceBassinAutre ?? "",
-        deFaceHanches: bilanKinesitherapique.deFaceHanches ?? "",
-        deFaceHanchesAutre: bilanKinesitherapique.deFaceHanchesAutre ?? "",
-        deFaceGenoux: bilanKinesitherapique.deFaceGenoux ?? "",
-        deFaceGenouxAutre: bilanKinesitherapique.deFaceGenouxAutre ?? "",
-        deFacePieds: bilanKinesitherapique.deFacePieds ?? "",
-        deFacePiedsAutre: bilanKinesitherapique.deFacePiedsAutre ?? "",
-        deProfilTete: bilanKinesitherapique.deProfilTete ?? "",
-        deProfilTeteAutre: bilanKinesitherapique.deProfilTeteAutre ?? "",
-        deProfilEpaule: bilanKinesitherapique.deProfilEpaule ?? "",
-        deProfilEpauleAutre: bilanKinesitherapique.deProfilEpauleAutre ?? "",
-        deProfilThorax: bilanKinesitherapique.deProfilThorax ?? "",
-        deProfilThoraxAutre: bilanKinesitherapique.deProfilThoraxAutre ?? "",
-        deProfilLombaires: bilanKinesitherapique.deProfilLombaires ?? "",
-        deProfilLombairesAutre:
-          bilanKinesitherapique.deProfilLombairesAutre ?? "",
-        deProfilBassin: bilanKinesitherapique.deProfilBassin ?? "",
-        deProfilBassinAutre: bilanKinesitherapique.deProfilBassinAutre ?? "",
-        deProfilHanches: bilanKinesitherapique.deProfilHanches ?? "",
-        deProfilHanchesAutre: bilanKinesitherapique.deProfilHanchesAutre ?? "",
-        deProfilGenoux: bilanKinesitherapique.deProfilGenoux ?? "",
-        deProfilGenouxAutre: bilanKinesitherapique.deProfilGenouxAutre ?? "",
-        deProfilChevilles: bilanKinesitherapique.deProfilChevilles ?? "",
-        deProfilChevillesAutre:
-          bilanKinesitherapique.deProfilChevillesAutre ?? "",
-        deProfilCentreGravite:
-          bilanKinesitherapique.deProfilCentreGravite ?? "",
-        deProfilCentreGraviteAutre:
-          bilanKinesitherapique.deProfilCentreGraviteAutre ?? "",
+        deDosTesCervical:            bMS.deDosTesCervical            ?? "",
+        deDosTesCervicalAutre:       bMS.deDosTesCervicalAutre       ?? "",
+        deDosEpaules:                bMS.deDosEpaules                ?? "",
+        deDosEpaulesAutre:           bMS.deDosEpaulesAutre           ?? "",
+        deDosScapulas:               bMS.deDosScapulas               ?? "",
+        deDosScapulasAutre:          bMS.deDosScapulasAutre          ?? "",
+        deDosAmyotrophie:            bMS.deDosAmyotrophie            ?? "",
+        deDosAmyotrophieAutre:       bMS.deDosAmyotrophieAutre       ?? "",
+        deDosRachis:                 bMS.deDosRachis                 ?? "",
+        deDosRachisAutre:            bMS.deDosRachisAutre            ?? "",
+        deDosBassin:                 bMS.deDosBassin                 ?? "",
+        deDosBassinAutre:            bMS.deDosBassinAutre            ?? "",
+        deDosMembresSup:             bMS.deDosMembresSup             ?? "",
+        deDosMembresSuperieursAutre: bMS.deDosMembresSuperieursAutre ?? "",
+        deDosAchille:                bMS.deDosAchille                ?? "",
+        deDosAchilleAutre:           bMS.deDosAchilleAutre           ?? "",
+        deFaceTete:                  bMS.deFaceTete                  ?? "",
+        deFaceTeteAutre:             bMS.deFaceTeteAutre             ?? "",
+        deFaceEpaule:                bMS.deFaceEpaule                ?? "",
+        deFaceEpauleAutre:           bMS.deFaceEpauleAutre           ?? "",
+        deFaceClavicule:             bMS.deFaceClavicule             ?? "",
+        deFaceClaviculeAutre:        bMS.deFaceClaviculeAutre        ?? "",
+        deFaceThorax:                bMS.deFaceThorax                ?? "",
+        deFaceThoraxAutre:           bMS.deFaceThoraxAutre           ?? "",
+        deFaceRachis:                bMS.deFaceRachis                ?? "",
+        deFaceRachisAutre:           bMS.deFaceRachisAutre           ?? "",
+        deFaceBassin:                bMS.deFaceBassin                ?? "",
+        deFaceBassinAutre:           bMS.deFaceBassinAutre           ?? "",
+        deFaceHanches:               bMS.deFaceHanches               ?? "",
+        deFaceHanchesAutre:          bMS.deFaceHanchesAutre          ?? "",
+        deFaceGenoux:                bMS.deFaceGenoux                ?? "",
+        deFaceGenouxAutre:           bMS.deFaceGenouxAutre           ?? "",
+        deFacePieds:                 bMS.deFacePieds                 ?? "",
+        deFacePiedsAutre:            bMS.deFacePiedsAutre            ?? "",
+        deProfilTete:                bMS.deProfilTete                ?? "",
+        deProfilTeteAutre:           bMS.deProfilTeteAutre           ?? "",
+        deProfilEpaule:              bMS.deProfilEpaule              ?? "",
+        deProfilEpauleAutre:         bMS.deProfilEpauleAutre         ?? "",
+        deProfilThorax:              bMS.deProfilThorax              ?? "",
+        deProfilThoraxAutre:         bMS.deProfilThoraxAutre         ?? "",
+        deProfilLombaires:           bMS.deProfilLombaires           ?? "",
+        deProfilLombairesAutre:      bMS.deProfilLombairesAutre      ?? "",
+        deProfilBassin:              bMS.deProfilBassin              ?? "",
+        deProfilBassinAutre:         bMS.deProfilBassinAutre         ?? "",
+        deProfilHanches:             bMS.deProfilHanches             ?? "",
+        deProfilHanchesAutre:        bMS.deProfilHanchesAutre        ?? "",
+        deProfilGenoux:              bMS.deProfilGenoux              ?? "",
+        deProfilGenouxAutre:         bMS.deProfilGenouxAutre         ?? "",
+        deProfilChevilles:           bMS.deProfilChevilles           ?? "",
+        deProfilChevillesAutre:      bMS.deProfilChevillesAutre      ?? "",
+        deProfilCentreGravite:       bMS.deProfilCentreGravite       ?? "",
+        deProfilCentreGraviteAutre:  bMS.deProfilCentreGraviteAutre  ?? "",
       },
-      // Scapulo-thoracique & articulations voisines
+
+      // ── Scapulo-thoracique & articulatins voisines — read from JSON ──────────
       scapuloThoracique: {
-        elevationScapulaire: bilanKinesitherapique.elevationScapulaire ?? "",
-        abaissementScapulaire:
-          bilanKinesitherapique.abaissementScapulaire ?? "",
-        abductionScapulaire: bilanKinesitherapique.abductionScapulaire ?? "",
-        adductionScapulaire: bilanKinesitherapique.adductionScapulaire ?? "",
-        sonnetteInterne: bilanKinesitherapique.sonnetteInterne ?? "",
-        sonnetteExterne: bilanKinesitherapique.sonnetteExterne ?? "",
-        mobiliteScapulaire:
-          bilanKinesitherapique.mobiliteScapulaire ?? "Normale",
-        dyskinésieScapulaire:
-          bilanKinesitherapique.dyskinesieScapulaire ?? false,
+        elevationScapulaire:    bST.elevationScapulaire    ?? "",
+        abaissementScapulaire:  bST.abaissementScapulaire  ?? "",
+        abductionScapulaire:    bST.abductionScapulaire    ?? "",
+        adductionScapulaire:    bST.adductionScapulaire    ?? "",
+        sonnetteInterne:        bST.sonnetteInterne        ?? "",
+        sonnetteExterne:        bST.sonnetteExterne        ?? "",
+        mobiliteScapulaire:     bST.mobiliteScapulaire     ?? "Normale",
+        "dyskinésieScapulaire": bST["dyskinésieScapulaire"] ?? false,
       },
       acromioClaviculaire: {
-        mobilite: bilanKinesitherapique.acromioMobilite ?? "Libre",
-        douleur: bilanKinesitherapique.acromioDouleur ?? false,
+        mobilite: bAC.mobilite ?? "Libre",
+        douleur:  bAC.douleur  ?? false,
       },
       sternoClaviculaire: {
-        mobilite: bilanKinesitherapique.sternoMobilite ?? "Libre",
-        douleur: bilanKinesitherapique.sternoDouleur ?? false,
+        mobilite: bSC.mobilite ?? "Libre",
+        douleur:  bSC.douleur  ?? false,
       },
       rachisCervical: {
-        flexion: bilanKinesitherapique.flexionCervicale ?? "",
-        extension: bilanKinesitherapique.extensionCervicale ?? "",
-        rotationDroite: bilanKinesitherapique.rotationDroite ?? "",
-        rotationGauche: bilanKinesitherapique.rotationGauche ?? "",
-        douleur: bilanKinesitherapique.rachisDouleur ?? false,
+        flexion:        bRC.flexion        ?? "",
+        extension:      bRC.extension      ?? "",
+        rotationDroite: bRC.rotationDroite ?? "",
+        rotationGauche: bRC.rotationGauche ?? "",
+        douleur:        bRC.douleur        ?? false,
       },
       coude: {
-        flexion: bilanKinesitherapique.flexionCoude ?? "",
-        extension: bilanKinesitherapique.extensionCoude ?? "",
-        pronation: bilanKinesitherapique.pronation ?? "",
-        supination: bilanKinesitherapique.supination ?? "",
-        mobilite: bilanKinesitherapique.coudeMobilite ?? "Normale",
+        flexion:    bCo.flexion    ?? "",
+        extension:  bCo.extension  ?? "",
+        pronation:  bCo.pronation  ?? "",
+        supination: bCo.supination ?? "",
+        mobilite:   bCo.mobilite   ?? "Normale",
       },
-      // Musculaire qualitatif
+
+      // ── Musculaire qualitatif — read from JSON objects ───────────────────────
       amyotrophie: {
-        deltoide: bilanKinesitherapique.amyotrophieDeltoide ?? "",
-        supra_epineux: bilanKinesitherapique.amyotrophieSupra ?? "",
-        infra_epineux: bilanKinesitherapique.amyotrophieInfra ?? "",
-        subscapulaire: bilanKinesitherapique.amyotrophieSubscapulaire ?? "",
-        trapeze: bilanKinesitherapique.amyotrophieTrapeze ?? "",
+        deltoide:      bAmy.deltoide      ?? "",
+        supra_epineux: bAmy.supra_epineux ?? "",
+        infra_epineux: bAmy.infra_epineux ?? "",
+        subscapulaire: bAmy.subscapulaire ?? "",
+        trapeze:       bAmy.trapeze       ?? "",
       },
-      amyotrophiePresence: bilanKinesitherapique.amyotrophiePresence ?? false,
+      amyotrophiePresence:  bilanKinesitherapique.amyotrophiePresence  ?? false,
       contractures: {
-        deltoide: bilanKinesitherapique.contractureDeltoide ?? "",
-        trapezeSuperieur: bilanKinesitherapique.contractureTrapeze ?? "",
-        grandPectoral: bilanKinesitherapique.contractureGrandPectoral ?? "",
-        grandDorsal: bilanKinesitherapique.contractureGrandDorsal ?? "",
+        deltoide:         bCon.deltoide         ?? "",
+        trapezeSuperieur: bCon.trapezeSuperieur ?? "",
+        grandPectoral:    bCon.grandPectoral    ?? "",
+        grandDorsal:      bCon.grandDorsal      ?? "",
       },
       contracturesPresence: bilanKinesitherapique.contracturesPresence ?? false,
       retractions: {
-        grandPectoral: bilanKinesitherapique.retractionGrandPectoral ?? "",
-        grandDorsal: bilanKinesitherapique.retractionGrandDorsal ?? "",
-        capsulePosterieure: bilanKinesitherapique.retractionCapsulePost ?? "",
+        grandPectoral:      bRet.grandPectoral      ?? "",
+        grandDorsal:        bRet.grandDorsal        ?? "",
+        capsulePosterieure: bRet.capsulePosterieure ?? "",
       },
-      retractionsPresence: bilanKinesitherapique.retractionsPresence ?? false,
-      // Quantitatif - testing musculaire (MRC)
+      retractionsPresence:  bilanKinesitherapique.retractionsPresence  ?? false,
+
+      // ── Testing musculaire MRC — field names match actual API response ────────
       testingMusculaire: {
-        supra_epineux: bilanKinesitherapique.supraEpineuxTesting ?? 3,
-        infra_epineux: bilanKinesitherapique.infraEpineuxTesting ?? 3,
-        subscapulaire: bilanKinesitherapique.subscapulaireTesting ?? 3,
-        deltoide: bilanKinesitherapique.deltoideTesting ?? 3,
+        supra_epineux:  bilanKinesitherapique.supraEpineuxTesting  ?? 3,
+        infra_epineux:  bilanKinesitherapique.infraEpineuxTesting  ?? 3,
+        subscapulaire:  bilanKinesitherapique.subscapulaireTesting ?? 3,
+        deltoide:       bilanKinesitherapique.deltoideTesting      ?? 3,
         grand_pectoral: bilanKinesitherapique.grandPectoralTesting ?? 3,
-        grand_dorsal: bilanKinesitherapique.grandDorsalTesting ?? 3,
+        grand_dorsal:   bilanKinesitherapique.grandDorsalTesting   ?? 3,
         trap_superieur: bilanKinesitherapique.trapSuperieurTesting ?? 3,
-        trap_moyen: bilanKinesitherapique.trapMoyenTesting ?? 3,
+        trap_moyen:     bilanKinesitherapique.trapMoyenTesting     ?? 3,
         trap_inferieur: bilanKinesitherapique.trapInferieurTesting ?? 3,
-        dentele_ant: bilanKinesitherapique.denteleAntTesting ?? 3,
-        long_biceps: bilanKinesitherapique.longBicepsTesting ?? 3,
-        triceps_long: bilanKinesitherapique.tricepsLongTesting ?? 3,
-        deltoides: bilanKinesitherapique.deltoideTesting ?? 3,
+        dentele_ant:    bilanKinesitherapique.denteleAntTesting    ?? 3,
+        long_biceps:    bilanKinesitherapique.longBicepsTesting    ?? 3,
+        triceps_long:   bilanKinesitherapique.tricepsLongTesting   ?? 3,
       },
-      deficitMusculaire: bilanKinesitherapique.deficitMusculaire ?? false,
-      asymetrieDroiteGauche:
-        bilanKinesitherapique.asymetrieDroiteGauche ?? false,
+      deficitMusculaire:     bilanKinesitherapique.deficitMusculaire     ?? false,
+      asymetrieDroiteGauche: bilanKinesitherapique.asymetrieDroiteGauche ?? false,
       syntheseMusculaire: {
-        musclesDeficitaires: bilanKinesitherapique.musclesDeficitaires ?? "",
-        musclesRetractes: bilanKinesitherapique.musclesRetractes ?? "",
-        musclesDouloureux: bilanKinesitherapique.musclesDouloureux ?? "",
+        musclesDeficitaires: bSyn.musclesDeficitaires ?? "",
+        musclesRetractes:    bSyn.musclesRetractes    ?? "",
+        musclesDouloureux:   bSyn.musclesDouloureux   ?? "",
       },
+
       // Qualité de vie
       sf12Score: bilanKinesitherapique.sf12Score ?? "",
     };
@@ -496,7 +380,9 @@ export default function PhysiotherapieForm({ session, patient, onSave }) {
     objectifsLong: protocoleReeducation.objectifsLong ?? "",
     // Phase de rééducation
     phaseActive: protocoleReeducation.phaseActive ?? "",
-    phaseDebutDate: protocoleReeducation.phaseDebutDate ?? "",
+    phaseDebutDate: protocoleReeducation.phaseDebutDate
+      ? String(protocoleReeducation.phaseDebutDate).split("T")[0]
+      : "",
     phaseObjectifsSpecifiques: protocoleReeducation.phaseObjectifsSpecifiques ?? "",
     // Électrophysiothérapie
     tensAntalgique: protocoleReeducation.tensAntalgique ?? false,
@@ -531,19 +417,19 @@ export default function PhysiotherapieForm({ session, patient, onSave }) {
     pompagesCapsulaires: protocoleReeducation.pompagesCapsulaires ?? false,
     leveesDeTension: protocoleReeducation.leveesDeTension ?? false,
     techManuAutre: protocoleReeducation.techManuAutre ?? "",
-    // Renforcement — types
-    renf_isometrique: protocoleReeducation.renf_isometrique ?? false,
-    renf_concentrique: protocoleReeducation.renf_concentrique ?? false,
-    renf_excentrique: protocoleReeducation.renf_excentrique ?? false,
-    renf_pliometrique: protocoleReeducation.renf_pliometrique ?? false,
-    renf_chaineCinOuverte: protocoleReeducation.renf_chaineCinOuverte ?? false,
-    renf_chaineCinFermee: protocoleReeducation.renf_chaineCinFermee ?? false,
-    // Renforcement — muscles ciblés
-    muscle_coiffe: protocoleReeducation.muscle_coiffe ?? false,
-    muscle_deltoide: protocoleReeducation.muscle_deltoide ?? false,
-    muscle_stabilisateursScap: protocoleReeducation.muscle_stabilisateursScap ?? false,
-    muscle_grandPecGrandDorsal: protocoleReeducation.muscle_grandPecGrandDorsal ?? false,
-    muscle_bicepsTriceps: protocoleReeducation.muscle_bicepsTriceps ?? false,
+    // Renforcement — types (API returns camelCase, form state uses snake_case)
+    renf_isometrique:     protocoleReeducation.renfIsometrique      ?? false,
+    renf_concentrique:    protocoleReeducation.renfConcentrique      ?? false,
+    renf_excentrique:     protocoleReeducation.renfExcentrique       ?? false,
+    renf_pliometrique:    protocoleReeducation.renfPliometrique      ?? false,
+    renf_chaineCinOuverte: protocoleReeducation.renfChaineCinOuverte ?? false,
+    renf_chaineCinFermee:  protocoleReeducation.renfChaineCinFermee  ?? false,
+    // Renforcement — muscles ciblés (same camelCase mismatch)
+    muscle_coiffe:             protocoleReeducation.muscleCoiffe             ?? false,
+    muscle_deltoide:           protocoleReeducation.muscleDeltoide           ?? false,
+    muscle_stabilisateursScap: protocoleReeducation.muscleStabilisateursScap ?? false,
+    muscle_grandPecGrandDorsal: protocoleReeducation.muscleGrandPecGrandDorsal ?? false,
+    muscle_bicepsTriceps:      protocoleReeducation.muscleBicepsTriceps      ?? false,
     renforcementAutre: protocoleReeducation.renforcementAutre ?? "",
     // Contrôle moteur
     stabilisationScapDyn: protocoleReeducation.stabilisationScapDyn ?? false,
@@ -592,7 +478,9 @@ export default function PhysiotherapieForm({ session, patient, onSave }) {
     ciDelaisPostChirurgicaux: protocoleReeducation.ciDelaisPostChirurgicaux ?? "",
     ciPathologiesAssociees: protocoleReeducation.ciPathologiesAssociees ?? "",
     ciPostOp: protocoleReeducation.ciPostOp ?? false,
-    ciDateChirurgie: protocoleReeducation.ciDateChirurgie ?? "",
+    ciDateChirurgie: protocoleReeducation.ciDateChirurgie
+      ? String(protocoleReeducation.ciDateChirurgie).split("T")[0]
+      : "",
     ciTypeChirurgie: protocoleReeducation.ciTypeChirurgie ?? "",
     // Fréquence
     seancesParSemaine: protocoleReeducation.seancesParSemaine ?? 2,
@@ -748,9 +636,9 @@ export default function PhysiotherapieForm({ session, patient, onSave }) {
     try {
       setSaving(true);
       await onSave({
-        bilan: bilanData,
-        protocole: protocolData,
-        resultat: resultatData,
+        bilan:     normalizeBilanPayload(bilanData),
+        protocole: normalizeProtocolePayload(protocolData),
+        resultat:  normalizeResultatPayload(resultatData),
         activeSubTab,
       });
     } catch (err) {
@@ -791,380 +679,14 @@ export default function PhysiotherapieForm({ session, patient, onSave }) {
       {/* BILAN KINÉ TAB */}
       {activeSubTab === "bilan" && (
         <div className="space-y-6">
-          {/* Interrogatoire */}
-          <div className="card">
-            <h3 className="font-bold text-gray-900 mb-4">Interrogatoire</h3>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="bilan-patient-first-name"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Prénom du patient
-                  </label>
-                  <input
-                    id="bilan-patient-first-name"
-                    type="text"
-                    value={bilanData.patientFirstName || ""}
-                    readOnly
-                    className="input-field bg-gray-50"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="bilan-patient-last-name"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Nom du patient
-                  </label>
-                  <input
-                    id="bilan-patient-last-name"
-                    type="text"
-                    value={bilanData.patientLastName || ""}
-                    readOnly
-                    className="input-field bg-gray-50"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-                <div>
-                  <label
-                    htmlFor="bilan-taille"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Taille (cm)
-                  </label>
-                  <input
-                    id="bilan-taille"
-                    type="text"
-                    value={bilanData.taille || ""}
-                    onChange={(e) =>
-                      handleBilanChange("taille", e.target.value)
-                    }
-                    className="input-field"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="bilan-poids"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Poids (kg)
-                  </label>
-                  <input
-                    id="bilan-poids"
-                    type="text"
-                    value={bilanData.poids || ""}
-                    onChange={(e) => handleBilanChange("poids", e.target.value)}
-                    className="input-field"
-                  />
-                </div>
-                <div
-                  className={`self-start rounded-lg border px-3 py-2 ${bmiInfo.isNormal ? "border-green-200 bg-green-50" : "border-amber-200 bg-amber-50"}`}
-                >
-                  <p className="text-[11px] font-medium text-gray-500 mb-0.5">
-                    IMC
-                  </p>
-                  <p className="text-xl font-bold text-gray-900 leading-tight">
-                    {bmiInfo.value === null ? "—" : bmiInfo.value.toFixed(1)}
-                  </p>
-                  <p
-                    className={`text-xs font-medium ${bmiInfo.isNormal ? "text-green-700" : "text-amber-700"}`}
-                  >
-                    {bmiInfo.category}
-                  </p>
-                  <p className="text-[11px] text-gray-500 mt-0.5">
-                    Norme: 18,5 - 24,9
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="bilan-age"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Âge
-                  </label>
-                  <input
-                    id="bilan-age"
-                    type="number"
-                    value={bilanData.age || ""}
-                    onChange={(e) => handleBilanChange("age", e.target.value)}
-                    className="input-field"
-                    placeholder="Âge"
-                  />
-                </div>
-                <div>
-                  <div className="block text-sm font-medium text-gray-700 mb-1">
-                    Sexe
-                  </div>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="sexe"
-                        value="mâle"
-                        checked={bilanData.sexe === "mâle"}
-                        onChange={(e) =>
-                          handleBilanChange("sexe", e.target.value)
-                        }
-                      />
-                      <span className="text-sm">mâle</span>
-                    </label>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="sexe"
-                        value="femelle"
-                        checked={bilanData.sexe === "femelle"}
-                        onChange={(e) =>
-                          handleBilanChange("sexe", e.target.value)
-                        }
-                      />
-                      <span className="text-sm">femelle</span>
-                    </label>
-                  </div>
-                </div>
-                <div>
-                  <div className="block text-sm font-medium text-gray-700 mb-1">
-                    Membre dominant
-                  </div>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="membreDominant"
-                        value="droite"
-                        checked={bilanData.membreDominant === "droite"}
-                        onChange={(e) =>
-                          handleBilanChange("membreDominant", e.target.value)
-                        }
-                      />
-                      <span className="text-sm">droite</span>
-                    </label>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="membreDominant"
-                        value="gauche"
-                        checked={bilanData.membreDominant === "gauche"}
-                        onChange={(e) =>
-                          handleBilanChange("membreDominant", e.target.value)
-                        }
-                      />
-                      <span className="text-sm">gauche</span>
-                    </label>
-                  </div>
-                </div>
-                <div>
-                  <div className="block text-sm font-medium text-gray-700 mb-1">
-                    Membre lésé
-                  </div>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="membreAtteint"
-                        value="droite"
-                        checked={bilanData.membreAtteint === "droite"}
-                        onChange={(e) =>
-                          handleBilanChange("membreAtteint", e.target.value)
-                        }
-                      />
-                      <span className="text-sm">droite</span>
-                    </label>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="membreAtteint"
-                        value="gauche"
-                        checked={bilanData.membreAtteint === "gauche"}
-                        onChange={(e) =>
-                          handleBilanChange("membreAtteint", e.target.value)
-                        }
-                      />
-                      <span className="text-sm">gauche</span>
-                    </label>
-                  </div>
-                </div>
-                <div>
-                  <label
-                    htmlFor="bilan-frequence-sport"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Fréquence de sport pratiquée
-                  </label>
-                  <input
-                    id="bilan-frequence-sport"
-                    type="text"
-                    value={bilanData.frequenceSportPratiquee || ""}
-                    onChange={(e) =>
-                      handleBilanChange(
-                        "frequenceSportPratiquee",
-                        e.target.value,
-                      )
-                    }
-                    className="input-field"
-                    placeholder="Ex: 3 fois par semaine"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="bilan-intensite-pratique"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Intensité
-                  </label>
-                  <input
-                    id="bilan-intensite-pratique"
-                    type="text"
-                    value={bilanData.intensitePratique || ""}
-                    onChange={(e) =>
-                      handleBilanChange("intensitePratique", e.target.value)
-                    }
-                    className="input-field"
-                    placeholder="Ex: Modérée"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="bilan-profession"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Profession
-                  </label>
-                  <input
-                    id="bilan-profession"
-                    type="text"
-                    value={bilanData.profession || ""}
-                    onChange={(e) =>
-                      handleBilanChange("profession", e.target.value)
-                    }
-                    className="input-field"
-                    placeholder="Profession"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="bilan-antecedents-medicaux"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Antécédents médicaux
-                  </label>
-                  <select
-                    id="bilan-antecedents-medicaux"
-                    value={bilanData.antecedentsMedicauxEnabled ? "oui" : "non"}
-                    onChange={(e) =>
-                      handleBilanChange(
-                        "antecedentsMedicauxEnabled",
-                        e.target.value === "oui",
-                      )
-                    }
-                    className="input-field w-28"
-                  >
-                    <option value="non">Non</option>
-                    <option value="oui">Oui</option>
-                  </select>
-                </div>
-                {bilanData.antecedentsMedicauxEnabled && (
-                  <div className="md:col-span-2">
-                    <textarea
-                      id="bilan-antecedents-medicaux-details"
-                      value={bilanData.antecedentsMedicauxDetails || ""}
-                      onChange={(e) =>
-                        handleBilanChange(
-                          "antecedentsMedicauxDetails",
-                          e.target.value,
-                        )
-                      }
-                      className="input-field min-h-28"
-                      placeholder="Décrire les antécédents médicaux"
-                    />
-                  </div>
-                )}
-                <div>
-                  <label
-                    htmlFor="bilan-antecedents-chirurgicaux"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Antécédents chirurgicaux
-                  </label>
-                  <select
-                    id="bilan-antecedents-chirurgicaux"
-                    value={
-                      bilanData.antecedentsChirurgicauxEnabled ? "oui" : "non"
-                    }
-                    onChange={(e) =>
-                      handleBilanChange(
-                        "antecedentsChirurgicauxEnabled",
-                        e.target.value === "oui",
-                      )
-                    }
-                    className="input-field w-28"
-                  >
-                    <option value="non">Non</option>
-                    <option value="oui">Oui</option>
-                  </select>
-                </div>
-                {bilanData.antecedentsChirurgicauxEnabled && (
-                  <div className="md:col-span-2">
-                    <textarea
-                      id="bilan-antecedents-chirurgicaux-details"
-                      value={bilanData.antecedentsChirurgicauxDetails || ""}
-                      onChange={(e) =>
-                        handleBilanChange(
-                          "antecedentsChirurgicauxDetails",
-                          e.target.value,
-                        )
-                      }
-                      className="input-field min-h-28"
-                      placeholder="Décrire les antécédents chirurgicaux"
-                    />
-                  </div>
-                )}
-                <div className="md:col-span-2">
-                  <label
-                    htmlFor="bilan-plainte"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Plainte principale
-                  </label>
-                  <input
-                    id="bilan-plainte"
-                    type="text"
-                    value={bilanData.plainte || ""}
-                    onChange={(e) =>
-                      handleBilanChange("plainte", e.target.value)
-                    }
-                    className="input-field"
-                    placeholder="Motif de consultation..."
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label
-                    htmlFor="bilan-historique"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Historique
-                  </label>
-                  <textarea
-                    id="bilan-historique"
-                    value={bilanData.historique || ""}
-                    onChange={(e) =>
-                      handleBilanChange("historique", e.target.value)
-                    }
-                    rows={3}
-                    className="input-field resize-none"
-                    placeholder="ATCD, contexte, chronologie..."
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Profil patient partagé */}
+          <PatientInterrogatoireCard
+            interrogatoire={interrogatoire}
+            patientId={patientId}
+            patient={patient}
+            onUpdate={onInterrogatoireUpdate}
+            onMeasurementsUpdate={onPatientMeasurementsUpdate}
+          />
 
           {/* Bilan cutané trophique */}
           <div className="card">
@@ -5338,9 +4860,12 @@ export default function PhysiotherapieForm({ session, patient, onSave }) {
       )}
 
       {/* Save button */}
-      {/* MRC Modal */}
-      {mrcModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      {/* MRC Modal — rendered via portal so fixed positions to the viewport */}
+      {mrcModalOpen && createPortal(
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={(e) => { if (e.target === e.currentTarget) closeMrcModal(); }}
+        >
           <div className="bg-white rounded-lg max-w-xl w-full p-6 mx-4">
             <div className="flex justify-between items-start">
               <div>
@@ -5357,24 +4882,12 @@ export default function PhysiotherapieForm({ session, patient, onSave }) {
             </div>
             <div className="mt-4 space-y-3">
               <div className="text-sm text-gray-700">
-                <div>
-                  <strong>0</strong> = aucune contraction
-                </div>
-                <div>
-                  <strong>1</strong> = contraction visible sans mouvement
-                </div>
-                <div>
-                  <strong>2</strong> = mouvement possible sans pesanteur
-                </div>
-                <div>
-                  <strong>3</strong> = mouvement contre pesanteur
-                </div>
-                <div>
-                  <strong>4</strong> = mouvement contre résistance modérée
-                </div>
-                <div>
-                  <strong>5</strong> = force normale
-                </div>
+                <div><strong>0</strong> = aucune contraction</div>
+                <div><strong>1</strong> = contraction visible sans mouvement</div>
+                <div><strong>2</strong> = mouvement possible sans pesanteur</div>
+                <div><strong>3</strong> = mouvement contre pesanteur</div>
+                <div><strong>4</strong> = mouvement contre résistance modérée</div>
+                <div><strong>5</strong> = force normale</div>
               </div>
               <div className="flex gap-2 mt-4">
                 {[0, 1, 2, 3, 4, 5].map((n) => (
@@ -5389,7 +4902,8 @@ export default function PhysiotherapieForm({ session, patient, onSave }) {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
       <button
         onClick={handleSave}
@@ -5412,5 +4926,8 @@ export default function PhysiotherapieForm({ session, patient, onSave }) {
 PhysiotherapieForm.propTypes = {
   session: PropTypes.object,
   patient: PropTypes.object,
+  interrogatoire: PropTypes.object,
+  patientId: PropTypes.string,
+  onInterrogatoireUpdate: PropTypes.func,
   onSave: PropTypes.func.isRequired,
 };

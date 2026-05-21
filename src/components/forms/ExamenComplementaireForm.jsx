@@ -219,21 +219,17 @@ export default function ExamenComplementaireForm({ session, patient, onSave }) {
       const multipartData = new FormData();
       multipartData.append("type", formData.type);
       if (formData.type === "bilanBiologique") {
-        // send selected bilan types as comma-separated string
-        multipartData.append(
-          "bilanBiologiqueType",
-          Array.isArray(formData.bilanBiologiqueType)
-            ? formData.bilanBiologiqueType.join(",")
-            : formData.bilanBiologiqueType,
-        );
+        // append each value as a separate field so backend receives a real array
+        (Array.isArray(formData.bilanBiologiqueType)
+          ? formData.bilanBiologiqueType
+          : []
+        ).forEach((t) => multipartData.append("bilanBiologiqueType", t));
         if (
           Array.isArray(formData.bilanBiologiqueType) &&
-          formData.bilanBiologiqueType.includes("autre")
+          formData.bilanBiologiqueType.includes("autre") &&
+          formData.bilanBiologiqueAutre
         ) {
-          multipartData.append(
-            "bilanBiologiqueAutre",
-            formData.bilanBiologiqueAutre,
-          );
+          multipartData.append("bilanBiologiqueAutre", formData.bilanBiologiqueAutre);
         }
       }
       multipartData.append("description", formData.description);
@@ -320,32 +316,34 @@ export default function ExamenComplementaireForm({ session, patient, onSave }) {
                   {exam.resultat && (
                     <p className="text-sm text-gray-600">{exam.resultat}</p>
                   )}
-                  {exam.fileUrl && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        openDocument(
-                          exam.fileUrl,
-                          `exam-${exam.id || Date.now()}`,
-                        )
-                      }
-                      className="text-xs text-primary hover:underline flex items-center gap-1 mt-2"
-                    >
-                      <svg
-                        className="w-3 h-3"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 10v6m0 0l-3-3m3 3l3-3M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z"
-                        />
-                      </svg>
-                      Télécharger / ouvrir
-                    </button>
+                  {Array.isArray(exam.fileUrls) && exam.fileUrls.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {exam.fileUrls.map((url, i) => (
+                        <button
+                          key={url}
+                          type="button"
+                          onClick={() =>
+                            openDocument(url, `exam-${exam.id || Date.now()}-${i + 1}`)
+                          }
+                          className="text-xs text-primary hover:underline flex items-center gap-1 border border-primary/30 rounded px-2 py-1"
+                        >
+                          <svg
+                            className="w-3 h-3 shrink-0"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 10v6m0 0l-3-3m3 3l3-3M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z"
+                            />
+                          </svg>
+                          Fichier {i + 1}
+                        </button>
+                      ))}
+                    </div>
                   )}
                 </div>
                 <button

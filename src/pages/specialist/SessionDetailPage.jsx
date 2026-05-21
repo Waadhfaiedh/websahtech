@@ -4,6 +4,8 @@ import { toast } from "react-toastify";
 import SpecialistLayout from "../../components/layout/SpecialistLayout";
 import api from "../../services/api";
 
+import { stripPending } from "../../components/forms/physioPayload";
+
 // Form sections
 import ExamenCliniqueForm from "../../components/forms/ExamenCliniqueForm";
 import ExamenComplementaireForm from "../../components/forms/ExamenComplementaireForm";
@@ -52,59 +54,277 @@ const SECTION_KEYS = {
   physiotherapie: "physiotherapie",
 };
 
+// ── Parse JSON fields from API response ────────────────────────────────────
+const parseJsonField = (value) => {
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value; // Return as-is if not valid JSON
+    }
+  }
+  return value; // Already an object or primitive
+};
+
+const normalizeExamenClinique = (examen) => {
+  if (!examen) return examen;
+  return {
+    ...examen,
+    mobiliteActive: parseJsonField(examen.mobiliteActive),
+    mobilitePassive: parseJsonField(examen.mobilitePassive),
+    testConflits: parseJsonField(examen.testConflits),
+    testsTendineux: parseJsonField(examen.testsTendineux),
+    palpation: parseJsonField(examen.palpation),
+    examenCervical: parseJsonField(examen.examenCervical),
+    examenNeurologique: parseJsonField(examen.examenNeurologique),
+    testsInstabilite: parseJsonField(examen.testsInstabilite),
+    testsLaxite: parseJsonField(examen.testsLaxite),
+    constantScore: parseJsonField(examen.constantScore),
+    quickDashScore: parseJsonField(examen.quickDashScore),
+  };
+};
+
+// ── Bilan kinésithérapique payload builder ──────────────────────────────────
 const buildPhysiotherapieBilanPayload = (bilan = {}) => ({
-  age: bilan.age === "" ? null : Number(bilan.age),
-  sexe: bilan.sexe,
-  taille: bilan.taille === "" ? null : Number(bilan.taille),
-  poids: bilan.poids === "" ? null : Number(bilan.poids),
-  membreDominant: bilan.membreDominant,
-  profession: bilan.profession,
-  membreAtteint: bilan.membreAtteint,
-  frequenceSportPratiquee: bilan.frequenceSportPratiquee,
-  intensitePratique: bilan.intensitePratique,
-  antecedentsMedicauxEnabled: bilan.antecedentsMedicauxEnabled,
-  antecedentsMedicauxDetails: bilan.antecedentsMedicauxDetails,
-  antecedentsChirurgicauxEnabled: bilan.antecedentsChirurgicauxEnabled,
-  antecedentsChirurgicauxDetails: bilan.antecedentsChirurgicauxDetails,
-  plainte: bilan.plainte,
-  historique: bilan.historique,
+  // Session-specific pain
+  intensiteEVA: bilan.intensiteEVA,
   siegeDouleur: bilan.siegeDouleur,
   irradiation: bilan.irradiation,
-  intensiteEVA: bilan.intensiteEVA,
   typeDouleur: bilan.typeDouleur,
   facteurAggravant: bilan.facteurAggravant,
-  facteursoulageant: bilan.facteursoulageant,
+  facteurSoulageant: bilan.facteursoulageant,
   debutDouleur: bilan.debutDouleur,
   retentissementAVQ: bilan.retentissementAVQ,
-  retentissementPro: bilan.retentissementProfessionnel,
+  retentissementProfessionnel: bilan.retentissementProfessionnel,
   retentissementSommeil: bilan.retentissementSommeil,
+
+  // Scores
   constantScore: JSON.stringify(bilan.constantScore),
   quickDashScore: JSON.stringify(bilan.quickDASH),
   dashArabeScore: JSON.stringify(bilan.dashArabeScore),
+
+  // ROM active — all 7 movements
   antepulsionActive: bilan.mobiliteArticulaire?.antepulsion_active,
-  antepulsionPassive: bilan.mobiliteArticulaire?.antepulsion_passive,
+  extensionActive: bilan.mobiliteArticulaire?.extension_active,
   abductionActive: bilan.mobiliteArticulaire?.abduction_active,
-  abductionPassive: bilan.mobiliteArticulaire?.abduction_passive,
+  adductionActive: bilan.mobiliteArticulaire?.adduction_active,
   retractionActive: bilan.mobiliteArticulaire?.retraction_active,
-  retractionPassive: bilan.mobiliteArticulaire?.retraction_passive,
   rotationExterneActive: bilan.mobiliteArticulaire?.rot_ext_active,
-  rotationExternePassive: bilan.mobiliteArticulaire?.rot_ext_passive,
   rotationInterneActive: bilan.mobiliteArticulaire?.rot_int_active,
+
+  // ROM passive — all 7 movements
+  antepulsionPassive: bilan.mobiliteArticulaire?.antepulsion_passive,
+  extensionPassive: bilan.mobiliteArticulaire?.extension_passive,
+  abductionPassive: bilan.mobiliteArticulaire?.abduction_passive,
+  adductionPassive: bilan.mobiliteArticulaire?.adduction_passive,
+  retractionPassive: bilan.mobiliteArticulaire?.retraction_passive,
+  rotationExternePassive: bilan.mobiliteArticulaire?.rot_ext_passive,
   rotationInternePassive: bilan.mobiliteArticulaire?.rot_int_passive,
-  deltoideTesting: bilan.testingMusculaire?.deltoides,
-  susEpineuxTesting: bilan.testingMusculaire?.sus_epineux,
+
+  // Analyse articulaire qualitative (nested under analyseQualitative in bilanData)
+  arcDouloureux: bilan.analyseQualitative?.arcDouloureux,
+  arcDouloureuxIntervalle: bilan.analyseQualitative?.arcDouloureuxIntervalle,
+  finDeCourse: bilan.analyseQualitative?.finDeCourse,
+
+  // Cutané-trophique
+  cutanePlaie: bilan.cutanePlaie,
+  cutaneCicatrice: bilan.cutaneCicatrice,
+  trophiqueOedeme: bilan.trophiqueOedeme,
+  trophiqueEpanchement: bilan.trophiqueEpanchement,
+  peauAdherences: bilan.peauAdherences,
+  peauHypersensibilite: bilan.peauHypersensibilite,
+
+  // Palpation (JSON objects)
+  pointsOsseux: bilan.pointsOsseux,
+  ligaments: bilan.ligaments,
+  musclesPalpation: bilan.musclesPalpation,
+  tendonsMTP: bilan.tendonsMTP,
+
+  // Posture / adjacent joints (bilanData uses "morpho" not "morphoStatique")
+  morphoStatique: bilan.morpho,
+  scapuloThoracique: bilan.scapuloThoracique,
+  acromioClaviculaire: bilan.acromioClaviculaire,
+  sternoClaviculaire: bilan.sternoClaviculaire,
+  rachisCervical: bilan.rachisCervical,
+  coude: bilan.coude,
+
+  // Muscle testing MRC — correct keys from testingMusculaire object
+  deltoideTesting: bilan.testingMusculaire?.deltoide,
+  susEpineuxTesting: bilan.testingMusculaire?.supra_epineux,
   infraEpineuxTesting: bilan.testingMusculaire?.infra_epineux,
-  subScapulaireTesting: bilan.testingMusculaire?.sub_scapulaire,
+  subScapulaireTesting: bilan.testingMusculaire?.subscapulaire,
+  grandPectoralTesting: bilan.testingMusculaire?.grand_pectoral,
+  grandDorsalTesting: bilan.testingMusculaire?.grand_dorsal,
+  trapSupTesting: bilan.testingMusculaire?.trap_superieur,
+  trapMoyTesting: bilan.testingMusculaire?.trap_moyen,
+  trapInfTesting: bilan.testingMusculaire?.trap_inferieur,
+  denteleAnteriorTesting: bilan.testingMusculaire?.dentele_ant,
+  longBicepsTesting: bilan.testingMusculaire?.long_biceps,
+  tricepsLongTesting: bilan.testingMusculaire?.triceps_long,
+  deficitMusculaire: bilan.deficitMusculaire,
+  asymetrieDroiteGauche: bilan.asymetrieDroiteGauche,
+  syntheseMusculaire: bilan.syntheseMusculaire,
+
+  // Qualitative muscle analysis (JSON objects + presence flags)
+  amyotrophie: bilan.amyotrophie,
+  amyotrophiePresence: bilan.amyotrophiePresence,
+  contractures: bilan.contractures,
+  contracturesPresence: bilan.contracturesPresence,
+  retractions: bilan.retractions,
+  retractionsPresence: bilan.retractionsPresence,
+
+  // Specific tests
   testJobe: bilan.testsSpecifiques?.jobe,
   testPatte: bilan.testsSpecifiques?.patte,
   testGerber: bilan.testsSpecifiques?.gerber,
   testNeer: bilan.testsSpecifiques?.neer,
   testHawkins: bilan.testsSpecifiques?.hawkins,
-  mainBouche: bilan.bilanFonctionnel?.mainBouche,
-  mainTete: bilan.bilanFonctionnel?.mainTete,
-  mainNuque: bilan.bilanFonctionnel?.mainNuque,
-  mainDos: bilan.bilanFonctionnel?.mainDos,
+
+  // Functional assessment — lives under bilanFonctionnel.testsSimples
+  mainBouche: bilan.bilanFonctionnel?.testsSimples?.mainBouche !== "impossible",
+  mainTete: bilan.bilanFonctionnel?.testsSimples?.mainTete !== "impossible",
+  mainNuque: bilan.bilanFonctionnel?.testsSimples?.mainNuque !== "impossible",
+  mainDos: bilan.bilanFonctionnel?.testsSimples?.mainDos !== "impossible",
+
+  sf12Score: bilan.sf12Score,
   observations: bilan.observations,
+});
+
+// ── Protocole de rééducation payload builder ────────────────────────────────
+const buildProtocolePayload = (p = {}) => ({
+  ...p,
+  objectifsCourt: p.objectifsCourt,
+  objectifsLong: p.objectifsLong,
+
+  // Phase
+  phaseActive: p.phaseActive,
+  phaseDebutDate: p.phaseDebutDate,
+  phaseObjectifsSpecifiques: p.phaseObjectifsSpecifiques,
+
+  // Electrophysio
+  physiotherapieAntalgique: p.physiotherapieAntalgique,
+  typesPhysio: p.typesPhysio,
+  tensAntalgique: p.tensAntalgique,
+  courantsExcitoMoteurs: p.courantsExcitoMoteurs,
+  ultrasons: p.ultrasons,
+  ondesDeChocProtocole: p.ondesDeChocProtocole,
+  cryotherapie: p.cryotherapie,
+  thermotherapie: p.thermotherapie,
+  electrophysioAutre: p.electrophysioAutre,
+
+  // Manual therapy
+  massage: p.massage,
+  massageDetail: p.massageDetail,
+  massageDecontracturant: p.massageDecontracturant,
+  mtp: p.mtp,
+  triggerPoints: p.triggerPoints,
+  drainageLymphatique: p.drainageLymphatique,
+  therapieManuAutre: p.therapieManuAutre,
+  mobilisationsPassives: p.mobilisationsPassives,
+  mobPassivesGlenoHumerales: p.mobPassivesGlenoHumerales,
+  mobPassivesScapulothoraciques: p.mobPassivesScapulothoraciques,
+  maitlandGrade: p.maitlandGrade,
+  mulligan: p.mulligan,
+  mobilisationsActives: p.mobilisationsActives,
+  mobActivesAssistees: p.mobActivesAssistees,
+  pendulairesCodeman: p.pendulairesCodeman,
+  etirementsCapsulairesPost: p.etirementsCapsulairesPost,
+  etirementsCapsulairesAnt: p.etirementsCapsulairesAnt,
+  etirementsCapsulairesInf: p.etirementsCapsulairesInf,
+  pompagesCapsulaires: p.pompagesCapsulaires,
+  leveesDeTension: p.leveesDeTension,
+  techManuAutre: p.techManuAutre,
+  balnéotherapie: p.balneotherapie,
+
+  // Renforcement
+  renforcement: p.renforcement,
+  renfIsometrique: p.renfIsometrique,
+  renfConcentrique: p.renfConcentrique,
+  renfExcentrique: p.renfExcentrique,
+  renfPliometrique: p.renfPliometrique,
+  renfChaineCinOuverte: p.renfChaineCinOuverte,
+  renfChaineCinFermee: p.renfChaineCinFermee,
+  muscleCoiffe: p.muscleCoiffe,
+  muscleDeltoide: p.muscleDeltoide,
+  muscleStabilisateursScap: p.muscleStabilisateursScap,
+  muscleGrandPecGrandDorsal: p.muscleGrandPecGrandDorsal,
+  muscleBicepsTriceps: p.muscleBicepsTriceps,
+  renforcementAutre: p.renforcementAutre,
+
+  // Contrôle moteur
+  proprioception: p.proprioception,
+  stabilisationScapDyn: p.stabilisationScapDyn,
+  recentrageGH: p.recentrageGH,
+  coordinationScapHum: p.coordinationScapHum,
+  proprioStatique: p.proprioStatique,
+  proprioDynamique: p.proprioDynamique,
+  travailPostural: p.travailPostural,
+  correctionCompensations: p.correctionCompensations,
+  controleMoteurAutre: p.controleMoteurAutre,
+
+  // Réathlétisation
+  gestesSpecifiques: p.gestesSpecifiques,
+  pliometrieMS: p.pliometrieMS,
+  travailArme: p.travailArme,
+  reintegrationCharge: p.reintegrationCharge,
+
+  // Exercices
+  exercicesDetail: p.exercicesDetail,
+  exerciceIds: p.exerciceIds,
+
+  // Taping
+  taping: p.taping,
+  tapingType: p.tapingType,
+
+  // HEP
+  hepPrescrit: p.hepPrescrit,
+  hepExercices: p.hepExercices,
+  hepSeancesJour: p.hepSeancesJour,
+  hepRepetitions: p.hepRepetitions,
+  hepSeries: p.hepSeries,
+  hepFrequence: p.hepFrequence,
+  hepConsignesDouleur: p.hepConsignesDouleur,
+
+  // Education
+  eduPosturaux: p.eduPosturaux,
+  eduLoadManagement: p.eduLoadManagement,
+  eduSommeil: p.eduSommeil,
+  eduNeuroscienceDouleur: p.eduNeuroscienceDouleur,
+  eduActivitesEviter: p.eduActivitesEviter,
+  eduActivitesPrivilegier: p.eduActivitesPrivilegier,
+  eduNotes: p.eduNotes,
+
+  // Critères de progression
+  criteresRomFlexion: p.criteresRomFlexion,
+  criteresRomAbduction: p.criteresRomAbduction,
+  criteresRomRotExt: p.criteresRomRotExt,
+  criteresEvaMax: p.criteresEvaMax,
+  criteresConstantMin: p.criteresConstantMin,
+  criteresQuickDASHMax: p.criteresQuickDASHMax,
+  criteresSymetrieMin: p.criteresSymetrieMin,
+  criteresAbsenceCompIA: p.criteresAbsenceCompIA,
+  criteresAutres: p.criteresAutres,
+
+  // Contre-indications
+  ciMouvementsInterdits: p.ciMouvementsInterdits,
+  ciDelaisPostChirurgicaux: p.ciDelaisPostChirurgicaux,
+  ciPathologiesAssociees: p.ciPathologiesAssociees,
+  ciPostOp: p.ciPostOp,
+  ciDateChirurgie: p.ciDateChirurgie,
+  ciTypeChirurgie: p.ciTypeChirurgie,
+
+  // Schedule
+  seancesParSemaine: p.seancesParSemaine,
+  dureeSemaines: p.dureeSemaines,
+  dureeSeance: p.dureeSeance,
+  repartition: p.repartition,
+  decroissanceProgressive: p.decroissanceProgressive,
+  modalitesSevrage: p.modalitesSevrage,
+
+  // Orthèse
+  orthese: p.orthese,
+  typeOrthese: p.typeOrthese,
+  observations: p.observations,
 });
 
 export default function SessionDetailPage() {
@@ -113,20 +333,33 @@ export default function SessionDetailPage() {
   const [activeSection, setActiveSection] = useState("examen-clinique");
   const [session, setSession] = useState(null);
   const [patient, setPatient] = useState(null);
+  const [interrogatoire, setInterrogatoire] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const fetchSessionData = async () => {
     if (!sessionId) {
-      console.error("SessionId is undefined. Cannot fetch session data.");
       toast.error("Erreur: l'identifiant de session est manquant");
       setLoading(false);
       return;
     }
-
     try {
       setLoading(true);
-      const sessionRes = await api.get(`/doctors/sessions/${sessionId}`);
-      setSession(sessionRes.data);
+      const res = await api.get(`/doctors/sessions/${sessionId}`);
+      const data = res.data;
+
+      // Parse JSON string fields in examenClinique
+      if (data.examenClinique) {
+        data.examenClinique = normalizeExamenClinique(data.examenClinique);
+      }
+
+      setSession(data);
+      // Patient and interrogatoire come embedded in the session response
+      if (data.patient) {
+        // Flatten user fields (fullName, gender, email…) onto the patient object
+        const { user, ...patientRest } = data.patient;
+        setPatient({ ...patientRest, ...user });
+        setInterrogatoire(data.patient.interrogatoire ?? null);
+      }
     } catch (err) {
       console.error("Failed to load session:", err);
       toast.error(
@@ -138,118 +371,47 @@ export default function SessionDetailPage() {
     }
   };
 
-  const fetchPatientData = async () => {
-    if (!patientId) {
-      console.error("PatientId is undefined. Cannot fetch patient data.");
-      return;
-    }
-
-    try {
-      const res = await api.get("/doctors/get-patients");
-      const patientsData = res.data.patients ?? res.data.data ?? res.data;
-      const foundPatient = patientsData.find(
-        (p) =>
-          p.userId === Number.parseInt(patientId, 10) || p.userId === patientId,
-      );
-
-      if (foundPatient) {
-        setPatient(foundPatient);
-      }
-    } catch (err) {
-      console.error("Failed to load patient data:", err);
-    }
-  };
-
-  // Load session and patient data on mount
   useEffect(() => {
     fetchSessionData();
-    fetchPatientData();
-  }, [sessionId, patientId]);
-
-  const handleSectionChange = (sectionId) => {
-    setActiveSection(sectionId);
-  };
+  }, [sessionId]);
 
   const hasSectionData = (sectionId) => {
     if (!session) return false;
-
     if (sectionId === "examen-complementaire") {
       return (
         Array.isArray(session.examenComplementaire) &&
         session.examenComplementaire.length > 0
       );
     }
-
-    const sectionKey = SECTION_KEYS[sectionId];
-    return Boolean(session[sectionKey]);
+    return Boolean(session[SECTION_KEYS[sectionId]]);
   };
 
   const handleSaveSection = async (sectionId, data) => {
     try {
+      const clamp = (v) => Math.max(0, Number.parseInt(v, 10) || 0);
       let endpoint = `/doctors/sessions/${sessionId}/${sectionId}`;
       let payload = data;
-      const clampToNonNegativeInt = (value) =>
-        Math.max(0, Number.parseInt(value, 10) || 0);
 
       if (sectionId === "physiotherapie") {
         const subTab = data?.activeSubTab || "bilan";
         endpoint = `/doctors/sessions/${sessionId}/physiotherapie/${subTab}`;
-
-        if (subTab === "bilan") {
-          payload = buildPhysiotherapieBilanPayload(data.bilan);
-        } else if (subTab === "protocole") {
-          payload = {
-            objectifsCourt: data.protocole?.objectifsCourt,
-            objectifsLong: data.protocole?.objectifsLong,
-            physiotherapieAntalgique: data.protocole?.physiotherapieAntalgique,
-            typesPhysio: data.protocole?.typesPhysio,
-            massage: data.protocole?.massage,
-            balnéotherapie: data.protocole?.balneotherapie,
-            mobilisationsPassives: data.protocole?.mobilisationsPassives,
-            mobilisationsActives: data.protocole?.mobilisationsActives,
-            renforcement: data.protocole?.renforcement,
-            proprioception: data.protocole?.proprioception,
-            exercicesDetail: data.protocole?.exercicesDetail,
-            seancesParSemaine: data.protocole?.seancesParSemaine,
-            dureeSemaines: data.protocole?.dureeSemaines,
-            orthese: data.protocole?.orthese,
-            typeOrthese: data.protocole?.typeOrthese,
-          };
-        } else if (subTab === "resultat") {
-          payload = {
-            constantScoreFinal: JSON.stringify(
-              data.resultat?.constantScoreFinal,
-            ),
-            quickDashScoreFinal: JSON.stringify(data.resultat?.quickDASHFinal),
-            evaFinal: data.resultat?.evaFinale,
-            evolutionDouleur: data.resultat?.evolution?.douleur,
-            evolutionMobilite: data.resultat?.evolution?.mobilite,
-            evolutionForce: data.resultat?.evolution?.force,
-            evolutionFonction: data.resultat?.evolution?.fonction,
-            antepulsionFinal: clampToNonNegativeInt(
-              data.resultat?.amplitudesFinales?.antepulsion,
-            ),
-            abductionFinal: clampToNonNegativeInt(
-              data.resultat?.amplitudesFinales?.abduction,
-            ),
-            rotationExterneFinal: clampToNonNegativeInt(
-              data.resultat?.amplitudesFinales?.rot_ext,
-            ),
-            rotationInterneFinal: clampToNonNegativeInt(
-              data.resultat?.amplitudesFinales?.rot_int,
-            ),
-            objectifsAtteints: data.resultat?.objectifsAtteints,
-            conclusionKine: data.resultat?.conclusionKine,
-            suitesDonnees: data.resultat?.suitesDonnees,
-          };
-        } else {
+        // PhysiotherapieForm.handleSave already ran the normalizers from
+        // physioPayload.js — just strip the _pendingBackend key before sending.
+        const subPayload =
+          data[
+            subTab === "bilan"
+              ? "bilan"
+              : subTab === "protocole"
+                ? "protocole"
+                : "resultat"
+          ];
+        if (!subPayload)
           throw new Error("Sous-section de physiotherapie invalide");
-        }
+        payload = stripPending(subPayload);
       }
 
       await api.post(endpoint, payload);
       toast.success("Section sauvegardée avec succès");
-      // Refresh session data
       fetchSessionData();
     } catch (err) {
       console.error("Failed to save section:", err);
@@ -272,7 +434,8 @@ export default function SessionDetailPage() {
   const CurrentFormComponent = SECTIONS.find(
     (s) => s.id === activeSection,
   )?.component;
-
+  const currentPatientId = session?.patientId ?? patientId;
+  console.log(patient);
   return (
     <SpecialistLayout>
       <div className="p-8 animate-fadeIn">
@@ -300,6 +463,11 @@ export default function SessionDetailPage() {
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Session Médicale</h1>
+          {patient?.fullName && (
+            <p className="text-base font-medium text-primary mt-0.5">
+              {patient?.fullName}
+            </p>
+          )}
           <p className="text-sm text-gray-500 mt-1">
             {session?.sessionDate &&
               new Date(session.sessionDate).toLocaleDateString("fr-FR", {
@@ -311,16 +479,16 @@ export default function SessionDetailPage() {
           </p>
         </div>
 
-        {/* Main content - Two column layout */}
+        {/* Two column layout */}
         <div className="grid grid-cols-4 gap-6">
-          {/* Left sidebar - Navigation */}
+          {/* Sidebar navigation */}
           <div className="col-span-1">
             <div className="card p-0 overflow-hidden sticky top-8">
               <nav className="space-y-1">
                 {SECTIONS.map((section) => (
                   <button
                     key={section.id}
-                    onClick={() => handleSectionChange(section.id)}
+                    onClick={() => setActiveSection(section.id)}
                     className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-all border-l-4 ${
                       activeSection === section.id
                         ? "bg-primary/10 border-l-primary text-primary font-medium"
@@ -348,12 +516,18 @@ export default function SessionDetailPage() {
             </div>
           </div>
 
-          {/* Right content area - Forms */}
+          {/* Form area */}
           <div className="col-span-3">
             {CurrentFormComponent && (
               <CurrentFormComponent
                 session={session}
                 patient={patient}
+                interrogatoire={interrogatoire}
+                patientId={currentPatientId}
+                onInterrogatoireUpdate={setInterrogatoire}
+                onPatientMeasurementsUpdate={(m) =>
+                  setPatient((prev) => ({ ...prev, ...m }))
+                }
                 onSave={(data) => handleSaveSection(activeSection, data)}
               />
             )}
