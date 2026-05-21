@@ -77,7 +77,7 @@ export default function AdminAdmins() {
     if (!deleteTarget?.userId) return;
     try {
       setDeleteLoading(true);
-      const res = await api.delete(`/admins/delete/${deleteTarget.userId}`);
+      const res = await api.delete(`/users/delete/${deleteTarget.userId}`);
       setAdmins((prev) =>
         prev.filter((admin) => admin.userId !== deleteTarget.userId),
       );
