@@ -21,6 +21,7 @@ import PlanningPage from "./pages/specialist/PlanningPage";
 import ProfilePage from "./pages/specialist/ProfilePage";
 import FeedbackPage from "./pages/specialist/FeedbackPage";
 import ReviewsPage from "./pages/specialist/ReviewsPage";
+import ClinicsPage from "./pages/specialist/ClinicsPage";
 
 // Admin
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -165,6 +166,14 @@ export default function App() {
           element={
             <PrivateRoute allowedRoles={["DOCTOR"]}>
               <ReviewsPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/specialist/clinics"
+          element={
+            <PrivateRoute allowedRoles={["DOCTOR"]}>
+              <ClinicsPage />
             </PrivateRoute>
           }
         />

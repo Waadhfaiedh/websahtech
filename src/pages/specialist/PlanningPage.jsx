@@ -23,11 +23,13 @@ export default function PlanningPage() {
   const [showSlotDetails, setShowSlotDetails] = useState(false);
   const [activeSlot, setActiveSlot] = useState(null);
   const [selectedDayKey, setSelectedDayKey] = useState("");
+  const [clinics, setClinics] = useState([]);
   const [slotForm, setSlotForm] = useState({
     date: "",
     startTime: "08:00",
     endTime: "17:00",
     place: "",
+    clinicId: "",
   });
   const [slotEditForm, setSlotEditForm] = useState({
     date: "",
@@ -145,9 +147,20 @@ export default function PlanningPage() {
     }
   };
 
+  const fetchClinics = async () => {
+    try {
+      const res = await api.get("/doctors/clinics");
+      const data = res.data?.data ?? res.data;
+      setClinics(Array.isArray(data) ? data : []);
+    } catch {
+      // non-critical — clinic dropdown stays empty
+    }
+  };
+
   useEffect(() => {
     fetchSlots();
     fetchAppointments();
+    fetchClinics();
   }, []);
 
   useEffect(() => {
@@ -293,12 +306,14 @@ export default function PlanningPage() {
 
     try {
       setCreatingSlot(true);
-      await api.post("/doctors/daily-slots", {
+      const body = {
         date: slotForm.date,
         startTime: startHour,
         endTime: endHour,
         place: slotForm.place.trim(),
-      });
+      };
+      if (slotForm.clinicId) body.clinicId = slotForm.clinicId;
+      await api.post("/doctors/daily-slots", body);
       toast.success("Creneaux ajoutes avec succes");
       setShowAddSlot(false);
       setSlotForm({
@@ -306,6 +321,7 @@ export default function PlanningPage() {
         startTime: "08:00",
         endTime: "17:00",
         place: "",
+        clinicId: "",
       });
       fetchSlots();
     } catch (err) {
@@ -762,7 +778,7 @@ export default function PlanningPage() {
                 htmlFor="slot-place"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Lieu
+                Lieu (salle / couloir)
               </label>
               <input
                 id="slot-place"
@@ -772,8 +788,33 @@ export default function PlanningPage() {
                   setSlotForm((p) => ({ ...p, place: e.target.value }))
                 }
                 className="input-field"
-                placeholder="Cabinet / Clinique"
+                placeholder="Ex: Salle 3 / Couloir B"
               />
+            </div>
+
+            <div>
+              <label
+                htmlFor="slot-clinic"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Clinique{" "}
+                <span className="text-gray-400 font-normal">(optionnel)</span>
+              </label>
+              <select
+                id="slot-clinic"
+                value={slotForm.clinicId}
+                onChange={(e) =>
+                  setSlotForm((p) => ({ ...p, clinicId: e.target.value }))
+                }
+                className="input-field"
+              >
+                <option value="">— Lieu externe (aucune clinique) —</option>
+                {clinics.map((c) => (
+                  <option key={c.clinicId} value={c.clinicId}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <button
