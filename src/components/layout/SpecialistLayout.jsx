@@ -59,6 +59,26 @@ function buildMessagePreview(payload) {
   };
 }
 
+function buildAppointmentPreview(payload) {
+  const patient = payload?.patientName || "Un patient";
+  const date = payload?.date
+    ? new Date(payload.date).toLocaleDateString("fr-FR", {
+        day: "2-digit",
+        month: "short",
+      })
+    : "";
+  const time = payload?.startTime
+    ? new Date(payload.startTime).toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "";
+  return {
+    title: `Nouveau rendez-vous — ${patient}`,
+    body: [date, time, payload?.place].filter(Boolean).join(" · ").slice(0, 120),
+  };
+}
+
 function showSystemNotification({ title, body, onClick }) {
   if (!("Notification" in globalThis)) {
     return;
@@ -353,9 +373,34 @@ export default function SpecialistLayout({ children }) {
       notifyIncomingMessage(notification);
     });
 
+    const notifyIncomingAppointment = async (payload) => {
+      const { title, body } = buildAppointmentPreview(payload);
+      const isForeground = !document.hidden;
+
+      playNotificationSound();
+
+      if (isForeground) {
+        toast.info(`${title}${body ? ` — ${body}` : ""}`, {
+          onClick: () => navigate("/specialist/planning"),
+        });
+        return;
+      }
+
+      await maybeShowSystemNotification({
+        title,
+        body: body || "Consultez votre planning",
+        onClick: () => navigate("/specialist/planning"),
+      });
+    };
+
+    socket.on("new_appointment", (data) => {
+      notifyIncomingAppointment(data);
+    });
+
     return () => {
       socket.off("new_message");
       socket.off("notification");
+      socket.off("new_appointment");
       socket.disconnect();
       socketRef.current = null;
     };
