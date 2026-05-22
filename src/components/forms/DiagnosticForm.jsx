@@ -62,8 +62,8 @@ export default function DiagnosticForm({ session, patient, onSave }) {
       description: "Perte fonctionnelle avec faiblesse",
     },
     {
-      id: "épaule bloquee (capsulite retractile)",
-      label: "Bloquée",
+      id: "bloquee",
+      label: "épaule Bloquée (capsulite retractile)",
       icon: "🔒",
       description: "Incapacité totale de mouvement",
     },

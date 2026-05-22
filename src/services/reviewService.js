@@ -2,10 +2,10 @@ import api from "./api";
 
 // ─── Endpoints (adjust paths once backend exists) ─────────────
 const ENDPOINTS = {
-  list: "/reviews",
-  mine: "/reviews/mine",
-  create: "/reviews",
-  delete: (id) => `/reviews/${id}`,
+  list: "admins/reviews",
+  mine: "users/reviews/mine",
+  create: "users/reviews",
+  delete: (id) => `admins/reviews/${id}`,
 };
 
 // ─── Review categories (used by both admin filter and specialist form) ───

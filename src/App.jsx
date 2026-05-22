@@ -20,6 +20,7 @@ import SearchPage from "./pages/specialist/SearchPage";
 import PlanningPage from "./pages/specialist/PlanningPage";
 import ProfilePage from "./pages/specialist/ProfilePage";
 import FeedbackPage from "./pages/specialist/FeedbackPage";
+import ReviewsPage from "./pages/specialist/ReviewsPage";
 
 // Admin
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -154,9 +155,17 @@ export default function App() {
         <Route
           path="/specialist/feedback"
           element={
-              <PrivateRoute allowedRoles={["DOCTOR"]}>
-                <FeedbackPage />
-              </PrivateRoute>
+            <PrivateRoute allowedRoles={["DOCTOR"]}>
+              <FeedbackPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/specialist/reviews"
+          element={
+            <PrivateRoute allowedRoles={["DOCTOR"]}>
+              <ReviewsPage />
+            </PrivateRoute>
           }
         />
 

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import AdminLayout from "../../components/layout/AdminLayout";
 import PageHeader from "../../components/common/PageHeader";
@@ -30,11 +31,17 @@ const StarRow = ({ value = 0, size = "sm" }) => {
   );
 };
 
+StarRow.propTypes = {
+  value: PropTypes.number,
+  size: PropTypes.oneOf(["sm", "lg"]),
+};
+
 export default function AdminReviews() {
   const { t } = useTranslation();
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   // Filters
   const [search, setSearch] = useState("");
@@ -60,8 +67,10 @@ export default function AdminReviews() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm("Supprimer cet avis ?")) return;
+  const handleDelete = async () => {
+    const id = deleteConfirm;
+    setDeleteConfirm(null);
+
     try {
       await deleteReview(id);
       setReviews((prev) => prev.filter((r) => r.id !== id));
@@ -86,7 +95,7 @@ export default function AdminReviews() {
     );
     return {
       count: reviews.length,
-      average: (sum / reviews.length).toFixed(1),
+      average: sum / reviews.length,
       distribution,
     };
   }, [reviews]);
@@ -125,12 +134,78 @@ export default function AdminReviews() {
     );
   };
 
+  let reviewsContent;
+  if (loading) {
+    reviewsContent = (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  } else if (filtered.length === 0) {
+    reviewsContent = (
+      <div className="card text-center py-16">
+        <p className="text-gray-400 text-sm">Aucun avis trouvé</p>
+      </div>
+    );
+  } else {
+    reviewsContent = (
+      <div className="grid gap-4 md:grid-cols-2">
+        {filtered.map((r) => (
+          <button
+            key={r.id}
+            type="button"
+            className="card hover:shadow-md transition-shadow cursor-pointer text-left w-full"
+            onClick={() => setSelected(r)}
+          >
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div className="flex items-center gap-3 min-w-0">
+                {r.author?.imageUrl ? (
+                  <img
+                    src={r.author.imageUrl}
+                    alt={r.author.fullName}
+                    className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-primary text-sm font-bold">
+                      {r.author?.fullName?.charAt(0) ?? "?"}
+                    </span>
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="font-medium text-sm text-gray-900 truncate">
+                    {r.author?.fullName ?? "Utilisateur"}
+                  </p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {getAuthorTypeBadge(r.author)}
+                    <span className="text-xs text-gray-400">
+                      {formatDate(r.createdAt)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <StarRow value={r.rating} />
+            </div>
+
+            <div className="mb-3">
+              <span className="inline-block text-xs font-medium text-gray-600 bg-gray-100 rounded-full px-2.5 py-1">
+                {getCategoryLabel(r.category)}
+              </span>
+            </div>
+
+            <p className="text-sm text-gray-700 line-clamp-3">{r.text}</p>
+          </button>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <AdminLayout>
       <div className="p-8 animate-fadeIn">
         <PageHeader
           title="Avis sur la plateforme"
-          subtitle={`${stats.count} avis · Note moyenne ${stats.average}/5`}
+          subtitle={`${stats.count} avis · Note moyenne ${stats.average.toFixed(1)}/5`}
         />
 
         {/* Stats banner */}
@@ -142,7 +217,7 @@ export default function AdminReviews() {
               </p>
               <div className="flex items-center gap-3">
                 <span className="text-3xl font-bold text-gray-900">
-                  {stats.average}
+                  {stats.average.toFixed(1)}
                 </span>
                 <StarRow value={Math.round(stats.average)} size="lg" />
               </div>
@@ -155,8 +230,7 @@ export default function AdminReviews() {
               <div className="space-y-1">
                 {[5, 4, 3, 2, 1].map((n) => {
                   const count = stats.distribution[n - 1];
-                  const pct =
-                    stats.count > 0 ? (count / stats.count) * 100 : 0;
+                  const pct = stats.count > 0 ? (count / stats.count) * 100 : 0;
                   return (
                     <div key={n} className="flex items-center gap-2">
                       <span className="text-xs text-gray-500 w-3">{n}</span>
@@ -236,63 +310,58 @@ export default function AdminReviews() {
         </div>
 
         {/* List */}
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="card text-center py-16">
-            <p className="text-gray-400 text-sm">Aucun avis trouvé</p>
-          </div>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2">
-            {filtered.map((r) => (
-              <div
-                key={r.id}
-                className="card hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => setSelected(r)}
-              >
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    {r.author?.imageUrl ? (
-                      <img
-                        src={r.author.imageUrl}
-                        alt={r.author.fullName}
-                        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-primary text-sm font-bold">
-                          {r.author?.fullName?.charAt(0) ?? "?"}
-                        </span>
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <p className="font-medium text-sm text-gray-900 truncate">
-                        {r.author?.fullName ?? "Utilisateur"}
-                      </p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        {getAuthorTypeBadge(r.author)}
-                        <span className="text-xs text-gray-400">
-                          {formatDate(r.createdAt)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <StarRow value={r.rating} />
-                </div>
+        {reviewsContent}
 
-                <div className="mb-3">
-                  <span className="inline-block text-xs font-medium text-gray-600 bg-gray-100 rounded-full px-2.5 py-1">
-                    {getCategoryLabel(r.category)}
-                  </span>
-                </div>
-
-                <p className="text-sm text-gray-700 line-clamp-3">{r.text}</p>
+        {/* Delete Confirmation Modal */}
+        <Modal
+          isOpen={!!deleteConfirm}
+          onClose={() => setDeleteConfirm(null)}
+          title="Confirmer la suppression"
+          size="sm"
+        >
+          <div className="space-y-4 py-2">
+            <div className="flex items-center justify-center">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <svg
+                  className="w-6 h-6 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
               </div>
-            ))}
+            </div>
+            <div className="text-center">
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                Supprimer cet avis ?
+              </h3>
+              <p className="text-sm text-gray-600">
+                Cette action est irréversible. L'avis sera définitivement
+                supprimé.
+              </p>
+            </div>
+            <div className="flex gap-3 pt-4">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="btn-secondary flex-1 justify-center"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleDelete}
+                className="btn-danger flex-1 justify-center"
+              >
+                Supprimer
+              </button>
+            </div>
           </div>
-        )}
+        </Modal>
 
         {/* Detail Modal */}
         <Modal
@@ -361,7 +430,7 @@ export default function AdminReviews() {
               {/* Actions */}
               <div className="flex gap-3 pt-4 border-t border-gray-100">
                 <button
-                  onClick={() => handleDelete(selected.id)}
+                  onClick={() => setDeleteConfirm(selected.id)}
                   className="btn-danger flex-1 justify-center"
                 >
                   {t("admin.delete")}
