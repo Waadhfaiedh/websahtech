@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { io } from "socket.io-client";
@@ -318,6 +318,7 @@ export default function SpecialistLayout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
   const socketRef = useRef(null);
+  const [appointmentBadge, setAppointmentBadge] = useState(0);
 
   const handleLogout = () => {
     logout();
@@ -394,6 +395,8 @@ export default function SpecialistLayout({ children }) {
       const isForeground = !document.hidden;
 
       playNotificationSound();
+      setAppointmentBadge((prev) => prev + 1);
+      window.dispatchEvent(new CustomEvent("sahtech:new_appointment"));
 
       if (isForeground) {
         toast.info(`${title}${body ? ` — ${body}` : ""}`, {
@@ -421,6 +424,12 @@ export default function SpecialistLayout({ children }) {
       socketRef.current = null;
     };
   }, [currentUserId, location.pathname, navigate, t, user?.accessToken]);
+
+  useEffect(() => {
+    if (location.pathname === "/specialist/planning") {
+      setAppointmentBadge(0);
+    }
+  }, [location.pathname]);
 
   if (specialist?.isValidated === false) {
     return (
@@ -481,7 +490,12 @@ export default function SpecialistLayout({ children }) {
               }
             >
               {icons[item.key]}
-              <span>{t(`nav.${item.key}`)}</span>
+              <span className="flex-1">{t(`nav.${item.key}`)}</span>
+              {item.key === "planning" && appointmentBadge > 0 && (
+                <span className="bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center leading-none">
+                  {appointmentBadge > 9 ? "9+" : appointmentBadge}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>

@@ -127,7 +127,6 @@ export default function ProfilePage() {
     fullName: specialist?.name || "",
     email: specialist?.email || "",
     specialty: specialist?.specialty || "",
-    clinic: specialist?.clinic || "",
     address: specialist?.location || "",
     phone: specialist?.phone || "",
     bio: specialist?.bio || "",
@@ -145,7 +144,6 @@ export default function ProfilePage() {
         fullName: specialist.name || "",
         email: specialist.email || "",
         specialty: specialist.specialty || "",
-        clinic: specialist.clinic || "",
         address: specialist.location || "",
         phone: specialist.phone || "",
         bio: specialist.bio || "",
@@ -223,7 +221,6 @@ export default function ProfilePage() {
 
       if (specialist?.role === "DOCTOR") {
         updateData.bio = form.bio;
-        updateData.clinic = form.clinic;
         updateData.location = form.address;
         updateData.speciality = form.specialty;
       }
@@ -240,7 +237,6 @@ export default function ProfilePage() {
         phone: form.phone,
         location: form.address,
         bio: form.bio,
-        clinic: form.clinic,
         specialty: form.specialty,
       });
 
@@ -328,7 +324,6 @@ export default function ProfilePage() {
     { key: "email", label: t("auth.email"), type: "email" },
     { key: "phone", label: t("profile.phone"), type: "tel" },
     { key: "specialty", label: t("profile.specialty"), type: "input" },
-    { key: "clinic", label: t("profile.clinic"), type: "input" },
     { key: "address", label: t("profile.address"), type: "input" },
   ];
 
@@ -449,6 +444,16 @@ export default function ProfilePage() {
               placeholder="Présentation de votre parcours et expertise..."
             />
           </div>
+
+          {specialist?.primaryClinic?.name && (
+            <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <p className="text-xs font-medium text-gray-500 mb-1">Clinique principale</p>
+              <p className="text-sm text-gray-800 font-semibold">{specialist.primaryClinic.name}</p>
+              {specialist.primaryClinic.address && (
+                <p className="text-xs text-gray-500 mt-0.5">{specialist.primaryClinic.address}</p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* License Info */}

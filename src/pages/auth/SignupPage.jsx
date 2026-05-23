@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -10,10 +10,13 @@ import {
 } from "react-leaflet";
 import AuthLayout from "../../components/layout/AuthLayout";
 import api from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-toastify";
 import "leaflet/dist/leaflet.css";
 
-const defaultClinicCenter = [36.8065, 10.1815];
+// Tunisia geographic center — used when no location has been picked yet
+const TUNISIA_CENTER = [33.8869, 9.5375];
+const TUNISIA_ZOOM = 7;
 
 function ClinicLocationPicker({ onSelect }) {
   useMapEvents({
@@ -40,8 +43,11 @@ const EyeIcon = ({ open }) =>
     </svg>
   );
 
+EyeIcon.propTypes = { open: PropTypes.bool.isRequired };
+
 export default function SignupPage() {
   const { t } = useTranslation();
+  const { verifyOtp } = useAuth();
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
@@ -51,6 +57,15 @@ export default function SignupPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [showClinicMap, setShowClinicMap] = useState(false);
   const [error, setError] = useState("");
+
+  // Existing clinics the doctor can link to during registration
+  const [availableClinics, setAvailableClinics] = useState([]);
+
+  // OTP verification (step 3)
+  const [signupResult, setSignupResult] = useState(null); // { userId, email }
+  const [otpCode, setOtpCode] = useState("");
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState("");
 
   const [form, setForm] = useState({
     fullName: "",
@@ -63,8 +78,8 @@ export default function SignupPage() {
     speciality: "",
     bio: "",
     licenseNumber: "",
-    clinic: "",
-    location: "",
+    clinicIds: [],
+    primaryClinicId: "",
     latitude: "",
     longitude: "",
   });
@@ -92,30 +107,63 @@ export default function SignupPage() {
     }));
   };
 
+  const handleClinicToggle = (clinicId, checked) => {
+    setForm((prev) => {
+      const newIds = checked
+        ? [...prev.clinicIds, clinicId]
+        : prev.clinicIds.filter((id) => id !== clinicId);
+      return {
+        ...prev,
+        clinicIds: newIds,
+        primaryClinicId: newIds.includes(prev.primaryClinicId)
+          ? prev.primaryClinicId
+          : "",
+      };
+    });
+  };
+
   const parsedLatitude = Number(form.latitude);
   const parsedLongitude = Number(form.longitude);
   const hasValidCoordinates =
-    Number.isFinite(parsedLatitude) && Number.isFinite(parsedLongitude);
+    form.latitude !== "" &&
+    form.longitude !== "" &&
+    Number.isFinite(parsedLatitude) &&
+    Number.isFinite(parsedLongitude);
   const mapCenter = hasValidCoordinates
     ? [parsedLatitude, parsedLongitude]
-    : defaultClinicCenter;
+    : TUNISIA_CENTER;
+  const mapZoom = hasValidCoordinates ? 13 : TUNISIA_ZOOM;
+
+  const fetchAvailableClinics = useCallback(async () => {
+    try {
+      const res = await api.get("/users/clinics");
+      const data = res.data?.data ?? res.data;
+      setAvailableClinics(Array.isArray(data) ? data : []);
+    } catch {
+      // Clinic linking is optional — silently skip if unavailable
+    }
+  }, []);
+
+  useEffect(() => {
+    if (role === "DOCTOR" && step === 2) {
+      fetchAvailableClinics();
+    }
+  }, [role, step, fetchAvailableClinics]);
 
   const validateForm = () => {
-    if (!form.fullName.trim()) return setError("Le nom complet est requis"), false;
-    if (!form.email.trim()) return setError("L'email est requis"), false;
+    if (!form.fullName.trim()) { setError("Le nom complet est requis"); return false; }
+    if (!form.email.trim()) { setError("L'email est requis"); return false; }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(form.email)) return setError("Veuillez entrer une adresse email valide"), false;
-    if (!form.password) return setError("Le mot de passe est requis"), false;
-    if (form.password.length < 6) return setError("Le mot de passe doit contenir au moins 6 caractères"), false;
-    if (form.password !== form.confirmPassword) return setError("Les mots de passe ne correspondent pas"), false;
-    if (!form.phone.trim()) return setError("Le numéro de téléphone est requis"), false;
-    if (!form.address.trim()) return setError("L'adresse est requise"), false;
-
+    if (!emailRegex.test(form.email)) { setError("Veuillez entrer une adresse email valide"); return false; }
+    if (!form.password) { setError("Le mot de passe est requis"); return false; }
+    if (form.password.length < 6) { setError("Le mot de passe doit contenir au moins 6 caractères"); return false; }
+    if (form.password !== form.confirmPassword) { setError("Les mots de passe ne correspondent pas"); return false; }
+    if (!form.phone.trim()) { setError("Le numéro de téléphone est requis"); return false; }
+    if (!form.address.trim()) { setError("L'adresse est requise"); return false; }
     if (role === "DOCTOR") {
-      if (!form.speciality.trim()) return setError("La spécialité est requise"), false;
-      if (!form.bio.trim()) return setError("La biographie est requise"), false;
-      if (!form.licenseNumber.trim()) return setError("Le numéro de licence est requis"), false;
-      if (!form.clinic.trim()) return setError("Le cabinet est requis"), false;
+      if (!form.speciality.trim()) { setError("La spécialité est requise"); return false; }
+      if (!form.bio.trim()) { setError("La biographie est requise"); return false; }
+      if (!form.licenseNumber.trim()) { setError("Le numéro de licence est requis"); return false; }
     }
     return true;
   };
@@ -141,15 +189,16 @@ export default function SignupPage() {
         signupData.speciality = form.speciality;
         signupData.bio = form.bio;
         signupData.licenseNumber = form.licenseNumber;
-        signupData.clinic = form.clinic;
-        signupData.location = form.location;
         if (form.latitude) signupData.latitude = Number.parseFloat(form.latitude);
         if (form.longitude) signupData.longitude = Number.parseFloat(form.longitude);
+        if (form.clinicIds.length > 0) signupData.clinicIds = form.clinicIds;
+        if (form.primaryClinicId) signupData.primaryClinicId = form.primaryClinicId;
       }
 
       const res = await api.post("/users/signup", signupData);
-      toast.success(res.data?.message || "Compte créé avec succès! Veuillez vous connecter.");
-      setTimeout(() => navigate("/login"), 2000);
+      const { userId, email } = res.data;
+      setSignupResult({ userId, email: email || form.email });
+      setStep(3);
     } catch (err) {
       const message = err.response?.data?.message || t("auth.error");
       setError(message);
@@ -159,11 +208,42 @@ export default function SignupPage() {
     }
   };
 
+  // ─── Step 3: verify EMAIL_VERIFICATION OTP ───────────────────
+  const handleVerifySignupOtp = async (e) => {
+    e.preventDefault();
+    setOtpError("");
+    setOtpLoading(true);
+    try {
+      const user = await verifyOtp(signupResult.userId, otpCode, "EMAIL_VERIFICATION");
+      toast.success("Email vérifié ! Bienvenue sur SAHTECK.");
+      navigate(user.role === "ADMIN" ? "/admin/dashboard" : "/specialist/dashboard");
+    } catch (err) {
+      const message = err.response?.data?.message || "Code invalide";
+      setOtpError(message);
+      toast.error(message);
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleResendSignupOtp = async () => {
+    try {
+      await api.post("/otp/send", {
+        userId: signupResult.userId,
+        email: signupResult.email,
+        type: "EMAIL_VERIFICATION",
+      });
+      toast.success("Code OTP renvoyé");
+    } catch {
+      toast.error("Échec de l'envoi du code");
+    }
+  };
+
   /* ─── Render ─────────────────────────────────────────────── */
   return (
     <AuthLayout maxWidth={step === 1 ? "md" : "lg"}>
-      {step === 1 ? (
-        // ─── Step 1: Role Selection ──────────────────────────
+      {/* ─── Step 1: Role selection ─────────────────────────── */}
+      {step === 1 && (
         <>
           <h1 className="text-center text-xl md:text-2xl font-bold text-gray-900 mb-2">
             Inscrivez-vous pour continuer
@@ -185,9 +265,7 @@ export default function SignupPage() {
                 </div>
                 <div className="flex-1">
                   <p className="font-bold text-gray-900">Administrateur</p>
-                  <p className="text-sm text-gray-500 mt-0.5">
-                    Gérez la plateforme et les utilisateurs
-                  </p>
+                  <p className="text-sm text-gray-500 mt-0.5">Gérez la plateforme et les utilisateurs</p>
                 </div>
                 <svg className="w-5 h-5 text-gray-300 group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -207,9 +285,7 @@ export default function SignupPage() {
                 </div>
                 <div className="flex-1">
                   <p className="font-bold text-gray-900">Spécialiste</p>
-                  <p className="text-sm text-gray-500 mt-0.5">
-                    Offrez vos services médicaux
-                  </p>
+                  <p className="text-sm text-gray-500 mt-0.5">Offrez vos services médicaux</p>
                 </div>
                 <svg className="w-5 h-5 text-gray-300 group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -219,14 +295,14 @@ export default function SignupPage() {
 
             <p className="text-center text-sm text-gray-600 pt-6 mt-2 border-t border-gray-100">
               Vous avez déjà un compte?{" "}
-              <Link to="/login" className="text-primary font-semibold hover:underline">
-                Se connecter
-              </Link>
+              <Link to="/login" className="text-primary font-semibold hover:underline">Se connecter</Link>
             </p>
           </div>
         </>
-      ) : (
-        // ─── Step 2: Registration Form ───────────────────────
+      )}
+
+      {/* ─── Step 2: Registration form ──────────────────────── */}
+      {step === 2 && (
         <>
           <h1 className="text-center text-xl md:text-2xl font-bold text-gray-900 mb-6">
             Créer un compte {role === "ADMIN" ? "Administrateur" : "Spécialiste"}
@@ -252,77 +328,30 @@ export default function SignupPage() {
                 </h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                      Nom complet *
-                    </label>
-                    <input
-                      type="text"
-                      value={form.fullName}
-                      onChange={(e) => handleField("fullName", e.target.value)}
-                      className="input-field"
-                      placeholder="Dr. Jean Dupont"
-                      required
-                    />
+                    <label className="block text-sm font-semibold text-gray-800 mb-1.5">Nom complet *</label>
+                    <input type="text" value={form.fullName} onChange={(e) => handleField("fullName", e.target.value)} className="input-field" placeholder="Dr. Jean Dupont" required />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                      Email *
-                    </label>
-                    <input
-                      type="email"
-                      value={form.email}
-                      onChange={(e) => handleField("email", e.target.value)}
-                      className="input-field"
-                      placeholder="docteur@sahtech.tn"
-                      required
-                    />
+                    <label className="block text-sm font-semibold text-gray-800 mb-1.5">Email *</label>
+                    <input type="email" value={form.email} onChange={(e) => handleField("email", e.target.value)} className="input-field" placeholder="docteur@sahtech.tn" required />
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                        Mot de passe *
-                      </label>
+                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">Mot de passe *</label>
                       <div className="relative">
-                        <input
-                          type={showPass ? "text" : "password"}
-                          value={form.password}
-                          onChange={(e) => handleField("password", e.target.value)}
-                          className="input-field pr-10"
-                          placeholder="••••••••"
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPass(!showPass)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                          aria-label="Toggle password visibility"
-                        >
+                        <input type={showPass ? "text" : "password"} value={form.password} onChange={(e) => handleField("password", e.target.value)} className="input-field pr-10" placeholder="••••••••" required />
+                        <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" aria-label="Toggle password visibility">
                           <EyeIcon open={showPass} />
                         </button>
                       </div>
                     </div>
-
                     <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                        Confirmer *
-                      </label>
+                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">Confirmer *</label>
                       <div className="relative">
-                        <input
-                          type={showConfirm ? "text" : "password"}
-                          value={form.confirmPassword}
-                          onChange={(e) => handleField("confirmPassword", e.target.value)}
-                          className="input-field pr-10"
-                          placeholder="••••••••"
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirm(!showConfirm)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                          aria-label="Toggle password visibility"
-                        >
+                        <input type={showConfirm ? "text" : "password"} value={form.confirmPassword} onChange={(e) => handleField("confirmPassword", e.target.value)} className="input-field pr-10" placeholder="••••••••" required />
+                        <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" aria-label="Toggle password visibility">
                           <EyeIcon open={showConfirm} />
                         </button>
                       </div>
@@ -331,27 +360,12 @@ export default function SignupPage() {
 
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                        Téléphone *
-                      </label>
-                      <input
-                        type="tel"
-                        value={form.phone}
-                        onChange={(e) => handleField("phone", e.target.value)}
-                        className="input-field"
-                        placeholder="50123456"
-                        required
-                      />
+                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">Téléphone *</label>
+                      <input type="tel" value={form.phone} onChange={(e) => handleField("phone", e.target.value)} className="input-field" placeholder="50123456" required />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                        Genre
-                      </label>
-                      <select
-                        value={form.gender}
-                        onChange={(e) => handleField("gender", e.target.value)}
-                        className="input-field"
-                      >
+                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">Genre</label>
+                      <select value={form.gender} onChange={(e) => handleField("gender", e.target.value)} className="input-field">
                         <option value="OTHER">Sélectionner...</option>
                         <option value="MALE">Homme</option>
                         <option value="FEMALE">Femme</option>
@@ -360,22 +374,13 @@ export default function SignupPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                      Adresse *
-                    </label>
-                    <input
-                      type="text"
-                      value={form.address}
-                      onChange={(e) => handleField("address", e.target.value)}
-                      className="input-field"
-                      placeholder="Rue, Ville"
-                      required
-                    />
+                    <label className="block text-sm font-semibold text-gray-800 mb-1.5">Adresse *</label>
+                    <input type="text" value={form.address} onChange={(e) => handleField("address", e.target.value)} className="input-field" placeholder="Rue, Ville" required />
                   </div>
                 </div>
               </div>
 
-              {/* Doctor section */}
+              {/* Doctor professional section */}
               {role === "DOCTOR" && (
                 <div className="pt-2">
                   <h3 className="text-xs font-bold tracking-wider text-gray-400 uppercase mb-3">
@@ -383,100 +388,92 @@ export default function SignupPage() {
                   </h3>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                        Spécialité *
-                      </label>
-                      <input
-                        type="text"
-                        value={form.speciality}
-                        onChange={(e) => handleField("speciality", e.target.value)}
-                        className="input-field"
-                        placeholder="Cardiologie"
-                        required
-                      />
+                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">Spécialité *</label>
+                      <input type="text" value={form.speciality} onChange={(e) => handleField("speciality", e.target.value)} className="input-field" placeholder="Cardiologie" required />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                        Biographie *
-                      </label>
-                      <textarea
-                        value={form.bio}
-                        onChange={(e) => handleField("bio", e.target.value)}
-                        className="input-field resize-none"
-                        rows={4}
-                        placeholder="Décrivez votre expérience et expertise..."
-                        required
-                      />
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                          Numéro de licence *
-                        </label>
-                        <input
-                          type="text"
-                          value={form.licenseNumber}
-                          onChange={(e) => handleField("licenseNumber", e.target.value)}
-                          className="input-field"
-                          placeholder="1234/12"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                          Cabinet *
-                        </label>
-                        <input
-                          type="text"
-                          value={form.clinic}
-                          onChange={(e) => handleField("clinic", e.target.value)}
-                          className="input-field"
-                          placeholder="Nom du cabinet"
-                          required
-                        />
-                      </div>
+                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">Biographie *</label>
+                      <textarea value={form.bio} onChange={(e) => handleField("bio", e.target.value)} className="input-field resize-none" rows={4} placeholder="Décrivez votre expérience et expertise..." required />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                        Localisation
-                      </label>
-                      <input
-                        type="text"
-                        value={form.location}
-                        onChange={(e) => handleField("location", e.target.value)}
-                        className="input-field"
-                        placeholder="Tunis, Tunisie"
-                      />
+                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">Numéro de licence *</label>
+                      <input type="text" value={form.licenseNumber} onChange={(e) => handleField("licenseNumber", e.target.value)} className="input-field" placeholder="1234/12" required />
                     </div>
 
+                    {/* Link to existing clinics (optional) */}
+                    {availableClinics.length > 0 && (
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-800 mb-2">
+                          Lier à des cliniques existantes{" "}
+                          <span className="text-gray-400 font-normal">(optionnel)</span>
+                        </label>
+                        <div className="space-y-1.5 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                          {availableClinics.map((clinic) => (
+                            <label
+                              key={clinic.clinicId}
+                              className="flex items-center gap-2.5 cursor-pointer hover:bg-gray-50 rounded p-1"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={form.clinicIds.includes(clinic.clinicId)}
+                                onChange={(e) => handleClinicToggle(clinic.clinicId, e.target.checked)}
+                                className="rounded border-gray-300 text-primary"
+                              />
+                              <span className="text-sm text-gray-700 font-medium">{clinic.name}</span>
+                              {clinic.address && (
+                                <span className="text-xs text-gray-400 truncate">— {clinic.address}</span>
+                              )}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {form.clinicIds.length > 0 && (
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-800 mb-1.5">
+                          Clinique principale{" "}
+                          <span className="text-gray-400 font-normal">(optionnel)</span>
+                        </label>
+                        <select
+                          value={form.primaryClinicId}
+                          onChange={(e) => handleField("primaryClinicId", e.target.value)}
+                          className="input-field"
+                        >
+                          <option value="">— Aucune clinique principale —</option>
+                          {availableClinics
+                            .filter((c) => form.clinicIds.includes(c.clinicId))
+                            .map((c) => (
+                              <option key={c.clinicId} value={c.clinicId}>{c.name}</option>
+                            ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {/* Location picker */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                          Latitude
-                        </label>
+                        <label className="block text-sm font-semibold text-gray-800 mb-1.5">Latitude</label>
                         <input
                           type="number"
                           step="any"
                           value={form.latitude}
+                          onChange={(e) => handleField("latitude", e.target.value)}
                           className="input-field"
                           placeholder="Cliquer sur la carte"
-                          readOnly
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                          Longitude
-                        </label>
+                        <label className="block text-sm font-semibold text-gray-800 mb-1.5">Longitude</label>
                         <input
                           type="number"
                           step="any"
                           value={form.longitude}
+                          onChange={(e) => handleField("longitude", e.target.value)}
                           className="input-field"
                           placeholder="Cliquer sur la carte"
-                          readOnly
                         />
                       </div>
                     </div>
@@ -503,7 +500,7 @@ export default function SignupPage() {
                         <div className="h-72 w-full overflow-hidden rounded-lg border border-gray-200">
                           <MapContainer
                             center={mapCenter}
-                            zoom={hasValidCoordinates ? 13 : 6}
+                            zoom={mapZoom}
                             className="h-full w-full"
                             scrollWheelZoom
                           >
@@ -557,10 +554,80 @@ export default function SignupPage() {
 
               <p className="text-center text-sm text-gray-600 pt-6 mt-2 border-t border-gray-100">
                 Vous avez déjà un compte?{" "}
-                <Link to="/login" className="text-primary font-semibold hover:underline">
-                  Se connecter
-                </Link>
+                <Link to="/login" className="text-primary font-semibold hover:underline">Se connecter</Link>
               </p>
+            </form>
+          </div>
+        </>
+      )}
+
+      {/* ─── Step 3: Email OTP verification ─────────────────── */}
+      {step === 3 && (
+        <>
+          <h1 className="text-center text-xl md:text-2xl font-bold text-gray-900 mb-6">
+            Vérification de l'email
+          </h1>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 md:p-10">
+            <div className="mb-6 text-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <p className="text-sm text-gray-600">
+                Un code de vérification a été envoyé à{" "}
+                <span className="font-semibold text-gray-800">{signupResult?.email}</span>
+              </p>
+            </div>
+
+            <form onSubmit={handleVerifySignupOtp} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-1.5">
+                  Code OTP
+                </label>
+                <input
+                  type="text"
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value)}
+                  className="input-field text-center text-2xl tracking-[0.5em] font-semibold"
+                  placeholder="000000"
+                  maxLength={6}
+                  required
+                />
+              </div>
+
+              {otpError && (
+                <div className="flex items-start gap-2 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+                  <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>{otpError}</span>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={otpLoading}
+                className="btn-primary w-full justify-center py-3 text-base disabled:opacity-70"
+              >
+                {otpLoading ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{" "}
+                    Vérification...
+                  </>
+                ) : (
+                  "Vérifier le code"
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResendSignupOtp}
+                className="w-full text-center text-sm text-primary hover:underline py-2"
+              >
+                Renvoyer le code
+              </button>
             </form>
           </div>
         </>

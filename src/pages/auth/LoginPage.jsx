@@ -96,7 +96,7 @@ export default function LoginPage() {
 
   const handleResendOtp = async () => {
     try {
-      const res = await api.post("/users/resend-otp", {
+      const res = await api.post("/otp/send", {
         userId,
         email: userEmail,
         type: "TWO_FACTOR",

@@ -176,7 +176,7 @@ export default function AdminSpecialists() {
                       {sp.email}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
-                      {sp.specialist?.clinic ?? "—"}
+                      {sp.specialist?.primaryClinic?.name ?? "—"}
                     </td>
                     <td className="px-6 py-4">
                       <Badge
@@ -272,7 +272,7 @@ export default function AdminSpecialists() {
                 {[
                   { label: "Email", val: selected.email },
                   { label: "Téléphone", val: selected.phone ?? "—" },
-                  { label: "Cabinet", val: selected.specialist?.clinic ?? "—" },
+                  { label: "Cabinet", val: selected.specialist?.primaryClinic?.name ?? "—" },
                   {
                     label: "Localisation",
                     val: selected.specialist?.location ?? "—",

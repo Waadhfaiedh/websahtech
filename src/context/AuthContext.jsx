@@ -64,7 +64,7 @@ export function AuthProvider({ children }) {
           security: data.security ?? "SFA",
           // doctor specific
           specialty: data.specialist?.speciality ?? "",
-          clinic: data.specialist?.clinic ?? "",
+          primaryClinic: data.specialist?.primaryClinic ?? null,
           bio: data.specialist?.bio ?? "",
           licenseNumber: data.specialist?.licenseNumber ?? "",
           isValidated: data.specialist?.isValidated ?? false,
@@ -100,10 +100,11 @@ export function AuthProvider({ children }) {
   );
 
   const verifyOtp = useCallback(
-    async (userId, code) => {
+    async (userId, code, type = "TWO_FACTOR") => {
       const { data } = await api.post("/users/signin/verify", {
         userId,
         code,
+        type,
       });
       localStorage.setItem("sahtech_user", JSON.stringify(data));
       setUser(data);

@@ -53,7 +53,7 @@ export default function SearchPage() {
       imageUrl: item.user?.imageUrl || "",
       specialty: item.speciality || "-",
       bio: item.bio || "Aucune biographie disponible",
-      clinic: item.clinic || "-",
+      clinic: item.primaryClinic?.name || "-",
       location: item.location || "-",
       rating: Number(item.rating || 0),
       reviewsCount: Number(item.reviewsCount || 0),

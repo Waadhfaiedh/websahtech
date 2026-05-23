@@ -123,7 +123,7 @@ export default function SpecialistDashboard() {
               <p className="text-blue-100 text-sm">{t("dashboard.welcome")},</p>
               <h1 className="text-2xl font-bold">{specialist?.name}</h1>
               <p className="text-blue-200 text-sm mt-0.5">
-                {specialist?.specialty} · {specialist?.clinic}
+                {specialist?.specialty}{specialist?.primaryClinic?.name ? ` · ${specialist.primaryClinic.name}` : ""}
               </p>
             </div>
           </div>

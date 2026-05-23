@@ -22,7 +22,7 @@ export default function ClinicsPage() {
     try {
       setLoading(true);
       setError(null);
-      const res = await api.get("/doctors/clinics");
+      const res = await api.get("/users/clinics");
       const data = res.data?.data ?? res.data;
       setClinics(Array.isArray(data) ? data : []);
     } catch (err) {

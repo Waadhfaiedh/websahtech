@@ -169,6 +169,12 @@ export default function PlanningPage() {
     }
   }, [selectedDayKey]);
 
+  useEffect(() => {
+    const handler = () => fetchAppointments();
+    window.addEventListener("sahtech:new_appointment", handler);
+    return () => window.removeEventListener("sahtech:new_appointment", handler);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const slotsByDay = useMemo(() => {
     return slots.reduce((acc, slot) => {
       if (!acc[slot.dayKey]) acc[slot.dayKey] = [];
