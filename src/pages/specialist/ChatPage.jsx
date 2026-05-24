@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { io } from "socket.io-client";
 import { toast } from "react-toastify";
@@ -50,6 +51,7 @@ function formatMessage(message, currentUserId) {
 export default function ChatPage() {
   const { t } = useTranslation();
   const { user, specialist } = useAuth();
+  const location = useLocation();
 
   const currentUserId = getCurrentUserId(user, specialist);
   const currentUserRole = user?.role || "DOCTOR";
@@ -78,6 +80,13 @@ export default function ChatPage() {
   useEffect(() => {
     activeConvIdRef.current = activeConvId;
   }, [activeConvId]);
+
+  // Auto-open AI assistant when navigated here with { state: { openAi: true } }
+  useEffect(() => {
+    if (location.state?.openAi) {
+      setActiveConvId(AI_CONV_ID);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     currentUserIdRef.current = currentUserId;
@@ -618,7 +627,6 @@ export default function ChatPage() {
             <p className="font-semibold text-gray-900">
               {activeConv.counterpartName}
             </p>
-            <p className="text-xs text-green-500 font-medium">En ligne</p>
           </div>
         </div>
 
@@ -818,7 +826,6 @@ export default function ChatPage() {
                         </span>
                       )}
                     </div>
-                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-white" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center">
@@ -839,19 +846,6 @@ export default function ChatPage() {
         <div className="flex-1 flex flex-col bg-gray-50">{chatContent}</div>
       </div>
 
-      {/* Floating shortcut to the AI assistant conversation */}
-      {!isAiActive && (
-        <button
-          onClick={() => setActiveConvId(AI_CONV_ID)}
-          aria-label="Assistant IA"
-          className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 text-white shadow-lg shadow-purple-500/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-          </svg>
-        </button>
-      )}
     </SpecialistLayout>
   );
 }

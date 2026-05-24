@@ -1,46 +1,24 @@
+// Redesigned following SAHTECK brand guidelines
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import Logo from "./Logo";
 import LanguageSwitcher from "./LanguageSwitcher";
+import { ShieldAlert, Clock, LogOut } from "lucide-react";
 
-const variantStyles = {
+const variantConfig = {
   admin: {
-    badge: "bg-rose-100 text-rose-700",
-    accent: "from-rose-500 to-amber-500",
-    icon: (
-      <svg
-        className="w-8 h-8"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M12 11c1.657 0 3-1.567 3-3.5S13.657 4 12 4 9 5.567 9 7.5 10.343 11 12 11zm0 0c-4.418 0-8 2.015-8 4.5V18h16v-2.5c0-2.485-3.582-4.5-8-4.5z"
-        />
-      </svg>
-    ),
+    badgeBg: "#FEF2F2",
+    badgeColor: "#EF4444",
+    iconBg: "linear-gradient(135deg, #EF4444, #F59E0B)",
+    blobColor: "rgba(239,68,68,0.10)",
+    Icon: ShieldAlert,
   },
   specialist: {
-    badge: "bg-amber-100 text-amber-700",
-    accent: "from-amber-500 to-orange-500",
-    icon: (
-      <svg
-        className="w-8 h-8"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M12 8v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
-        />
-      </svg>
-    ),
+    badgeBg: "#FFFBEB",
+    badgeColor: "#F59E0B",
+    iconBg: "linear-gradient(135deg, #F59E0B, #F97316)",
+    blobColor: "rgba(245,158,11,0.10)",
+    Icon: Clock,
   },
 };
 
@@ -52,52 +30,144 @@ export default function AccessRestriction({
   onAction,
 }) {
   const { t } = useTranslation();
-  const styles = variantStyles[variant] || variantStyles.specialist;
+  const config = variantConfig[variant] ?? variantConfig.specialist;
+  const { Icon, iconBg, badgeBg, badgeColor, blobColor } = config;
 
   return (
-    <div className="min-h-screen bg-surface relative overflow-hidden flex items-center justify-center p-6">
-      <div className="absolute inset-0 opacity-60 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.95),_rgba(241,245,249,0.85)_45%,_rgba(226,232,240,0.9)_100%)]" />
-      <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-primary/10 blur-3xl" />
-      <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-amber-300/20 blur-3xl" />
+    <div
+      className="h-screen w-screen flex flex-col relative overflow-hidden"
+      style={{ background: "#F8FAFF" }}
+    >
+      {/* Decorative blobs */}
+      <div
+        className="absolute -top-32 -right-32 w-96 h-96 rounded-full blur-3xl pointer-events-none"
+        style={{ background: "rgba(0,82,255,0.07)" }}
+      />
+      <div
+        className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full blur-3xl pointer-events-none"
+        style={{ background: blobColor }}
+      />
 
-      <div className="relative z-10 w-full max-w-2xl overflow-hidden rounded-[2rem] border border-white/70 bg-white/95 shadow-[0_30px_90px_rgba(15,23,42,0.15)] backdrop-blur">
-        <div className="flex items-center justify-between gap-4 border-b border-gray-100 px-6 py-5">
-          <Logo size="sm" />
-          <LanguageSwitcher compact />
-        </div>
-
-        <div className="px-6 py-10 md:px-10 md:py-12 text-center">
+      {/* Card — centred, never taller than the viewport */}
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4">
+        <div
+          className="w-full max-w-md bg-white rounded-2xl overflow-hidden"
+          style={{ boxShadow: "0 2px 40px rgba(0,82,255,0.10)" }}
+        >
+          {/* Brand accent strip */}
           <div
-            className={`mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${styles.accent} text-white shadow-lg`}
+            className="h-1.5 w-full"
+            style={{ background: "linear-gradient(135deg, #0052FF, #00A3FF)" }}
+          />
+
+          {/* Header bar */}
+          <div
+            className="flex items-center justify-between px-6 py-3"
+            style={{ borderBottom: "1px solid #F1F5F9" }}
           >
-            {styles.icon}
+            <Logo size="sm" />
+            <LanguageSwitcher compact />
           </div>
 
-          <span
-            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${styles.badge}`}
-          >
-            {variant === "admin"
-              ? t("access.admin_badge")
-              : t("access.specialist_badge")}
-          </span>
+          {/* Body */}
+          <div className="px-8 py-6 text-center">
+            {/* Icon */}
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+              style={{ background: iconBg, boxShadow: "0 6px 18px rgba(0,0,0,0.12)" }}
+            >
+              <Icon size={28} color="white" strokeWidth={1.75} />
+            </div>
 
-          <h1 className="mt-5 text-3xl font-bold tracking-tight text-gray-900 md:text-4xl">
-            {title}
-          </h1>
+            {/* Badge */}
+            <span
+              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-3"
+              style={{ background: badgeBg, color: badgeColor }}
+            >
+              {variant === "admin"
+                ? t("access.admin_badge")
+                : t("access.specialist_badge")}
+            </span>
 
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-gray-600 md:text-base">
-            {message}
-          </p>
+            {/* Title */}
+            <h1
+              className="text-xl font-bold mb-2 leading-tight"
+              style={{ color: "#0A0F1E" }}
+            >
+              {title}
+            </h1>
 
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            {/* Message */}
+            <p
+              className="text-sm leading-relaxed mx-auto max-w-xs"
+              style={{ color: "#64748B" }}
+            >
+              {message}
+            </p>
+
+            {/* Steps hint */}
+            <div
+              className="mt-5 mb-5 rounded-xl p-3 text-left"
+              style={{ background: "#F8FAFF", border: "1.5px solid #E2E8F0" }}
+            >
+              {[
+                {
+                  id: "received",
+                  label: t("access.step1", "Votre demande a été reçue"),
+                  badge: "✓",
+                  badgeStyle: { background: "#ECFDF5", color: "#10B981" },
+                  textStyle: { color: "#0A0F1E", fontWeight: 400 },
+                },
+                {
+                  id: "reviewing",
+                  label: t("access.step2", "En cours d'examen par notre équipe"),
+                  badge: "2",
+                  badgeStyle: { background: "linear-gradient(135deg, #0052FF, #00A3FF)", color: "white" },
+                  textStyle: { color: "#0A0F1E", fontWeight: 600 },
+                },
+                {
+                  id: "notified",
+                  label: t("access.step3", "Vous serez notifié par email"),
+                  badge: "3",
+                  badgeStyle: { background: "#F1F5F9", color: "#94A3B8" },
+                  textStyle: { color: "#94A3B8", fontWeight: 400 },
+                },
+              ].map(({ id, label, badge, badgeStyle, textStyle }) => (
+                <div key={id} className="flex items-center gap-3 py-1.5">
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold"
+                    style={badgeStyle}
+                  >
+                    {badge}
+                  </div>
+                  <span className="text-sm" style={textStyle}>
+                    {label}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Action button */}
             <button
               onClick={onAction}
-              className={`inline-flex items-center justify-center rounded-xl bg-gradient-to-r ${styles.accent} px-5 py-3 text-sm font-semibold text-white shadow-md transition-transform hover:-translate-y-0.5`}
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold text-white transition-all duration-200"
+              style={{
+                background: "linear-gradient(135deg, #0052FF, #00A3FF)",
+                boxShadow: "0 4px 14px rgba(0,82,255,0.30)",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
             >
+              <LogOut size={16} />
               {actionLabel || t("nav.logout")}
             </button>
           </div>
         </div>
+
+        {/* Footer note */}
+        <p className="mt-4 text-xs" style={{ color: "#94A3B8" }}>
+          © 2026 SAHTECH — {t("landing.footer.rights", "Tous droits réservés")}
+        </p>
       </div>
     </div>
   );

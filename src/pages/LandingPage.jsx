@@ -111,13 +111,6 @@ function Hero() {
       </div>
 
       <div className="max-w-5xl mx-auto text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/80 backdrop-blur-sm rounded-full border border-gray-200/60 shadow-sm mb-6">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-xs font-medium text-gray-700">
-            {t("landing.hero.badge")}
-          </span>
-        </div>
-
         <h1 className="text-5xl md:text-7xl font-bold text-gray-900 leading-[1.05] tracking-tight mb-6">
           {t("landing.hero.title_1")}
           <br />

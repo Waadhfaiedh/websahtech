@@ -1,3 +1,4 @@
+// Redesigned following SAHTECK brand guidelines
 import { useCallback, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useNavigate, Link } from "react-router-dom";
@@ -13,6 +14,27 @@ import api from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-toastify";
 import "leaflet/dist/leaflet.css";
+import {
+  Zap,
+  Stethoscope,
+  ChevronRight,
+  ArrowLeft,
+  User,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  Phone,
+  MapPin,
+  FileText,
+  Building2,
+  AlertCircle,
+  Loader2,
+  Shield,
+  RefreshCw,
+  Map,
+  CheckCircle2,
+} from "lucide-react";
 
 // Tunisia geographic center — used when no location has been picked yet
 const TUNISIA_CENTER = [33.8869, 9.5375];
@@ -31,20 +53,156 @@ ClinicLocationPicker.propTypes = {
   onSelect: PropTypes.func.isRequired,
 };
 
-const EyeIcon = ({ open }) =>
-  open ? (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-    </svg>
-  ) : (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-    </svg>
+/* ── Shared input style helpers ─────────────────────────────── */
+const inputBase =
+  "w-full py-3 rounded-lg text-sm outline-none transition-all duration-200";
+const inputStyle = {
+  background: "#F1F5F9",
+  color: "#0A0F1E",
+  border: "1.5px solid transparent",
+};
+const handleFocus = (e) => (e.target.style.border = "1.5px solid #0052FF");
+const handleBlur  = (e) => (e.target.style.border = "1.5px solid transparent");
+
+/* ── Step progress indicator ────────────────────────────────── */
+function StepIndicator({ current }) {
+  return (
+    <div className="flex items-center justify-center gap-1 mb-8">
+      {[1, 2, 3].map((s) => (
+        <div key={s} className="flex items-center">
+          <div
+            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300"
+            style={
+              s < current
+                ? { background: "#10B981", color: "white" }
+                : s === current
+                ? { background: "linear-gradient(135deg, #0052FF, #00A3FF)", color: "white" }
+                : { background: "#F1F5F9", color: "#94A3B8" }
+            }
+          >
+            {s < current ? <CheckCircle2 size={14} /> : s}
+          </div>
+          {s < 3 && (
+            <div
+              className="w-10 h-0.5 mx-1 transition-all duration-300"
+              style={{ background: s < current ? "#10B981" : "#E2E8F0" }}
+            />
+          )}
+        </div>
+      ))}
+    </div>
   );
+}
+StepIndicator.propTypes = { current: PropTypes.number.isRequired };
 
-EyeIcon.propTypes = { open: PropTypes.bool.isRequired };
+/* ── Labeled input wrapper with optional leading icon ────────── */
+function InputField({ label, icon: Icon, children }) {
+  return (
+    <div>
+      <label
+        className="block text-xs font-semibold mb-1.5 uppercase tracking-wide"
+        style={{ color: "#64748B" }}
+      >
+        {label}
+      </label>
+      <div className="relative">
+        {Icon && (
+          <span
+            className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+            style={{ color: "#94A3B8" }}
+          >
+            <Icon size={16} />
+          </span>
+        )}
+        {children}
+      </div>
+    </div>
+  );
+}
+InputField.propTypes = {
+  label: PropTypes.string.isRequired,
+  icon: PropTypes.elementType,
+  children: PropTypes.node.isRequired,
+};
 
+/* ── Section header with blue accent bar ────────────────────── */
+function SectionHeader({ label }) {
+  return (
+    <div className="flex items-center gap-2.5 mb-4">
+      <div
+        className="h-4 w-1 rounded-full flex-shrink-0"
+        style={{ background: "linear-gradient(135deg, #0052FF, #00A3FF)" }}
+      />
+      <span
+        className="text-xs font-bold tracking-widest uppercase"
+        style={{ color: "#64748B" }}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+SectionHeader.propTypes = { label: PropTypes.string.isRequired };
+
+/* ── Error banner ───────────────────────────────────────────── */
+function ErrorBanner({ message }) {
+  if (!message) return null;
+  return (
+    <div
+      className="flex items-start gap-2.5 p-3 rounded-lg text-sm"
+      style={{ background: "#FEF2F2", color: "#EF4444" }}
+    >
+      <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+      <span>{message}</span>
+    </div>
+  );
+}
+ErrorBanner.propTypes = { message: PropTypes.string };
+
+/* ── Primary submit button ──────────────────────────────────── */
+function PrimaryButton({ loading, disabled, children, ...props }) {
+  const isDisabled = loading || disabled;
+  return (
+    <button
+      disabled={isDisabled}
+      className="w-full flex items-center justify-center gap-2 py-3 rounded-full text-sm font-semibold text-white transition-all duration-200"
+      style={{
+        background: isDisabled
+          ? "#94A3B8"
+          : "linear-gradient(135deg, #0052FF, #00A3FF)",
+        cursor: isDisabled ? "not-allowed" : "pointer",
+        boxShadow: isDisabled ? "none" : "0 4px 14px rgba(0,82,255,0.30)",
+      }}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+PrimaryButton.propTypes = {
+  loading: PropTypes.bool,
+  disabled: PropTypes.bool,
+  children: PropTypes.node.isRequired,
+};
+
+/* ── Card wrapper ───────────────────────────────────────────── */
+function Card({ children }) {
+  return (
+    <div
+      className="bg-white rounded-2xl overflow-hidden"
+      style={{ boxShadow: "0 2px 24px rgba(0,82,255,0.10)" }}
+    >
+      <div
+        className="h-1.5 w-full"
+        style={{ background: "linear-gradient(135deg, #0052FF, #00A3FF)" }}
+      />
+      <div className="p-8 md:p-10">{children}</div>
+    </div>
+  );
+}
+Card.propTypes = { children: PropTypes.node.isRequired };
+
+/* ════════════════════════════════════════════════════════════ */
 export default function SignupPage() {
   const { t } = useTranslation();
   const { verifyOtp } = useAuth();
@@ -58,7 +216,6 @@ export default function SignupPage() {
   const [showClinicMap, setShowClinicMap] = useState(false);
   const [error, setError] = useState("");
 
-  // Existing clinics the doctor can link to during registration
   const [availableClinics, setAvailableClinics] = useState([]);
 
   // OTP verification (step 3)
@@ -239,502 +396,627 @@ export default function SignupPage() {
     }
   };
 
-  /* ─── Render ─────────────────────────────────────────────── */
+  /* ═══════════════════════════════════════════════════════════ */
   return (
     <AuthLayout maxWidth={step === 1 ? "md" : "lg"}>
+
       {/* ─── Step 1: Role selection ─────────────────────────── */}
       {step === 1 && (
-        <>
-          <h1 className="text-center text-xl md:text-2xl font-bold text-gray-900 mb-2">
-            {t("signup.title")}
-          </h1>
-          <p className="text-center text-sm text-gray-500 mb-6">
-            {t("signup.subtitle")}
-          </p>
+        <Card>
+          <StepIndicator current={1} />
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold mb-2" style={{ color: "#0A0F1E" }}>
+              {t("signup.title")}
+            </h1>
+            <p className="text-sm" style={{ color: "#64748B" }}>
+              {t("signup.subtitle")}
+            </p>
+          </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 md:p-10 space-y-4">
+          <div className="space-y-3">
+            {/* Admin card */}
             <button
               onClick={() => handleSelectRole("ADMIN")}
-              className="w-full p-5 border-2 border-gray-200 rounded-xl hover:border-primary hover:bg-primary/5 transition-all text-left group"
+              className="w-full p-5 rounded-xl text-left transition-all duration-200 bg-white"
+              style={{ border: "1.5px solid #E2E8F0" }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.border = "1.5px solid #0052FF";
+                e.currentTarget.style.background = "#F0F5FF";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.border = "1.5px solid #E2E8F0";
+                e.currentTarget.style.background = "white";
+              }}
             >
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center group-hover:bg-red-100 transition-colors">
-                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "#FEF2F2" }}
+                >
+                  <Zap size={22} color="#EF4444" />
                 </div>
-                <div className="flex-1">
-                  <p className="font-bold text-gray-900">{t("signup.admin_title")}</p>
-                  <p className="text-sm text-gray-500 mt-0.5">{t("signup.admin_desc")}</p>
+                <div className="flex-1 min-w-0 text-left">
+                  <p className="font-bold text-sm" style={{ color: "#0A0F1E" }}>
+                    {t("signup.admin_title")}
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: "#64748B" }}>
+                    {t("signup.admin_desc")}
+                  </p>
                 </div>
-                <svg className="w-5 h-5 text-gray-300 group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
+                <ChevronRight size={18} style={{ color: "#CBD5E1", flexShrink: 0 }} />
               </div>
             </button>
 
+            {/* Doctor card */}
             <button
               onClick={() => handleSelectRole("DOCTOR")}
-              className="w-full p-5 border-2 border-gray-200 rounded-xl hover:border-primary hover:bg-primary/5 transition-all text-left group"
+              className="w-full p-5 rounded-xl text-left transition-all duration-200 bg-white"
+              style={{ border: "1.5px solid #E2E8F0" }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.border = "1.5px solid #0052FF";
+                e.currentTarget.style.background = "#F0F5FF";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.border = "1.5px solid #E2E8F0";
+                e.currentTarget.style.background = "white";
+              }}
             >
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                  </svg>
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "#EFF6FF" }}
+                >
+                  <Stethoscope size={22} color="#0052FF" />
                 </div>
-                <div className="flex-1">
-                  <p className="font-bold text-gray-900">{t("signup.specialist_title")}</p>
-                  <p className="text-sm text-gray-500 mt-0.5">{t("signup.specialist_desc")}</p>
+                <div className="flex-1 min-w-0 text-left">
+                  <p className="font-bold text-sm" style={{ color: "#0A0F1E" }}>
+                    {t("signup.specialist_title")}
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: "#64748B" }}>
+                    {t("signup.specialist_desc")}
+                  </p>
                 </div>
-                <svg className="w-5 h-5 text-gray-300 group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
+                <ChevronRight size={18} style={{ color: "#CBD5E1", flexShrink: 0 }} />
               </div>
             </button>
+          </div>
 
-            <p className="text-center text-sm text-gray-600 pt-6 mt-2 border-t border-gray-100">
+          <div className="mt-6 pt-6 border-t border-gray-100 text-center">
+            <p className="text-sm" style={{ color: "#64748B" }}>
               {t("signup.already_account")}{" "}
-              <Link to="/login" className="text-primary font-semibold hover:underline">
+              <Link
+                to="/login"
+                className="font-semibold hover:underline transition-colors duration-200"
+                style={{ color: "#0052FF" }}
+              >
                 {t("signup.login_link")}
               </Link>
             </p>
           </div>
-        </>
+        </Card>
       )}
 
       {/* ─── Step 2: Registration form ──────────────────────── */}
       {step === 2 && (
-        <>
-          <h1 className="text-center text-xl md:text-2xl font-bold text-gray-900 mb-6">
-            {role === "ADMIN" ? t("signup.create_admin") : t("signup.create_specialist")}
-          </h1>
+        <Card>
+          <StepIndicator current={2} />
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 md:p-10">
+          {/* Header row */}
+          <div className="flex items-center gap-3 mb-8">
             <button
               type="button"
               onClick={handleBackToRoleSelection}
-              className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-6"
+              className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200"
+              style={{ background: "#F1F5F9" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#E2E8F0")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "#F1F5F9")}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              {t("signup.previous_step")}
+              <ArrowLeft size={16} style={{ color: "#64748B" }} />
             </button>
+            <h1 className="text-xl font-bold" style={{ color: "#0A0F1E" }}>
+              {role === "ADMIN" ? t("signup.create_admin") : t("signup.create_specialist")}
+            </h1>
+          </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Personal section */}
-              <div>
-                <h3 className="text-xs font-bold tracking-wider text-gray-400 uppercase mb-3">
-                  {t("signup.personal_info")}
-                </h3>
-                <div className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* ── Personal info ── */}
+            <div>
+              <SectionHeader label={t("signup.personal_info")} />
+              <div className="space-y-4">
+                <InputField label={`${t("signup.full_name")} *`} icon={User}>
+                  <input
+                    type="text"
+                    value={form.fullName}
+                    onChange={(e) => handleField("fullName", e.target.value)}
+                    placeholder={t("signup.full_name_placeholder")}
+                    required
+                    className={`${inputBase} pl-10 pr-4`}
+                    style={inputStyle}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
+                  />
+                </InputField>
+
+                <InputField label={`${t("signup.email")} *`} icon={Mail}>
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => handleField("email", e.target.value)}
+                    placeholder={t("signup.email_placeholder")}
+                    required
+                    className={`${inputBase} pl-10 pr-4`}
+                    style={inputStyle}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
+                  />
+                </InputField>
+
+                {/* Password row */}
+                <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                      {t("signup.full_name")} *
+                    <label
+                      className="block text-xs font-semibold mb-1.5 uppercase tracking-wide"
+                      style={{ color: "#64748B" }}
+                    >
+                      {t("signup.password")} *
                     </label>
-                    <input
-                      type="text"
-                      value={form.fullName}
-                      onChange={(e) => handleField("fullName", e.target.value)}
-                      className="input-field"
-                      placeholder={t("signup.full_name_placeholder")}
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                      {t("signup.email")} *
-                    </label>
-                    <input
-                      type="email"
-                      value={form.email}
-                      onChange={(e) => handleField("email", e.target.value)}
-                      className="input-field"
-                      placeholder={t("signup.email_placeholder")}
-                      required
-                    />
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                        {t("signup.password")} *
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showPass ? "text" : "password"}
-                          value={form.password}
-                          onChange={(e) => handleField("password", e.target.value)}
-                          className="input-field pr-10"
-                          placeholder="••••••••"
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPass(!showPass)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                          aria-label="Toggle password visibility"
-                        >
-                          <EyeIcon open={showPass} />
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                        {t("signup.confirm_password")} *
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showConfirm ? "text" : "password"}
-                          value={form.confirmPassword}
-                          onChange={(e) => handleField("confirmPassword", e.target.value)}
-                          className="input-field pr-10"
-                          placeholder="••••••••"
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirm(!showConfirm)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                          aria-label="Toggle password visibility"
-                        >
-                          <EyeIcon open={showConfirm} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                        {t("signup.phone")} *
-                      </label>
-                      <input
-                        type="tel"
-                        value={form.phone}
-                        onChange={(e) => handleField("phone", e.target.value)}
-                        className="input-field"
-                        placeholder={t("signup.phone_placeholder")}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                        {t("signup.gender")}
-                      </label>
-                      <select
-                        value={form.gender}
-                        onChange={(e) => handleField("gender", e.target.value)}
-                        className="input-field"
+                    <div className="relative">
+                      <span
+                        className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                        style={{ color: "#94A3B8" }}
                       >
-                        <option value="OTHER">{t("signup.gender_select")}</option>
-                        <option value="MALE">{t("signup.gender_male")}</option>
-                        <option value="FEMALE">{t("signup.gender_female")}</option>
-                      </select>
+                        <Lock size={16} />
+                      </span>
+                      <input
+                        type={showPass ? "text" : "password"}
+                        value={form.password}
+                        onChange={(e) => handleField("password", e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        className={`${inputBase} pl-10 pr-11`}
+                        style={inputStyle}
+                        onFocus={handleFocus}
+                        onBlur={handleBlur}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPass(!showPass)}
+                        aria-label="Toggle password"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors duration-200"
+                        style={{ color: "#94A3B8" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = "#0052FF")}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = "#94A3B8")}
+                      >
+                        {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                      {t("signup.address")} *
+                    <label
+                      className="block text-xs font-semibold mb-1.5 uppercase tracking-wide"
+                      style={{ color: "#64748B" }}
+                    >
+                      {t("signup.confirm_password")} *
                     </label>
-                    <input
-                      type="text"
-                      value={form.address}
-                      onChange={(e) => handleField("address", e.target.value)}
-                      className="input-field"
-                      placeholder={t("signup.address_placeholder")}
-                      required
-                    />
+                    <div className="relative">
+                      <span
+                        className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                        style={{ color: "#94A3B8" }}
+                      >
+                        <Lock size={16} />
+                      </span>
+                      <input
+                        type={showConfirm ? "text" : "password"}
+                        value={form.confirmPassword}
+                        onChange={(e) => handleField("confirmPassword", e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        className={`${inputBase} pl-10 pr-11`}
+                        style={inputStyle}
+                        onFocus={handleFocus}
+                        onBlur={handleBlur}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirm(!showConfirm)}
+                        aria-label="Toggle password"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors duration-200"
+                        style={{ color: "#94A3B8" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = "#0052FF")}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = "#94A3B8")}
+                      >
+                        {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
+
+                {/* Phone + gender */}
+                <div className="grid md:grid-cols-2 gap-4">
+                  <InputField label={`${t("signup.phone")} *`} icon={Phone}>
+                    <input
+                      type="tel"
+                      value={form.phone}
+                      onChange={(e) => handleField("phone", e.target.value)}
+                      placeholder={t("signup.phone_placeholder")}
+                      required
+                      className={`${inputBase} pl-10 pr-4`}
+                      style={inputStyle}
+                      onFocus={handleFocus}
+                      onBlur={handleBlur}
+                    />
+                  </InputField>
+
+                  <div>
+                    <label
+                      className="block text-xs font-semibold mb-1.5 uppercase tracking-wide"
+                      style={{ color: "#64748B" }}
+                    >
+                      {t("signup.gender")}
+                    </label>
+                    <select
+                      value={form.gender}
+                      onChange={(e) => handleField("gender", e.target.value)}
+                      className={`${inputBase} px-4`}
+                      style={inputStyle}
+                      onFocus={handleFocus}
+                      onBlur={handleBlur}
+                    >
+                      <option value="OTHER">{t("signup.gender_select")}</option>
+                      <option value="MALE">{t("signup.gender_male")}</option>
+                      <option value="FEMALE">{t("signup.gender_female")}</option>
+                    </select>
+                  </div>
+                </div>
+
+                <InputField label={`${t("signup.address")} *`} icon={MapPin}>
+                  <input
+                    type="text"
+                    value={form.address}
+                    onChange={(e) => handleField("address", e.target.value)}
+                    placeholder={t("signup.address_placeholder")}
+                    required
+                    className={`${inputBase} pl-10 pr-4`}
+                    style={inputStyle}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
+                  />
+                </InputField>
               </div>
+            </div>
 
-              {/* Doctor professional section */}
-              {role === "DOCTOR" && (
-                <div className="pt-2">
-                  <h3 className="text-xs font-bold tracking-wider text-gray-400 uppercase mb-3">
-                    {t("signup.professional_info")}
-                  </h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                        {t("signup.specialty")} *
-                      </label>
-                      <input
-                        type="text"
-                        value={form.speciality}
-                        onChange={(e) => handleField("speciality", e.target.value)}
-                        className="input-field"
-                        placeholder={t("signup.specialty_placeholder")}
-                        required
-                      />
-                    </div>
+            {/* ── Doctor professional info ── */}
+            {role === "DOCTOR" && (
+              <div>
+                <SectionHeader label={t("signup.professional_info")} />
+                <div className="space-y-4">
+                  <InputField label={`${t("signup.specialty")} *`} icon={Stethoscope}>
+                    <input
+                      type="text"
+                      value={form.speciality}
+                      onChange={(e) => handleField("speciality", e.target.value)}
+                      placeholder={t("signup.specialty_placeholder")}
+                      required
+                      className={`${inputBase} pl-10 pr-4`}
+                      style={inputStyle}
+                      onFocus={handleFocus}
+                      onBlur={handleBlur}
+                    />
+                  </InputField>
 
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                        {t("signup.bio")} *
-                      </label>
+                  {/* Bio */}
+                  <div>
+                    <label
+                      className="block text-xs font-semibold mb-1.5 uppercase tracking-wide"
+                      style={{ color: "#64748B" }}
+                    >
+                      {t("signup.bio")} *
+                    </label>
+                    <div className="relative">
+                      <span
+                        className="absolute left-3 top-3 pointer-events-none"
+                        style={{ color: "#94A3B8" }}
+                      >
+                        <FileText size={16} />
+                      </span>
                       <textarea
                         value={form.bio}
                         onChange={(e) => handleField("bio", e.target.value)}
-                        className="input-field resize-none"
-                        rows={4}
                         placeholder={t("signup.bio_placeholder")}
                         required
+                        rows={4}
+                        className="w-full pl-10 pr-4 py-3 rounded-lg text-sm outline-none transition-all duration-200 resize-none"
+                        style={inputStyle}
+                        onFocus={handleFocus}
+                        onBlur={handleBlur}
                       />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                        {t("signup.license_number")} *
-                      </label>
-                      <input
-                        type="text"
-                        value={form.licenseNumber}
-                        onChange={(e) => handleField("licenseNumber", e.target.value)}
-                        className="input-field"
-                        placeholder={t("signup.license_placeholder")}
-                        required
-                      />
-                    </div>
-
-                    {/* Link to existing clinics (optional) */}
-                    {availableClinics.length > 0 && (
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-800 mb-2">
-                          {t("signup.link_clinics")}{" "}
-                          <span className="text-gray-400 font-normal">({t("signup.optional")})</span>
-                        </label>
-                        <div className="space-y-1.5 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
-                          {availableClinics.map((clinic) => (
-                            <label
-                              key={clinic.clinicId}
-                              className="flex items-center gap-2.5 cursor-pointer hover:bg-gray-50 rounded p-1"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={form.clinicIds.includes(clinic.clinicId)}
-                                onChange={(e) => handleClinicToggle(clinic.clinicId, e.target.checked)}
-                                className="rounded border-gray-300 text-primary"
-                              />
-                              <span className="text-sm text-gray-700 font-medium">{clinic.name}</span>
-                              {clinic.address && (
-                                <span className="text-xs text-gray-400 truncate">— {clinic.address}</span>
-                              )}
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {form.clinicIds.length > 0 && (
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                          {t("signup.primary_clinic")}{" "}
-                          <span className="text-gray-400 font-normal">({t("signup.optional")})</span>
-                        </label>
-                        <select
-                          value={form.primaryClinicId}
-                          onChange={(e) => handleField("primaryClinicId", e.target.value)}
-                          className="input-field"
-                        >
-                          <option value="">{t("signup.no_primary_clinic")}</option>
-                          {availableClinics
-                            .filter((c) => form.clinicIds.includes(c.clinicId))
-                            .map((c) => (
-                              <option key={c.clinicId} value={c.clinicId}>{c.name}</option>
-                            ))}
-                        </select>
-                      </div>
-                    )}
-
-                    {/* Location picker */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                          {t("signup.latitude")}
-                        </label>
-                        <input
-                          type="number"
-                          step="any"
-                          value={form.latitude}
-                          onChange={(e) => handleField("latitude", e.target.value)}
-                          className="input-field"
-                          placeholder={t("signup.map_hint")}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                          {t("signup.longitude")}
-                        </label>
-                        <input
-                          type="number"
-                          step="any"
-                          value={form.longitude}
-                          onChange={(e) => handleField("longitude", e.target.value)}
-                          className="input-field"
-                          placeholder={t("signup.map_hint")}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="rounded-xl border border-gray-200 p-4 bg-gray-50/50">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm font-semibold text-gray-800">
-                          {t("signup.map_section_title")}
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => setShowClinicMap((prev) => !prev)}
-                          className="text-sm font-semibold text-primary hover:underline"
-                        >
-                          {showClinicMap ? t("signup.hide_map") : t("signup.map_open")}
-                        </button>
-                      </div>
-                      <p className="text-xs text-gray-500 mb-3">
-                        {t("signup.map_section_desc")}
-                      </p>
-
-                      {showClinicMap && (
-                        <div className="h-72 w-full overflow-hidden rounded-lg border border-gray-200">
-                          <MapContainer
-                            center={mapCenter}
-                            zoom={mapZoom}
-                            className="h-full w-full"
-                            scrollWheelZoom
-                          >
-                            <TileLayer
-                              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                            />
-                            <ClinicLocationPicker onSelect={handleMapSelect} />
-                            {hasValidCoordinates && (
-                              <CircleMarker
-                                center={[parsedLatitude, parsedLongitude]}
-                                radius={9}
-                                pathOptions={{
-                                  color: "#1d4ed8",
-                                  fillColor: "#2563eb",
-                                  fillOpacity: 0.9,
-                                }}
-                              />
-                            )}
-                          </MapContainer>
-                        </div>
-                      )}
                     </div>
                   </div>
+
+                  <InputField label={`${t("signup.license_number")} *`} icon={FileText}>
+                    <input
+                      type="text"
+                      value={form.licenseNumber}
+                      onChange={(e) => handleField("licenseNumber", e.target.value)}
+                      placeholder={t("signup.license_placeholder")}
+                      required
+                      className={`${inputBase} pl-10 pr-4`}
+                      style={inputStyle}
+                      onFocus={handleFocus}
+                      onBlur={handleBlur}
+                    />
+                  </InputField>
+
+                  {/* Link to existing clinics */}
+                  {availableClinics.length > 0 && (
+                    <div>
+                      <label
+                        className="block text-xs font-semibold mb-1.5 uppercase tracking-wide"
+                        style={{ color: "#64748B" }}
+                      >
+                        {t("signup.link_clinics")}{" "}
+                        <span className="normal-case font-normal" style={{ color: "#94A3B8" }}>
+                          ({t("signup.optional")})
+                        </span>
+                      </label>
+                      <div
+                        className="space-y-1 max-h-48 overflow-y-auto rounded-xl p-3"
+                        style={{ background: "#F8FAFF", border: "1.5px solid #E2E8F0" }}
+                      >
+                        {availableClinics.map((clinic) => (
+                          <label
+                            key={clinic.clinicId}
+                            className="flex items-center gap-3 cursor-pointer rounded-lg p-2 transition-colors duration-150"
+                            onMouseEnter={(e) => (e.currentTarget.style.background = "#EFF6FF")}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={form.clinicIds.includes(clinic.clinicId)}
+                              onChange={(e) => handleClinicToggle(clinic.clinicId, e.target.checked)}
+                              className="rounded"
+                              style={{ accentColor: "#0052FF" }}
+                            />
+                            <Building2 size={14} style={{ color: "#94A3B8", flexShrink: 0 }} />
+                            <span className="text-sm font-medium flex-1 min-w-0" style={{ color: "#0A0F1E" }}>
+                              {clinic.name}
+                            </span>
+                            {clinic.address && (
+                              <span className="text-xs truncate" style={{ color: "#94A3B8" }}>
+                                {clinic.address}
+                              </span>
+                            )}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Primary clinic selector */}
+                  {form.clinicIds.length > 0 && (
+                    <div>
+                      <label
+                        className="block text-xs font-semibold mb-1.5 uppercase tracking-wide"
+                        style={{ color: "#64748B" }}
+                      >
+                        {t("signup.primary_clinic")}{" "}
+                        <span className="normal-case font-normal" style={{ color: "#94A3B8" }}>
+                          ({t("signup.optional")})
+                        </span>
+                      </label>
+                      <select
+                        value={form.primaryClinicId}
+                        onChange={(e) => handleField("primaryClinicId", e.target.value)}
+                        className={`${inputBase} px-4`}
+                        style={inputStyle}
+                        onFocus={handleFocus}
+                        onBlur={handleBlur}
+                      >
+                        <option value="">{t("signup.no_primary_clinic")}</option>
+                        {availableClinics
+                          .filter((c) => form.clinicIds.includes(c.clinicId))
+                          .map((c) => (
+                            <option key={c.clinicId} value={c.clinicId}>{c.name}</option>
+                          ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Coordinates */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <InputField label={t("signup.latitude")}>
+                      <input
+                        type="number"
+                        step="any"
+                        value={form.latitude}
+                        onChange={(e) => handleField("latitude", e.target.value)}
+                        placeholder={t("signup.map_hint")}
+                        className={`${inputBase} px-4`}
+                        style={inputStyle}
+                        onFocus={handleFocus}
+                        onBlur={handleBlur}
+                      />
+                    </InputField>
+                    <InputField label={t("signup.longitude")}>
+                      <input
+                        type="number"
+                        step="any"
+                        value={form.longitude}
+                        onChange={(e) => handleField("longitude", e.target.value)}
+                        placeholder={t("signup.map_hint")}
+                        className={`${inputBase} px-4`}
+                        style={inputStyle}
+                        onFocus={handleFocus}
+                        onBlur={handleBlur}
+                      />
+                    </InputField>
+                  </div>
+
+                  {/* Map picker section */}
+                  <div
+                    className="rounded-xl p-4"
+                    style={{ background: "#F8FAFF", border: "1.5px solid #E2E8F0" }}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Map size={16} style={{ color: "#0052FF" }} />
+                        <p className="text-sm font-semibold" style={{ color: "#0A0F1E" }}>
+                          {t("signup.map_section_title")}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowClinicMap((prev) => !prev)}
+                        className="text-xs font-semibold px-3 py-1.5 rounded-full transition-all duration-200"
+                        style={
+                          showClinicMap
+                            ? { background: "#EFF6FF", color: "#0052FF", border: "1.5px solid #DBEAFE" }
+                            : { background: "linear-gradient(135deg, #0052FF, #00A3FF)", color: "white" }
+                        }
+                      >
+                        {showClinicMap ? t("signup.hide_map") : t("signup.map_open")}
+                      </button>
+                    </div>
+                    <p className="text-xs mb-3" style={{ color: "#64748B" }}>
+                      {t("signup.map_section_desc")}
+                    </p>
+
+                    {showClinicMap && (
+                      <div className="h-72 w-full overflow-hidden rounded-xl" style={{ border: "1.5px solid #E2E8F0" }}>
+                        <MapContainer
+                          center={mapCenter}
+                          zoom={mapZoom}
+                          className="h-full w-full"
+                          scrollWheelZoom
+                        >
+                          <TileLayer
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                          />
+                          <ClinicLocationPicker onSelect={handleMapSelect} />
+                          {hasValidCoordinates && (
+                            <CircleMarker
+                              center={[parsedLatitude, parsedLongitude]}
+                              radius={9}
+                              pathOptions={{
+                                color: "#0052FF",
+                                fillColor: "#0052FF",
+                                fillOpacity: 0.85,
+                              }}
+                            />
+                          )}
+                        </MapContainer>
+                      </div>
+                    )}
+                  </div>
                 </div>
+              </div>
+            )}
+
+            <ErrorBanner message={error} />
+
+            <PrimaryButton type="submit" loading={loading}>
+              {loading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  {t("signup.creating")}
+                </>
+              ) : (
+                t("signup.submit")
               )}
+            </PrimaryButton>
 
-              {error && (
-                <div className="flex items-start gap-2 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
-                  <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>{error}</span>
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn-primary w-full justify-center py-3 text-base disabled:opacity-70"
-              >
-                {loading ? (
-                  <>
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{" "}
-                    {t("signup.creating")}
-                  </>
-                ) : (
-                  t("signup.submit")
-                )}
-              </button>
-
-              <p className="text-center text-sm text-gray-600 pt-6 mt-2 border-t border-gray-100">
+            <div className="pt-4 border-t border-gray-100 text-center">
+              <p className="text-sm" style={{ color: "#64748B" }}>
                 {t("signup.already_account")}{" "}
-                <Link to="/login" className="text-primary font-semibold hover:underline">
+                <Link
+                  to="/login"
+                  className="font-semibold hover:underline transition-colors duration-200"
+                  style={{ color: "#0052FF" }}
+                >
                   {t("signup.login_link")}
                 </Link>
               </p>
-            </form>
-          </div>
-        </>
+            </div>
+          </form>
+        </Card>
       )}
 
       {/* ─── Step 3: Email OTP verification ─────────────────── */}
       {step === 3 && (
-        <>
-          <h1 className="text-center text-xl md:text-2xl font-bold text-gray-900 mb-6">
-            {t("signup.email_verification_title")}
-          </h1>
+        <Card>
+          <StepIndicator current={3} />
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 md:p-10">
-            <div className="mb-6 text-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <p className="text-sm text-gray-600">
-                {t("signup.email_verification_desc")}{" "}
-                <span className="font-semibold text-gray-800">{signupResult?.email}</span>
-              </p>
+          <div className="text-center mb-8">
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
+              style={{ background: "linear-gradient(135deg, #0052FF, #00A3FF)" }}
+            >
+              <Mail size={28} color="white" />
+            </div>
+            <h1 className="text-2xl font-bold mb-2" style={{ color: "#0A0F1E" }}>
+              {t("signup.email_verification_title")}
+            </h1>
+            <p className="text-sm" style={{ color: "#64748B" }}>
+              {t("signup.email_verification_desc")}{" "}
+              <span className="font-semibold" style={{ color: "#0052FF" }}>
+                {signupResult?.email}
+              </span>
+            </p>
+          </div>
+
+          <form onSubmit={handleVerifySignupOtp} className="space-y-5">
+            <div>
+              <label
+                className="block text-xs font-semibold mb-1.5 uppercase tracking-wide"
+                style={{ color: "#64748B" }}
+              >
+                {t("signup.otp_label")}
+              </label>
+              <input
+                type="text"
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value)}
+                placeholder="000000"
+                maxLength={6}
+                required
+                className="w-full py-4 rounded-lg text-center text-2xl font-bold tracking-[0.6em] outline-none transition-all duration-200"
+                style={inputStyle}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+              />
             </div>
 
-            <form onSubmit={handleVerifySignupOtp} className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                  {t("signup.otp_label")}
-                </label>
-                <input
-                  type="text"
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value)}
-                  className="input-field text-center text-2xl tracking-[0.5em] font-semibold"
-                  placeholder="000000"
-                  maxLength={6}
-                  required
-                />
-              </div>
+            <ErrorBanner message={otpError} />
 
-              {otpError && (
-                <div className="flex items-start gap-2 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
-                  <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>{otpError}</span>
-                </div>
+            <PrimaryButton type="submit" loading={otpLoading}>
+              {otpLoading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  {t("signup.verifying")}
+                </>
+              ) : (
+                <>
+                  <Shield size={16} />
+                  {t("signup.verify_code")}
+                </>
               )}
+            </PrimaryButton>
 
-              <button
-                type="submit"
-                disabled={otpLoading}
-                className="btn-primary w-full justify-center py-3 text-base disabled:opacity-70"
-              >
-                {otpLoading ? (
-                  <>
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{" "}
-                    {t("signup.verifying")}
-                  </>
-                ) : (
-                  t("signup.verify_code")
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleResendSignupOtp}
-                className="w-full text-center text-sm text-primary hover:underline py-2"
-              >
-                {t("signup.resend_code")}
-              </button>
-            </form>
-          </div>
-        </>
+            <button
+              type="button"
+              onClick={handleResendSignupOtp}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-full text-sm font-medium transition-all duration-200"
+              style={{ background: "#EFF6FF", color: "#0052FF", border: "1.5px solid #DBEAFE" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#DBEAFE")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "#EFF6FF")}
+            >
+              <RefreshCw size={14} />
+              {t("signup.resend_code")}
+            </button>
+          </form>
+        </Card>
       )}
     </AuthLayout>
   );

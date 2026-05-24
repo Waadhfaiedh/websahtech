@@ -20,7 +20,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <AuthProvider>
       <App />
       <ToastContainer
-        position="bottom-right"
+        position="top-right"
         autoClose={3200}
         closeOnClick
         pauseOnHover
