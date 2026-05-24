@@ -50,7 +50,7 @@ export default function LoginPage() {
         setUserId(result.userId);
         setUserEmail(result.email);
         setShowOtp(true);
-        toast.success(result.message || "Code OTP envoyé");
+        toast.success(result.message || t("signup.otp_sent"));
       } else {
         if (result.role === "ADMIN") navigate("/admin/dashboard");
         else navigate("/specialist/dashboard");
@@ -85,7 +85,7 @@ export default function LoginPage() {
         setCooldown(err.retryAfter);
         toast.error(err.message);
       } else {
-        const message = err.response?.data?.message || "Invalid OTP code";
+        const message = err.response?.data?.message || t("signup.invalid_code");
         setError(message);
         toast.error(message);
       }
@@ -102,10 +102,10 @@ export default function LoginPage() {
         type: "TWO_FACTOR",
       });
       setError("");
-      toast.success(res.data?.message || "Code OTP renvoyé");
+      toast.success(res.data?.message || t("signup.otp_sent"));
     } catch {
-      setError("Failed to resend OTP");
-      toast.error("Failed to resend OTP");
+      setError(t("signup.resend_failed"));
+      toast.error(t("signup.resend_failed"));
     }
   };
 
@@ -124,7 +124,7 @@ export default function LoginPage() {
 
   return (
     <AuthLayout maxWidth="md">
-      {/* Title above the card — Doctolib style */}
+      {/* Title above the card */}
       <h1 className="text-center text-xl md:text-2xl font-bold text-gray-900 mb-6">
         {t("auth.welcome")}
       </h1>
@@ -133,7 +133,6 @@ export default function LoginPage() {
         {!showOtp ? (
           // ─── Login form ────────────────────────────────────
           <>
-            {/* Back / context row */}
             <p className="text-sm text-gray-500 mb-6">{t("auth.subtitle")}</p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -192,11 +191,11 @@ export default function LoginPage() {
                 }`}
               >
                 {cooldown > 0 ? (
-                  `Réessayer dans ${cooldown}s`
+                  `${t("auth.retry_in")} ${cooldown}s`
                 ) : loading ? (
                   <>
                     <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{" "}
-                    Connexion...
+                    {t("auth.connecting")}
                   </>
                 ) : (
                   t("auth.sign_in")
@@ -205,9 +204,9 @@ export default function LoginPage() {
             </form>
 
             <p className="text-center text-sm text-gray-600 mt-6 pt-6 border-t border-gray-100">
-              Vous n'avez pas de compte?{" "}
+              {t("auth.no_account")}{" "}
               <Link to="/signup" className="text-primary font-semibold hover:underline">
-                S'inscrire
+                {t("auth.register_link")}
               </Link>
             </p>
           </>
@@ -226,13 +225,13 @@ export default function LoginPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              Étape précédente
+              {t("auth.otp_previous_step")}
             </button>
 
             <div className="mb-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-1">Vérification</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-1">{t("auth.otp_title")}</h2>
               <p className="text-sm text-gray-500">
-                Un code a été envoyé à{" "}
+                {t("auth.otp_desc")}{" "}
                 <span className="font-medium text-gray-700">{userEmail}</span>
               </p>
             </div>
@@ -240,7 +239,7 @@ export default function LoginPage() {
             <form onSubmit={handleVerifyOtp} className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                  Code OTP
+                  {t("auth.otp_label")}
                 </label>
                 <input
                   type="text"
@@ -270,14 +269,14 @@ export default function LoginPage() {
                 }`}
               >
                 {cooldown > 0 ? (
-                  `Réessayer dans ${cooldown}s`
+                  `${t("auth.otp_retry_in")} ${cooldown}s`
                 ) : loading ? (
                   <>
                     <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{" "}
-                    Vérification...
+                    {t("auth.otp_verifying")}
                   </>
                 ) : (
-                  "Vérifier le code"
+                  t("auth.otp_verify")
                 )}
               </button>
 
@@ -286,7 +285,7 @@ export default function LoginPage() {
                 onClick={handleResendOtp}
                 className="w-full text-center text-sm text-primary hover:underline py-2"
               >
-                Renvoyer le code
+                {t("auth.otp_resend")}
               </button>
             </form>
           </>

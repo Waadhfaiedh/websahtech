@@ -151,19 +151,19 @@ export default function SignupPage() {
   }, [role, step, fetchAvailableClinics]);
 
   const validateForm = () => {
-    if (!form.fullName.trim()) { setError("Le nom complet est requis"); return false; }
-    if (!form.email.trim()) { setError("L'email est requis"); return false; }
+    if (!form.fullName.trim()) { setError(t("signup.val_name")); return false; }
+    if (!form.email.trim()) { setError(t("signup.val_email")); return false; }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(form.email)) { setError("Veuillez entrer une adresse email valide"); return false; }
-    if (!form.password) { setError("Le mot de passe est requis"); return false; }
-    if (form.password.length < 6) { setError("Le mot de passe doit contenir au moins 6 caractères"); return false; }
-    if (form.password !== form.confirmPassword) { setError("Les mots de passe ne correspondent pas"); return false; }
-    if (!form.phone.trim()) { setError("Le numéro de téléphone est requis"); return false; }
-    if (!form.address.trim()) { setError("L'adresse est requise"); return false; }
+    if (!emailRegex.test(form.email)) { setError(t("signup.val_email_invalid")); return false; }
+    if (!form.password) { setError(t("signup.val_password")); return false; }
+    if (form.password.length < 6) { setError(t("signup.val_password_length")); return false; }
+    if (form.password !== form.confirmPassword) { setError(t("signup.val_password_match")); return false; }
+    if (!form.phone.trim()) { setError(t("signup.val_phone")); return false; }
+    if (!form.address.trim()) { setError(t("signup.val_address")); return false; }
     if (role === "DOCTOR") {
-      if (!form.speciality.trim()) { setError("La spécialité est requise"); return false; }
-      if (!form.bio.trim()) { setError("La biographie est requise"); return false; }
-      if (!form.licenseNumber.trim()) { setError("Le numéro de licence est requis"); return false; }
+      if (!form.speciality.trim()) { setError(t("signup.val_specialty")); return false; }
+      if (!form.bio.trim()) { setError(t("signup.val_bio")); return false; }
+      if (!form.licenseNumber.trim()) { setError(t("signup.val_license")); return false; }
     }
     return true;
   };
@@ -215,10 +215,10 @@ export default function SignupPage() {
     setOtpLoading(true);
     try {
       const user = await verifyOtp(signupResult.userId, otpCode, "EMAIL_VERIFICATION");
-      toast.success("Email vérifié ! Bienvenue sur SAHTECK.");
+      toast.success(t("signup.email_verified"));
       navigate(user.role === "ADMIN" ? "/admin/dashboard" : "/specialist/dashboard");
     } catch (err) {
-      const message = err.response?.data?.message || "Code invalide";
+      const message = err.response?.data?.message || t("signup.invalid_code");
       setOtpError(message);
       toast.error(message);
     } finally {
@@ -233,9 +233,9 @@ export default function SignupPage() {
         email: signupResult.email,
         type: "EMAIL_VERIFICATION",
       });
-      toast.success("Code OTP renvoyé");
+      toast.success(t("signup.otp_sent"));
     } catch {
-      toast.error("Échec de l'envoi du code");
+      toast.error(t("signup.resend_failed"));
     }
   };
 
@@ -246,10 +246,10 @@ export default function SignupPage() {
       {step === 1 && (
         <>
           <h1 className="text-center text-xl md:text-2xl font-bold text-gray-900 mb-2">
-            Inscrivez-vous pour continuer
+            {t("signup.title")}
           </h1>
           <p className="text-center text-sm text-gray-500 mb-6">
-            Sélectionnez votre type de compte
+            {t("signup.subtitle")}
           </p>
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 md:p-10 space-y-4">
@@ -264,8 +264,8 @@ export default function SignupPage() {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <p className="font-bold text-gray-900">Administrateur</p>
-                  <p className="text-sm text-gray-500 mt-0.5">Gérez la plateforme et les utilisateurs</p>
+                  <p className="font-bold text-gray-900">{t("signup.admin_title")}</p>
+                  <p className="text-sm text-gray-500 mt-0.5">{t("signup.admin_desc")}</p>
                 </div>
                 <svg className="w-5 h-5 text-gray-300 group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -284,8 +284,8 @@ export default function SignupPage() {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <p className="font-bold text-gray-900">Spécialiste</p>
-                  <p className="text-sm text-gray-500 mt-0.5">Offrez vos services médicaux</p>
+                  <p className="font-bold text-gray-900">{t("signup.specialist_title")}</p>
+                  <p className="text-sm text-gray-500 mt-0.5">{t("signup.specialist_desc")}</p>
                 </div>
                 <svg className="w-5 h-5 text-gray-300 group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -294,8 +294,10 @@ export default function SignupPage() {
             </button>
 
             <p className="text-center text-sm text-gray-600 pt-6 mt-2 border-t border-gray-100">
-              Vous avez déjà un compte?{" "}
-              <Link to="/login" className="text-primary font-semibold hover:underline">Se connecter</Link>
+              {t("signup.already_account")}{" "}
+              <Link to="/login" className="text-primary font-semibold hover:underline">
+                {t("signup.login_link")}
+              </Link>
             </p>
           </div>
         </>
@@ -305,7 +307,7 @@ export default function SignupPage() {
       {step === 2 && (
         <>
           <h1 className="text-center text-xl md:text-2xl font-bold text-gray-900 mb-6">
-            Créer un compte {role === "ADMIN" ? "Administrateur" : "Spécialiste"}
+            {role === "ADMIN" ? t("signup.create_admin") : t("signup.create_specialist")}
           </h1>
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 md:p-10">
@@ -317,41 +319,87 @@ export default function SignupPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              Étape précédente
+              {t("signup.previous_step")}
             </button>
 
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Personal section */}
               <div>
                 <h3 className="text-xs font-bold tracking-wider text-gray-400 uppercase mb-3">
-                  Informations personnelles
+                  {t("signup.personal_info")}
                 </h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-1.5">Nom complet *</label>
-                    <input type="text" value={form.fullName} onChange={(e) => handleField("fullName", e.target.value)} className="input-field" placeholder="Dr. Jean Dupont" required />
+                    <label className="block text-sm font-semibold text-gray-800 mb-1.5">
+                      {t("signup.full_name")} *
+                    </label>
+                    <input
+                      type="text"
+                      value={form.fullName}
+                      onChange={(e) => handleField("fullName", e.target.value)}
+                      className="input-field"
+                      placeholder={t("signup.full_name_placeholder")}
+                      required
+                    />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-1.5">Email *</label>
-                    <input type="email" value={form.email} onChange={(e) => handleField("email", e.target.value)} className="input-field" placeholder="docteur@sahtech.tn" required />
+                    <label className="block text-sm font-semibold text-gray-800 mb-1.5">
+                      {t("signup.email")} *
+                    </label>
+                    <input
+                      type="email"
+                      value={form.email}
+                      onChange={(e) => handleField("email", e.target.value)}
+                      className="input-field"
+                      placeholder={t("signup.email_placeholder")}
+                      required
+                    />
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">Mot de passe *</label>
+                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">
+                        {t("signup.password")} *
+                      </label>
                       <div className="relative">
-                        <input type={showPass ? "text" : "password"} value={form.password} onChange={(e) => handleField("password", e.target.value)} className="input-field pr-10" placeholder="••••••••" required />
-                        <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" aria-label="Toggle password visibility">
+                        <input
+                          type={showPass ? "text" : "password"}
+                          value={form.password}
+                          onChange={(e) => handleField("password", e.target.value)}
+                          className="input-field pr-10"
+                          placeholder="••••••••"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPass(!showPass)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          aria-label="Toggle password visibility"
+                        >
                           <EyeIcon open={showPass} />
                         </button>
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">Confirmer *</label>
+                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">
+                        {t("signup.confirm_password")} *
+                      </label>
                       <div className="relative">
-                        <input type={showConfirm ? "text" : "password"} value={form.confirmPassword} onChange={(e) => handleField("confirmPassword", e.target.value)} className="input-field pr-10" placeholder="••••••••" required />
-                        <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" aria-label="Toggle password visibility">
+                        <input
+                          type={showConfirm ? "text" : "password"}
+                          value={form.confirmPassword}
+                          onChange={(e) => handleField("confirmPassword", e.target.value)}
+                          className="input-field pr-10"
+                          placeholder="••••••••"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirm(!showConfirm)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          aria-label="Toggle password visibility"
+                        >
                           <EyeIcon open={showConfirm} />
                         </button>
                       </div>
@@ -360,22 +408,46 @@ export default function SignupPage() {
 
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">Téléphone *</label>
-                      <input type="tel" value={form.phone} onChange={(e) => handleField("phone", e.target.value)} className="input-field" placeholder="50123456" required />
+                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">
+                        {t("signup.phone")} *
+                      </label>
+                      <input
+                        type="tel"
+                        value={form.phone}
+                        onChange={(e) => handleField("phone", e.target.value)}
+                        className="input-field"
+                        placeholder={t("signup.phone_placeholder")}
+                        required
+                      />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">Genre</label>
-                      <select value={form.gender} onChange={(e) => handleField("gender", e.target.value)} className="input-field">
-                        <option value="OTHER">Sélectionner...</option>
-                        <option value="MALE">Homme</option>
-                        <option value="FEMALE">Femme</option>
+                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">
+                        {t("signup.gender")}
+                      </label>
+                      <select
+                        value={form.gender}
+                        onChange={(e) => handleField("gender", e.target.value)}
+                        className="input-field"
+                      >
+                        <option value="OTHER">{t("signup.gender_select")}</option>
+                        <option value="MALE">{t("signup.gender_male")}</option>
+                        <option value="FEMALE">{t("signup.gender_female")}</option>
                       </select>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-1.5">Adresse *</label>
-                    <input type="text" value={form.address} onChange={(e) => handleField("address", e.target.value)} className="input-field" placeholder="Rue, Ville" required />
+                    <label className="block text-sm font-semibold text-gray-800 mb-1.5">
+                      {t("signup.address")} *
+                    </label>
+                    <input
+                      type="text"
+                      value={form.address}
+                      onChange={(e) => handleField("address", e.target.value)}
+                      className="input-field"
+                      placeholder={t("signup.address_placeholder")}
+                      required
+                    />
                   </div>
                 </div>
               </div>
@@ -384,30 +456,57 @@ export default function SignupPage() {
               {role === "DOCTOR" && (
                 <div className="pt-2">
                   <h3 className="text-xs font-bold tracking-wider text-gray-400 uppercase mb-3">
-                    Informations professionnelles
+                    {t("signup.professional_info")}
                   </h3>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">Spécialité *</label>
-                      <input type="text" value={form.speciality} onChange={(e) => handleField("speciality", e.target.value)} className="input-field" placeholder="Cardiologie" required />
+                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">
+                        {t("signup.specialty")} *
+                      </label>
+                      <input
+                        type="text"
+                        value={form.speciality}
+                        onChange={(e) => handleField("speciality", e.target.value)}
+                        className="input-field"
+                        placeholder={t("signup.specialty_placeholder")}
+                        required
+                      />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">Biographie *</label>
-                      <textarea value={form.bio} onChange={(e) => handleField("bio", e.target.value)} className="input-field resize-none" rows={4} placeholder="Décrivez votre expérience et expertise..." required />
+                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">
+                        {t("signup.bio")} *
+                      </label>
+                      <textarea
+                        value={form.bio}
+                        onChange={(e) => handleField("bio", e.target.value)}
+                        className="input-field resize-none"
+                        rows={4}
+                        placeholder={t("signup.bio_placeholder")}
+                        required
+                      />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">Numéro de licence *</label>
-                      <input type="text" value={form.licenseNumber} onChange={(e) => handleField("licenseNumber", e.target.value)} className="input-field" placeholder="1234/12" required />
+                      <label className="block text-sm font-semibold text-gray-800 mb-1.5">
+                        {t("signup.license_number")} *
+                      </label>
+                      <input
+                        type="text"
+                        value={form.licenseNumber}
+                        onChange={(e) => handleField("licenseNumber", e.target.value)}
+                        className="input-field"
+                        placeholder={t("signup.license_placeholder")}
+                        required
+                      />
                     </div>
 
                     {/* Link to existing clinics (optional) */}
                     {availableClinics.length > 0 && (
                       <div>
                         <label className="block text-sm font-semibold text-gray-800 mb-2">
-                          Lier à des cliniques existantes{" "}
-                          <span className="text-gray-400 font-normal">(optionnel)</span>
+                          {t("signup.link_clinics")}{" "}
+                          <span className="text-gray-400 font-normal">({t("signup.optional")})</span>
                         </label>
                         <div className="space-y-1.5 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
                           {availableClinics.map((clinic) => (
@@ -434,15 +533,15 @@ export default function SignupPage() {
                     {form.clinicIds.length > 0 && (
                       <div>
                         <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                          Clinique principale{" "}
-                          <span className="text-gray-400 font-normal">(optionnel)</span>
+                          {t("signup.primary_clinic")}{" "}
+                          <span className="text-gray-400 font-normal">({t("signup.optional")})</span>
                         </label>
                         <select
                           value={form.primaryClinicId}
                           onChange={(e) => handleField("primaryClinicId", e.target.value)}
                           className="input-field"
                         >
-                          <option value="">— Aucune clinique principale —</option>
+                          <option value="">{t("signup.no_primary_clinic")}</option>
                           {availableClinics
                             .filter((c) => form.clinicIds.includes(c.clinicId))
                             .map((c) => (
@@ -455,25 +554,29 @@ export default function SignupPage() {
                     {/* Location picker */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-semibold text-gray-800 mb-1.5">Latitude</label>
+                        <label className="block text-sm font-semibold text-gray-800 mb-1.5">
+                          {t("signup.latitude")}
+                        </label>
                         <input
                           type="number"
                           step="any"
                           value={form.latitude}
                           onChange={(e) => handleField("latitude", e.target.value)}
                           className="input-field"
-                          placeholder="Cliquer sur la carte"
+                          placeholder={t("signup.map_hint")}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-gray-800 mb-1.5">Longitude</label>
+                        <label className="block text-sm font-semibold text-gray-800 mb-1.5">
+                          {t("signup.longitude")}
+                        </label>
                         <input
                           type="number"
                           step="any"
                           value={form.longitude}
                           onChange={(e) => handleField("longitude", e.target.value)}
                           className="input-field"
-                          placeholder="Cliquer sur la carte"
+                          placeholder={t("signup.map_hint")}
                         />
                       </div>
                     </div>
@@ -481,19 +584,18 @@ export default function SignupPage() {
                     <div className="rounded-xl border border-gray-200 p-4 bg-gray-50/50">
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-sm font-semibold text-gray-800">
-                          Position du cabinet sur la carte
+                          {t("signup.map_section_title")}
                         </p>
                         <button
                           type="button"
                           onClick={() => setShowClinicMap((prev) => !prev)}
                           className="text-sm font-semibold text-primary hover:underline"
                         >
-                          {showClinicMap ? "Masquer" : "Ouvrir la carte"}
+                          {showClinicMap ? t("signup.hide_map") : t("signup.map_open")}
                         </button>
                       </div>
                       <p className="text-xs text-gray-500 mb-3">
-                        Cliquez sur la carte pour sélectionner l'emplacement exact du cabinet.
-                        Les coordonnées seront remplies automatiquement.
+                        {t("signup.map_section_desc")}
                       </p>
 
                       {showClinicMap && (
@@ -545,16 +647,18 @@ export default function SignupPage() {
                 {loading ? (
                   <>
                     <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{" "}
-                    Création du compte...
+                    {t("signup.creating")}
                   </>
                 ) : (
-                  "Créer un compte"
+                  t("signup.submit")
                 )}
               </button>
 
               <p className="text-center text-sm text-gray-600 pt-6 mt-2 border-t border-gray-100">
-                Vous avez déjà un compte?{" "}
-                <Link to="/login" className="text-primary font-semibold hover:underline">Se connecter</Link>
+                {t("signup.already_account")}{" "}
+                <Link to="/login" className="text-primary font-semibold hover:underline">
+                  {t("signup.login_link")}
+                </Link>
               </p>
             </form>
           </div>
@@ -565,7 +669,7 @@ export default function SignupPage() {
       {step === 3 && (
         <>
           <h1 className="text-center text-xl md:text-2xl font-bold text-gray-900 mb-6">
-            Vérification de l'email
+            {t("signup.email_verification_title")}
           </h1>
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 md:p-10">
@@ -576,7 +680,7 @@ export default function SignupPage() {
                 </svg>
               </div>
               <p className="text-sm text-gray-600">
-                Un code de vérification a été envoyé à{" "}
+                {t("signup.email_verification_desc")}{" "}
                 <span className="font-semibold text-gray-800">{signupResult?.email}</span>
               </p>
             </div>
@@ -584,7 +688,7 @@ export default function SignupPage() {
             <form onSubmit={handleVerifySignupOtp} className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-1.5">
-                  Code OTP
+                  {t("signup.otp_label")}
                 </label>
                 <input
                   type="text"
@@ -614,10 +718,10 @@ export default function SignupPage() {
                 {otpLoading ? (
                   <>
                     <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{" "}
-                    Vérification...
+                    {t("signup.verifying")}
                   </>
                 ) : (
-                  "Vérifier le code"
+                  t("signup.verify_code")
                 )}
               </button>
 
@@ -626,7 +730,7 @@ export default function SignupPage() {
                 onClick={handleResendSignupOtp}
                 className="w-full text-center text-sm text-primary hover:underline py-2"
               >
-                Renvoyer le code
+                {t("signup.resend_code")}
               </button>
             </form>
           </div>
