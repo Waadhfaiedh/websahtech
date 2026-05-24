@@ -1,8 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../context/AuthContext";
-import SpecialistLayout from "../../components/layout/SpecialistLayout";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../services/api";
 import Cropper from "react-easy-crop";
@@ -329,16 +328,14 @@ export default function ProfilePage() {
 
   if (!specialist) {
     return (
-      <SpecialistLayout>
         <div className="p-8 flex items-center justify-center min-h-[400px]">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
-      </SpecialistLayout>
     );
   }
 
   return (
-    <SpecialistLayout>
+    <>
       <div className="p-8 animate-fadeIn max-w-3xl">
         <PageHeader title={t("profile.title")} />
 
@@ -665,6 +662,6 @@ export default function ProfilePage() {
           }}
         />
       )}
-    </SpecialistLayout>
+    </>
   );
 }

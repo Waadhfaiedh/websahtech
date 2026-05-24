@@ -1,11 +1,20 @@
+// Redesigned following SAHTECK brand guidelines
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import SpecialistLayout from "../../components/layout/SpecialistLayout";
-import StatCard from "../../components/common/StatCard";
 import api from "../../services/api";
 import { toast } from "react-toastify";
+import {
+  Users,
+  CalendarDays,
+  FileText,
+  MessageSquare,
+  BarChart2,
+  ChevronRight,
+  Clock,
+  Sparkles,
+} from "lucide-react";
 
 const riskColors = {
   green: "badge-green",
@@ -13,6 +22,9 @@ const riskColors = {
   red: "badge-red",
 };
 const riskLabels = { green: "Faible", orange: "Modéré", red: "Élevé" };
+
+const cardShadow = { boxShadow: "0 2px 12px rgba(0,82,255,0.08)" };
+const gradientBg = { background: "linear-gradient(135deg, #0052FF, #00A3FF)" };
 
 export default function SpecialistDashboard() {
   const { t } = useTranslation();
@@ -33,7 +45,6 @@ export default function SpecialistDashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-
       const statsRes = await api.get("/doctors/get-forms");
       setDashboardData({
         patientsCount: statsRes.data.patientsCount || 0,
@@ -53,234 +64,291 @@ export default function SpecialistDashboard() {
     }
   };
 
+  const today = new Date().toLocaleDateString("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+
+  const statCards = [
+    {
+      Icon: Users,
+      label: t("dashboard.total_patients"),
+      value: dashboardData.patientsCount,
+      iconColor: "#0052FF",
+      iconBg: "#EFF6FF",
+    },
+    {
+      Icon: CalendarDays,
+      label: t("dashboard.upcoming_rdvs"),
+      value: dashboardData.appointmentsCount,
+      iconColor: "#10B981",
+      iconBg: "#ECFDF5",
+    },
+    {
+      Icon: FileText,
+      label: t("dashboard.pending_reports"),
+      value: dashboardData.pendingReports,
+      iconColor: "#F59E0B",
+      iconBg: "#FFFBEB",
+    },
+    {
+      Icon: MessageSquare,
+      label: t("dashboard.unread_messages"),
+      value: dashboardData.unreadMessages,
+      iconColor: "#8B5CF6",
+      iconBg: "#F5F3FF",
+    },
+  ];
+
   const quickLinks = [
     {
       label: t("nav.patients"),
       path: "/specialist/patients",
-      color: "bg-blue-500",
-      icon: "👥",
+      Icon: Users,
+      iconColor: "#0052FF",
+      iconBg: "#EFF6FF",
     },
     {
       label: t("nav.chat"),
       path: "/specialist/chat",
-      color: "bg-emerald-500",
-      icon: "💬",
+      Icon: MessageSquare,
+      iconColor: "#10B981",
+      iconBg: "#ECFDF5",
     },
     {
       label: t("nav.reports"),
       path: "/specialist/reports",
-      color: "bg-purple-500",
-      icon: "📊",
+      Icon: BarChart2,
+      iconColor: "#8B5CF6",
+      iconBg: "#F5F3FF",
     },
     {
       label: t("nav.planning"),
       path: "/specialist/planning",
-      color: "bg-orange-500",
-      icon: "📅",
+      Icon: CalendarDays,
+      iconColor: "#F59E0B",
+      iconBg: "#FFFBEB",
     },
   ];
 
-  if (!specialist) {
+  if (!specialist || loading) {
     return (
-      <SpecialistLayout>
-        <div className="flex items-center justify-center h-full p-8">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="p-8 animate-pulse">
+        <div className="h-32 rounded-2xl mb-8" style={{ background: "linear-gradient(135deg, #e2e8f0, #cbd5e1)" }} />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-white rounded-xl p-5" style={cardShadow}>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-gray-100" />
+                <div className="h-3 bg-gray-100 rounded w-2/3" />
+              </div>
+              <div className="h-8 bg-gray-100 rounded w-1/3" />
+            </div>
+          ))}
         </div>
-      </SpecialistLayout>
-    );
-  }
-
-  if (loading) {
-    return (
-      <SpecialistLayout>
-        <div className="p-8 flex items-center justify-center min-h-[400px]">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="grid grid-cols-3 gap-6">
+          <div className="col-span-2 bg-white rounded-xl h-56" style={cardShadow} />
+          <div className="bg-white rounded-xl h-56" style={cardShadow} />
         </div>
-      </SpecialistLayout>
+      </div>
     );
   }
 
   return (
-    <SpecialistLayout>
-      <div className="p-8 animate-fadeIn">
-        {/* Welcome banner */}
-        <div className="bg-primary rounded-2xl p-6 mb-8 text-white relative overflow-hidden">
-          <div className="absolute right-0 top-0 w-48 h-48 bg-white/5 rounded-full -translate-y-12 translate-x-12" />
-          <div className="absolute right-16 bottom-0 w-32 h-32 bg-white/5 rounded-full translate-y-8" />
-          <div className="flex items-center gap-4 relative z-10">
+    <div className="p-8 animate-fadeIn" style={{ background: "#F8FAFF", minHeight: "100%" }}>
+
+      {/* ── Welcome Banner ── */}
+      <div
+        className="rounded-2xl p-6 mb-8 text-white relative overflow-hidden"
+        style={gradientBg}
+      >
+        {/* Decorative blobs */}
+        <div className="absolute right-0 top-0 w-56 h-56 bg-white/10 rounded-full -translate-y-16 translate-x-16 pointer-events-none" />
+        <div className="absolute right-24 bottom-0 w-36 h-36 bg-white/10 rounded-full translate-y-10 pointer-events-none" />
+        <div className="absolute left-1/2 top-0 w-24 h-24 bg-white/5 rounded-full -translate-y-8 pointer-events-none" />
+
+        <div className="flex items-center justify-between relative z-10">
+          <div className="flex items-center gap-4">
             {specialist?.imageUrl ? (
               <img
                 src={specialist.imageUrl}
                 alt={specialist.name}
-                className="w-14 h-14 rounded-2xl object-cover flex-shrink-0"
+                className="w-14 h-14 rounded-2xl object-cover flex-shrink-0 ring-2 ring-white/30"
               />
             ) : (
-              <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center text-2xl font-bold flex-shrink-0">
+              <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center text-2xl font-bold flex-shrink-0 ring-2 ring-white/30">
                 {(specialist?.name || "S").charAt(0)}
               </div>
             )}
             <div>
-              <p className="text-blue-100 text-sm">{t("dashboard.welcome")},</p>
-              <h1 className="text-2xl font-bold">{specialist?.name}</h1>
+              <p className="text-blue-100 text-sm font-medium">
+                {t("dashboard.welcome")},
+              </p>
+              <h1 className="text-2xl font-bold leading-tight">
+                {specialist?.name}
+              </h1>
               <p className="text-blue-200 text-sm mt-0.5">
-                {specialist?.specialty}{specialist?.primaryClinic?.name ? ` · ${specialist.primaryClinic.name}` : ""}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard
-            title={t("dashboard.total_patients")}
-            value={dashboardData.patientsCount}
-            color="blue"
-            icon={
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-            }
-          />
-          <StatCard
-            title={t("dashboard.upcoming_rdvs")}
-            value={dashboardData.appointmentsCount}
-            color="green"
-            icon={
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-            }
-          />
-          <StatCard
-            title={t("dashboard.pending_reports")}
-            value={dashboardData.pendingReports}
-            color="orange"
-            icon={
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
-            }
-          />
-          <StatCard
-            title={t("dashboard.unread_messages")}
-            value={dashboardData.unreadMessages}
-            color="purple"
-            icon={
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                />
-              </svg>
-            }
-          />
-        </div>
-
-        <div className="grid grid-cols-3 gap-6">
-          {/* Recent AI Reports - Placeholder until API is ready */}
-          <div className="col-span-2 card">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-bold text-gray-900">
-                {t("dashboard.recent_reports")}
-              </h2>
-              <Link
-                to="/specialist/reports"
-                className="text-primary text-sm font-medium hover:underline"
-              >
-                {t("common.view_all")}
-              </Link>
-            </div>
-            <div className="space-y-3">
-              <p className="text-gray-400 text-center py-8">
-                Fonctionnalité à venir
+                {specialist?.specialty}
+                {specialist?.primaryClinic?.name
+                  ? ` · ${specialist.primaryClinic.name}`
+                  : ""}
               </p>
             </div>
           </div>
 
-          {/* Quick links */}
-          <div className="card">
-            <h2 className="font-bold text-gray-900 mb-4">
-              {t("dashboard.quick_links")}
-            </h2>
-            <div className="grid grid-cols-2 gap-3">
-              {quickLinks.map((ql) => (
-                <Link
-                  key={ql.path}
-                  to={ql.path}
-                  className="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-100 hover:border-primary/30 hover:bg-primary/5 transition-all group"
-                >
-                  <span className="text-2xl">{ql.icon}</span>
-                  <span className="text-xs font-medium text-gray-700 text-center group-hover:text-primary">
-                    {ql.label}
-                  </span>
-                </Link>
-              ))}
-            </div>
-
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                RDV à venir
-              </h3>
-              {dashboardData.upcomingRDVs.length > 0 ? (
-                dashboardData.upcomingRDVs.slice(0, 3).map((rdv) => (
-                  <div key={rdv.id} className="flex items-center gap-2 mb-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-gray-800 truncate">
-                        {rdv.patientName}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {rdv.date} · {rdv.startTime}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-xs text-gray-400 text-center py-4">
-                  Aucun RDV à venir
-                </p>
-              )}
+          <div className="hidden md:flex flex-col items-end gap-1">
+            <div className="flex items-center gap-2 bg-white/15 rounded-xl px-3 py-2">
+              <Clock size={14} className="text-blue-100" />
+              <span className="text-sm text-blue-100 capitalize">{today}</span>
             </div>
           </div>
         </div>
       </div>
-    </SpecialistLayout>
+
+      {/* ── Stat Cards ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {statCards.map(({ Icon, label, value, iconColor, iconBg }) => (
+          <div
+            key={label}
+            className="bg-white rounded-xl p-5 transition-all duration-200 hover:-translate-y-0.5"
+            style={cardShadow}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: iconBg }}
+              >
+                <Icon size={20} style={{ color: iconColor }} />
+              </div>
+              <span className="text-xs font-medium text-slate-500 leading-tight">
+                {label}
+              </span>
+            </div>
+            <p className="text-3xl font-bold" style={{ color: "#0A0F1E" }}>
+              {value}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Bottom Grid ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {/* Recent AI Reports */}
+        <div className="lg:col-span-2 bg-white rounded-xl p-6" style={cardShadow}>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center"
+                style={{ background: "#F5F3FF" }}
+              >
+                <Sparkles size={16} style={{ color: "#8B5CF6" }} />
+              </div>
+              <h2 className="font-semibold text-base" style={{ color: "#0A0F1E" }}>
+                {t("dashboard.recent_reports")}
+              </h2>
+            </div>
+            <Link
+              to="/specialist/reports"
+              className="flex items-center gap-1 text-sm font-medium transition-colors duration-200"
+              style={{ color: "#0052FF" }}
+            >
+              {t("common.view_all")}
+              <ChevronRight size={16} />
+            </Link>
+          </div>
+
+          {/* Empty state */}
+          <div className="flex flex-col items-center justify-center py-12">
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
+              style={{ background: "#F8FAFF" }}
+            >
+              <FileText size={28} style={{ color: "#CBD5E1" }} />
+            </div>
+            <p className="text-sm font-medium mb-1" style={{ color: "#0A0F1E" }}>
+              Aucun rapport récent
+            </p>
+            <p className="text-xs text-center max-w-[200px]" style={{ color: "#64748B" }}>
+              Fonctionnalité à venir
+            </p>
+          </div>
+        </div>
+
+        {/* Quick Links + Upcoming RDVs */}
+        <div className="bg-white rounded-xl p-6" style={cardShadow}>
+          <h2 className="font-semibold text-base mb-4" style={{ color: "#0A0F1E" }}>
+            {t("dashboard.quick_links")}
+          </h2>
+
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            {quickLinks.map(({ label, path, Icon, iconColor, iconBg }) => (
+              <Link
+                key={path}
+                to={path}
+                className="flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-200 hover:scale-[1.02] group"
+                style={{ background: "#F8FAFF" }}
+              >
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 group-hover:scale-110"
+                  style={{ background: iconBg }}
+                >
+                  <Icon size={20} style={{ color: iconColor }} />
+                </div>
+                <span
+                  className="text-xs font-medium text-center leading-tight"
+                  style={{ color: "#0A0F1E" }}
+                >
+                  {label}
+                </span>
+              </Link>
+            ))}
+          </div>
+
+          {/* Upcoming RDVs */}
+          <div className="pt-4 border-t border-gray-100">
+            <div className="flex items-center gap-2 mb-3">
+              <CalendarDays size={14} style={{ color: "#64748B" }} />
+              <h3 className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#64748B" }}>
+                RDV à venir
+              </h3>
+            </div>
+
+            {dashboardData.upcomingRDVs.length > 0 ? (
+              <div className="space-y-2">
+                {dashboardData.upcomingRDVs.slice(0, 3).map((rdv) => (
+                  <div
+                    key={rdv.id}
+                    className="flex items-center gap-3 p-2.5 rounded-lg"
+                    style={{ background: "#F8FAFF" }}
+                  >
+                    <div
+                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{ background: "#0052FF" }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold truncate" style={{ color: "#0A0F1E" }}>
+                        {rdv.patientName}
+                      </p>
+                      <p className="text-xs" style={{ color: "#64748B" }}>
+                        {rdv.date} · {rdv.startTime}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center py-4">
+                <Clock size={24} style={{ color: "#CBD5E1" }} className="mb-2" />
+                <p className="text-xs text-center" style={{ color: "#64748B" }}>
+                  Aucun RDV à venir
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

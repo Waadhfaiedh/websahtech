@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import SpecialistLayout from "../../components/layout/SpecialistLayout";
 import PageHeader from "../../components/common/PageHeader";
 import api from "../../services/api";
 import { toast } from "react-toastify";
@@ -78,16 +77,13 @@ export default function AccueilPage() {
 
   if (loading) {
     return (
-      <SpecialistLayout>
         <div className="p-8 flex items-center justify-center min-h-[400px]">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
-      </SpecialistLayout>
     );
   }
 
   return (
-    <SpecialistLayout>
       <div className="p-8 animate-fadeIn">
         <PageHeader
           title={t("nav.accueil")}
@@ -166,6 +162,5 @@ export default function AccueilPage() {
           )}
         </div>
       </div>
-    </SpecialistLayout>
   );
 }

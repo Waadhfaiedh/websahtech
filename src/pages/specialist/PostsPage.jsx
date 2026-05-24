@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../context/AuthContext";
-import SpecialistLayout from "../../components/layout/SpecialistLayout";
 import PageHeader from "../../components/common/PageHeader";
 import Modal from "../../components/common/Modal";
 import api from "../../services/api";
@@ -148,16 +147,13 @@ export default function PostsPage() {
 
   if (loading) {
     return (
-      <SpecialistLayout>
         <div className="p-8 flex justify-center items-center min-h-[400px]">
           <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
-      </SpecialistLayout>
     );
   }
 
   return (
-    <SpecialistLayout>
       <div className="p-6 md:p-8 max-w-5xl mx-auto">
         <PageHeader
           title="Mes publications"
@@ -392,6 +388,5 @@ export default function PostsPage() {
           </div>
         </Modal>
       </div>
-    </SpecialistLayout>
   );
 }

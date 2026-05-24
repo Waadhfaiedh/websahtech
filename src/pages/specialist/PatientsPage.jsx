@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../context/AuthContext";
-import SpecialistLayout from "../../components/layout/SpecialistLayout";
 import PageHeader from "../../components/common/PageHeader";
 import Badge from "../../components/common/Badge";
 import api from "../../services/api";
@@ -74,28 +73,23 @@ export default function PatientsPage() {
 
   if (loading) {
     return (
-      <SpecialistLayout>
         <div className="p-8 flex items-center justify-center min-h-[400px]">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
-      </SpecialistLayout>
     );
   }
 
   if (error) {
     return (
-      <SpecialistLayout>
         <div className="p-8">
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-center">
             {error}
           </div>
         </div>
-      </SpecialistLayout>
     );
   }
 
   return (
-    <SpecialistLayout>
       <div className="p-8 animate-fadeIn">
         <PageHeader
           title={t("patients.title")}
@@ -189,6 +183,5 @@ export default function PatientsPage() {
           )}
         </div>
       </div>
-    </SpecialistLayout>
   );
 }

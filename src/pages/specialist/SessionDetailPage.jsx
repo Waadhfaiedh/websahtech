@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import SpecialistLayout from "../../components/layout/SpecialistLayout";
 import api from "../../services/api";
 
 import { stripPending } from "../../components/forms/physioPayload";
@@ -423,11 +422,9 @@ export default function SessionDetailPage() {
 
   if (loading) {
     return (
-      <SpecialistLayout>
         <div className="p-8 flex items-center justify-center min-h-[400px]">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
-      </SpecialistLayout>
     );
   }
 
@@ -437,7 +434,6 @@ export default function SessionDetailPage() {
   const currentPatientId = session?.patientId ?? patientId;
   console.log(patient);
   return (
-    <SpecialistLayout>
       <div className="p-8 animate-fadeIn">
         {/* Back button */}
         <button
@@ -534,6 +530,5 @@ export default function SessionDetailPage() {
           </div>
         </div>
       </div>
-    </SpecialistLayout>
   );
 }

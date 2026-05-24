@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import SpecialistLayout from "./components/layout/SpecialistLayout";
 import LandingPage from "./pages/LandingPage";
 import { useAuth } from "./context/AuthContext";
 
@@ -47,6 +48,16 @@ function RootRedirect() {
   );
 }
 
+// Layout route: SpecialistLayout mounts once and persists across specialist pages.
+// This prevents the scroll position from resetting on every navigation.
+function SpecialistRoutes() {
+  return (
+    <PrivateRoute allowedRoles={["DOCTOR"]}>
+      <SpecialistLayout />
+    </PrivateRoute>
+  );
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -54,186 +65,56 @@ export default function App() {
         {/* Public */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<RootRedirect />} />
+        <Route path="/landing" element={<LandingPage />} />
 
-        {/* Specialist routes */}
-        <Route
-          path="/specialist/dashboard"
-          element={
-            <PrivateRoute allowedRoles={["DOCTOR"]}>
-              <SpecialistDashboard />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/specialist/patients"
-          element={
-            <PrivateRoute allowedRoles={["DOCTOR"]}>
-              <PatientsPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/specialist/patients/:id"
-          element={
-            <PrivateRoute allowedRoles={["DOCTOR"]}>
-              <PatientDetailPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/specialist/patients/:patientId/sessions/:sessionId"
-          element={
-            <PrivateRoute allowedRoles={["DOCTOR"]}>
-              <SessionDetailPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/specialist/reports"
-          element={
-            <PrivateRoute allowedRoles={["DOCTOR"]}>
-              <ReportsPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/specialist/chat"
-          element={
-            <PrivateRoute allowedRoles={["DOCTOR"]}>
-              <ChatPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/specialist/posts"
-          element={
-            <PrivateRoute allowedRoles={["DOCTOR"]}>
-              <PostsPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/specialist/accueil"
-          element={
-            <PrivateRoute allowedRoles={["DOCTOR"]}>
-              <AccueilPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/specialist/exercises"
-          element={
-            <PrivateRoute allowedRoles={["DOCTOR"]}>
-              <ExercisesPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/specialist/search"
-          element={
-            <PrivateRoute allowedRoles={["DOCTOR"]}>
-              <SearchPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/specialist/planning"
-          element={
-            <PrivateRoute allowedRoles={["DOCTOR"]}>
-              <PlanningPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/specialist/profile"
-          element={
-            <PrivateRoute allowedRoles={["DOCTOR"]}>
-              <ProfilePage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/specialist/feedback"
-          element={
-            <PrivateRoute allowedRoles={["DOCTOR"]}>
-              <FeedbackPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/specialist/reviews"
-          element={
-            <PrivateRoute allowedRoles={["DOCTOR"]}>
-              <ReviewsPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/specialist/clinics"
-          element={
-            <PrivateRoute allowedRoles={["DOCTOR"]}>
-              <ClinicsPage />
-            </PrivateRoute>
-          }
-        />
+        {/* Specialist — single persistent layout, children rendered via Outlet */}
+        <Route path="/specialist" element={<SpecialistRoutes />}>
+          <Route path="dashboard"                              element={<SpecialistDashboard />} />
+          <Route path="patients"                               element={<PatientsPage />} />
+          <Route path="patients/:id"                           element={<PatientDetailPage />} />
+          <Route path="patients/:patientId/sessions/:sessionId" element={<SessionDetailPage />} />
+          <Route path="reports"                                element={<ReportsPage />} />
+          <Route path="chat"                                   element={<ChatPage />} />
+          <Route path="posts"                                  element={<PostsPage />} />
+          <Route path="accueil"                                element={<AccueilPage />} />
+          <Route path="exercises"                              element={<ExercisesPage />} />
+          <Route path="search"                                 element={<SearchPage />} />
+          <Route path="planning"                               element={<PlanningPage />} />
+          <Route path="profile"                                element={<ProfilePage />} />
+          <Route path="feedback"                               element={<FeedbackPage />} />
+          <Route path="reviews"                                element={<ReviewsPage />} />
+          <Route path="clinics"                                element={<ClinicsPage />} />
+        </Route>
 
         {/* Admin routes */}
         <Route
           path="/admin/dashboard"
-          element={
-            <PrivateRoute allowedRoles={["ADMIN"]}>
-              <AdminDashboard />
-            </PrivateRoute>
-          }
+          element={<PrivateRoute allowedRoles={["ADMIN"]}><AdminDashboard /></PrivateRoute>}
         />
         <Route
           path="/admin/specialists"
-          element={
-            <PrivateRoute allowedRoles={["ADMIN"]}>
-              <AdminSpecialists />
-            </PrivateRoute>
-          }
+          element={<PrivateRoute allowedRoles={["ADMIN"]}><AdminSpecialists /></PrivateRoute>}
         />
         <Route
           path="/admin/admins"
-          element={
-            <PrivateRoute allowedRoles={["ADMIN"]}>
-              <AdminAdmins />
-            </PrivateRoute>
-          }
+          element={<PrivateRoute allowedRoles={["ADMIN"]}><AdminAdmins /></PrivateRoute>}
         />
         <Route
           path="/admin/patients"
-          element={
-            <PrivateRoute allowedRoles={["ADMIN"]}>
-              <AdminPatients />
-            </PrivateRoute>
-          }
+          element={<PrivateRoute allowedRoles={["ADMIN"]}><AdminPatients /></PrivateRoute>}
         />
         <Route
           path="/admin/posts"
-          element={
-            <PrivateRoute allowedRoles={["ADMIN"]}>
-              <AdminPosts />
-            </PrivateRoute>
-          }
+          element={<PrivateRoute allowedRoles={["ADMIN"]}><AdminPosts /></PrivateRoute>}
         />
         <Route
           path="/admin/profile"
-          element={
-            <PrivateRoute allowedRoles={["ADMIN"]}>
-              <AdminProfile />
-            </PrivateRoute>
-          }
+          element={<PrivateRoute allowedRoles={["ADMIN"]}><AdminProfile /></PrivateRoute>}
         />
         <Route
           path="/admin/reviews"
-          element={
-            <PrivateRoute allowedRoles={["ADMIN"]}>
-              <AdminReviews />
-            </PrivateRoute>
-          }
+          element={<PrivateRoute allowedRoles={["ADMIN"]}><AdminReviews /></PrivateRoute>}
         />
 
         {/* Fallback */}

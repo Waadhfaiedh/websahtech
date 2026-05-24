@@ -1,10 +1,8 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import SpecialistLayout from "../../components/layout/SpecialistLayout";
 import Badge from "../../components/common/Badge";
 import NewSessionModal from "../../components/modals/NewSessionModal";
-import EvolutionCharts from "../../components/charts/EvolutionCharts";
 import api from "../../services/api";
 import { toast } from "react-toastify";
 
@@ -14,9 +12,7 @@ export default function PatientDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState("info");
-  const [noteText, setNoteText] = useState("");
-  const [notes, setNotes] = useState([]);
-  const [patient, setPatient] = useState(null);
+const [patient, setPatient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [treatmentPlan, setTreatmentPlan] = useState("");
   const [editingPlan, setEditingPlan] = useState(false);
@@ -85,17 +81,6 @@ export default function PatientDetailPage() {
     }
   };
 
-  const addNote = () => {
-    if (!noteText.trim()) return;
-    const newNote = {
-      id: Date.now(),
-      date: new Date().toISOString().split("T")[0],
-      text: noteText,
-    };
-    setNotes((prev) => [newNote, ...prev]);
-    setNoteText("");
-  };
-
   const getMedicalHistoryItems = () => {
     return patient?.patient?.medicalHistory || [];
   };
@@ -138,31 +123,25 @@ export default function PatientDetailPage() {
 
   if (loading) {
     return (
-      <SpecialistLayout>
         <div className="p-8 flex items-center justify-center min-h-[400px]">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
-      </SpecialistLayout>
     );
   }
 
   if (!patient) {
     return (
-      <SpecialistLayout>
         <div className="p-8 text-center text-gray-400">
           Patient introuvable.
         </div>
-      </SpecialistLayout>
     );
   }
 
   const tabs = [
     { key: "info", label: "Informations" },
     { key: "treatment", label: "Plan de traitement" },
-    { key: "notes", label: "Notes de suivi" },
     { key: "reports", label: t("patients.ai_reports") },
     { key: "dossier", label: "Dossier médical" },
-    { key: "evolution", label: "Évolution" },
   ];
 
   const renderSessionsContent = () => {
@@ -278,7 +257,7 @@ export default function PatientDetailPage() {
   };
 
   return (
-    <SpecialistLayout>
+    <>
       <div className="p-8 animate-fadeIn">
         <button
           onClick={() => navigate(-1)}
@@ -495,38 +474,6 @@ export default function PatientDetailPage() {
           </div>
         )}
 
-        {activeTab === "notes" && (
-          <div className="space-y-4">
-            <div className="card">
-              <h3 className="font-bold text-gray-900 mb-3">Ajouter une note</h3>
-              <textarea
-                value={noteText}
-                onChange={(e) => setNoteText(e.target.value)}
-                rows={3}
-                className="input-field resize-none mb-3"
-                placeholder="Observations de la séance..."
-              />
-              <button onClick={addNote} className="btn-primary">
-                {t("common.add")}
-              </button>
-            </div>
-            <div className="space-y-3">
-              {notes.length > 0 ? (
-                notes.map((note, i) => (
-                  <div key={i} className="card border-l-4 border-l-primary">
-                    <p className="text-xs text-gray-400 mb-1">{note.date}</p>
-                    <p className="text-sm text-gray-800">{note.text}</p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-400 text-center py-8">
-                  Aucune note de suivi
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
         {activeTab === "reports" && (
           <div className="card">
             <p className="text-gray-400 text-center py-8">
@@ -568,7 +515,6 @@ export default function PatientDetailPage() {
           </div>
         )}
 
-        {activeTab === "evolution" && <EvolutionCharts patientId={id} />}
       </div>
 
       {/* New Session Modal */}
@@ -578,6 +524,6 @@ export default function PatientDetailPage() {
         patientId={id}
         onSessionCreated={() => fetchSessions()}
       />
-    </SpecialistLayout>
+    </>
   );
 }

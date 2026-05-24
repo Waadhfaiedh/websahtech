@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import SpecialistLayout from "../../components/layout/SpecialistLayout";
 import PageHeader from "../../components/common/PageHeader";
 import Modal from "../../components/common/Modal";
 import api from "../../services/api";
@@ -89,7 +88,6 @@ export default function ClinicsPage() {
   };
 
   return (
-    <SpecialistLayout>
       <div className="p-8 animate-fadeIn">
         <PageHeader
           title="Mes Cliniques"
@@ -218,6 +216,5 @@ export default function ClinicsPage() {
           </div>
         </Modal>
       </div>
-    </SpecialistLayout>
   );
 }

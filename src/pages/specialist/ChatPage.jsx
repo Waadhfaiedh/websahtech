@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { io } from "socket.io-client";
 import { toast } from "react-toastify";
-import SpecialistLayout from "../../components/layout/SpecialistLayout";
 import { useAuth } from "../../context/AuthContext";
 import api, { API_BASE_URL } from "../../services/api";
 
@@ -731,7 +730,6 @@ export default function ChatPage() {
   }
 
   return (
-    <SpecialistLayout>
       <div className="flex h-full">
         <div className="w-80 bg-white border-r border-gray-100 flex flex-col flex-shrink-0">
           <div className="p-4 border-b border-gray-100">
@@ -846,6 +844,5 @@ export default function ChatPage() {
         <div className="flex-1 flex flex-col bg-gray-50">{chatContent}</div>
       </div>
 
-    </SpecialistLayout>
   );
 }

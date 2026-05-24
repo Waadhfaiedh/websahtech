@@ -182,7 +182,7 @@ export default function EvolutionCharts({ patientId }) {
               stroke="#F59E0B"
               strokeWidth={2}
               dot={{ fill: "#F59E0B", r: 4 }}
-              name="Abduction (°)"
+              name="Élévation latérale (°)"
             />
           </LineChart>
         </ResponsiveContainer>

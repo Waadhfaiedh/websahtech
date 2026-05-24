@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { useAuth } from "../../context/AuthContext";
-import SpecialistLayout from "../../components/layout/SpecialistLayout";
 import PageHeader from "../../components/common/PageHeader";
 import Modal from "../../components/common/Modal";
 import MovementReport from "../../components/reports/MovementReport";
@@ -131,7 +130,6 @@ export default function ReportsPage() {
   };
 
   return (
-    <SpecialistLayout>
       <div className="p-8 animate-fadeIn">
         <PageHeader
           title={t("reports.title")}
@@ -317,6 +315,5 @@ export default function ReportsPage() {
           <MovementReport report={selectedReport} />
         </Modal>
       </div>
-    </SpecialistLayout>
   );
 }

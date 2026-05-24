@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import { toast } from "react-toastify";
-import SpecialistLayout from "../../components/layout/SpecialistLayout";
 import PageHeader from "../../components/common/PageHeader";
 import Modal from "../../components/common/Modal";
 import Badge from "../../components/common/Badge";
@@ -132,7 +131,6 @@ export default function SearchPage() {
   };
 
   return (
-    <SpecialistLayout>
       <div className="p-8 animate-fadeIn">
         <PageHeader
           title={t("search.title")}
@@ -383,6 +381,5 @@ export default function SearchPage() {
           )}
         </Modal>
       </div>
-    </SpecialistLayout>
   );
 }

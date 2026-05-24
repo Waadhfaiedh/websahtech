@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
-import SpecialistLayout from "../../components/layout/SpecialistLayout";
 import PageHeader from "../../components/common/PageHeader";
 import Modal from "../../components/common/Modal";
 import Badge from "../../components/common/Badge";
@@ -405,7 +404,6 @@ export default function PlanningPage() {
   };
 
   return (
-    <SpecialistLayout>
       <div className="p-8 animate-fadeIn">
         <PageHeader
           title={t("planning.title")}
@@ -985,6 +983,5 @@ export default function PlanningPage() {
           </div>
         </Modal>
       </div>
-    </SpecialistLayout>
   );
 }

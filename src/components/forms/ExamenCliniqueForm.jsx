@@ -147,7 +147,7 @@ a) Antepulsion (/ 10 points) :
 - 121°-150° : 8 points
 - > 150° : 10 points
 
-b) Abduction (/ 10 points) :
+b) Élévation latérale (/ 10 points) :
 - 0°-30° : 0 point
 - 31°-60° : 2 points
 - 61°-90° : 4 points
@@ -170,7 +170,7 @@ d) Rotation mediale (/ 10 points) :
 - Dos de la main niveau T7-T8 : 10 points
 
 4) Force musculaire / 25 points
-Abduction isometrique (elevation antero-laterale de 90° dans le plan de l'omoplate).
+Élévation latérale isométrique (élévation antéro-latérale de 90° dans le plan de l'omoplate).
 Mesure avec dynamometre (sensibilite minimale 500 g) fixe au poignet, patient assis,
 bras tendu a 30° d'antepulsion, resistance a la poussee vers le bas pendant 5 secondes.
 - Si 90° n'est pas atteint en actif : 0 point
@@ -847,7 +847,7 @@ export default function ExamenCliniqueForm({ session, patient, interrogatoire, p
             {[
               { key: "elevation_ant", label: "Élévation antérieure" },
               { key: "retropultion", label: "Rétropulsion" },
-              { key: "abduction", label: "Abduction" },
+              { key: "abduction", label: "Élévation latérale" },
               { key: "adduction", label: "Adduction" },
               { key: "rot_ext", label: "Rotation externe" },
               { key: "rot_int", label: "Rotation interne" },

@@ -3430,7 +3430,7 @@ export default function PhysiotherapieForm({ session, patient, interrogatoire, p
               </p>
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { key: "supra_epineux", label: "Supra-épineux (abduction)" },
+                  { key: "supra_epineux", label: "Supra-épineux (élévation latérale)" },
                   {
                     key: "infra_epineux",
                     label: "Infra-épineux (rotation externe)",
@@ -4155,7 +4155,7 @@ export default function PhysiotherapieForm({ session, patient, interrogatoire, p
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">ROM abduction cible (°)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">ROM élévation latérale cible (°)</label>
                 <input
                   type="number"
                   min="0"
@@ -4379,7 +4379,7 @@ export default function PhysiotherapieForm({ session, patient, interrogatoire, p
                   onChange={(e) => handleProtocolChange("ciMouvementsInterdits", e.target.value)}
                   rows={2}
                   className="input-field resize-none"
-                  placeholder="Ex : pas d'abduction active au-delà de 60° avant J45..."
+                  placeholder="Ex : pas d'élévation latérale active au-delà de 60° avant J45..."
                 />
               </div>
               <div>

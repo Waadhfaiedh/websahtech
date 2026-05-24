@@ -1,8 +1,7 @@
-import { useState, useEffect, useMemo } from "react";
+﻿import { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
-import SpecialistLayout from "../../components/layout/SpecialistLayout";
 import PageHeader from "../../components/common/PageHeader";
 import Modal from "../../components/common/Modal";
 import { mockPatients } from "../../services/mockData";
@@ -838,7 +837,6 @@ export default function ExercisesPage() {
   };
 
   return (
-    <SpecialistLayout>
       <div className="p-8 animate-fadeIn">
         <PageHeader
           title={t("exercises.title")}
@@ -1483,6 +1481,5 @@ export default function ExercisesPage() {
           </div>
         </Modal>
       </div>
-    </SpecialistLayout>
   );
 }

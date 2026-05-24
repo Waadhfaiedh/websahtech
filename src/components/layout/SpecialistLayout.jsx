@@ -1,6 +1,5 @@
-import PropTypes from "prop-types";
 import { useEffect, useRef, useState } from "react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { io } from "socket.io-client";
 import { toast } from "react-toastify";
@@ -312,7 +311,7 @@ const navItems = [
   { key: "profile", path: "/specialist/profile" },
 ];
 
-export default function SpecialistLayout({ children }) {
+export default function SpecialistLayout() {
   const { t } = useTranslation();
   const { user, specialist, logout } = useAuth();
   const navigate = useNavigate();
@@ -527,7 +526,7 @@ export default function SpecialistLayout({ children }) {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto">{children}</main>
+      <main className="flex-1 overflow-y-auto"><Outlet /></main>
     </div>
 
     {/* Floating AI assistant button — hidden on the chat page itself */}
@@ -548,6 +547,3 @@ export default function SpecialistLayout({ children }) {
   );
 }
 
-SpecialistLayout.propTypes = {
-  children: PropTypes.node.isRequired,
-};

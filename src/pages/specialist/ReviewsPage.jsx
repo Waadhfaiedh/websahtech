@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
-import SpecialistLayout from "../../components/layout/SpecialistLayout";
 import PageHeader from "../../components/common/PageHeader";
 import Badge from "../../components/common/Badge";
 import Modal from "../../components/common/Modal";
@@ -162,7 +161,6 @@ export default function SpecialistReviewsPage() {
   };
 
   return (
-    <SpecialistLayout>
       <div className="p-8 animate-fadeIn">
         <PageHeader
           title="Mes avis sur la plateforme"
@@ -445,6 +443,5 @@ export default function SpecialistReviewsPage() {
           )}
         </Modal>
       </div>
-    </SpecialistLayout>
   );
 }

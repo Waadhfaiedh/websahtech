@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import SpecialistLayout from "../../components/layout/SpecialistLayout";
 import PageHeader from "../../components/common/PageHeader";
 import { toast } from "react-toastify";
 import {
@@ -124,7 +123,6 @@ export default function FeedbackPage() {
   };
 
   return (
-    <SpecialistLayout>
       <div className="p-8 animate-fadeIn">
         <PageHeader
           title="Avis & Réclamations"
@@ -260,6 +258,5 @@ export default function FeedbackPage() {
           </div>
         </div>
       </div>
-    </SpecialistLayout>
   );
 }
