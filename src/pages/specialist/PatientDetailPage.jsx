@@ -144,6 +144,12 @@ const [patient, setPatient] = useState(null);
     { key: "dossier", label: "Dossier médical" },
   ];
 
+  const genderLabel = (() => {
+    if (patient?.gender === "MALE") return "Homme";
+    if (patient?.gender === "FEMALE") return "Femme";
+    return "—";
+  })();
+
   const renderSessionsContent = () => {
     if (loadingSessions) {
       return (
@@ -350,12 +356,7 @@ const [patient, setPatient] = useState(null);
                   { label: "Téléphone", val: patient.phone || "—" },
                   {
                     label: "Genre",
-                    val:
-                      patient.gender === "MALE"
-                        ? "Homme"
-                        : patient.gender === "FEMALE"
-                          ? "Femme"
-                          : "—",
+                    val: genderLabel,
                   },
                   { label: "Âge", val: `${getPatientAge()} ans` },
                   {
@@ -386,9 +387,9 @@ const [patient, setPatient] = useState(null);
               </h3>
               {getMedicalHistoryItems().length > 0 ? (
                 <div className="space-y-3">
-                  {getMedicalHistoryItems().map((item, index) => (
+                  {getMedicalHistoryItems().map((item) => (
                     <div
-                      key={index}
+                      key={item.id || item.title}
                       className="border-b border-gray-100 pb-2 last:border-0"
                     >
                       <p className="text-sm font-medium text-gray-800">
@@ -401,7 +402,7 @@ const [patient, setPatient] = useState(null);
                             openDocument(
                               item.fileUrl,
                               item.title ||
-                                `document-${item.category || index}`,
+                                `document-${item.category}`,
                             )
                           }
                           className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
