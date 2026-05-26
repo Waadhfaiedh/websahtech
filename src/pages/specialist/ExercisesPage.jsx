@@ -1,7 +1,9 @@
 ﻿import { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
+import { Dumbbell, X, Search, Users, Check } from "lucide-react";
 import PageHeader from "../../components/common/PageHeader";
 import Modal from "../../components/common/Modal";
 import { mockPatients } from "../../services/mockData";
@@ -531,8 +533,9 @@ export default function ExercisesPage() {
   const [assignPatientsLoading, setAssignPatientsLoading] = useState(false);
   const [assignPatientsError, setAssignPatientsError] = useState(null);
   const [assignSearchQuery, setAssignSearchQuery] = useState("");
-  const [assigningExerciseLoading, setAssigningExerciseLoading] =
-    useState(false);
+  const [assigningExerciseLoading, setAssigningExerciseLoading] = useState(false);
+  const [assignSelectedPatient, setAssignSelectedPatient] = useState(null);
+  const [assignParams, setAssignParams] = useState({ repetitions: 10, series: 3, seancesParJour: 1, frequence: "quotidien", consignesDouleur: "", notes: "" });
 
   const EMPTY_FORM = {
     name: "",
@@ -578,7 +581,7 @@ export default function ExercisesPage() {
         setMyLoading(true);
         setMyError(null);
         const response = await api.get("/doctors/exercises");
-        setMyExercises(response.data);
+        setMyExercises(response.data?.data ?? response.data ?? []);
       } catch (err) {
         setMyError(err.response?.data?.message || "Failed to load exercises");
       } finally {
@@ -615,6 +618,8 @@ export default function ExercisesPage() {
     if (!showAssign) {
       setAssignPatients([]);
       setAssignSearchQuery("");
+      setAssignSelectedPatient(null);
+      setAssignParams({ repetitions: 10, series: 3, seancesParJour: 1, frequence: "quotidien", consignesDouleur: "", notes: "" });
       return;
     }
 
@@ -691,26 +696,20 @@ export default function ExercisesPage() {
     });
   }, [assignPatients, assignSearchQuery]);
 
-  const handleAssignExercise = async (patientId) => {
-    if (!showAssign) return;
-
+  const handleAssignExercise = async () => {
+    if (!showAssign || !assignSelectedPatient) return;
     try {
       setAssigningExerciseLoading(true);
-      await api.patch("/doctors/assign-exercise", {
-        patientId,
-        exerciceId: showAssign.exerciseId, // Note: backend uses 'exerciceId' (typo)
-      });
-      toast.success(`Exercice assigné au patient !`);
-      setShowAssign(null);
-      setAssignSearchQuery("");
-
-      // Refresh my exercises list
-      const response = await api.get("/doctors/exercises");
-      setMyExercises(response.data);
-    } catch (err) {
-      toast.error(
-        err.response?.data?.message || "Erreur lors de l'assignation",
+      await api.post(
+        `/doctors/exercises/${showAssign.exerciseId}/assign/${assignSelectedPatient.userId}`,
+        assignParams,
       );
+      toast.success(`Exercice assigné à ${assignSelectedPatient.fullName} !`);
+      setShowAssign(null);
+      const response = await api.get("/doctors/exercises");
+      setMyExercises(response.data?.data ?? response.data ?? []);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Erreur lors de l'assignation");
     } finally {
       setAssigningExerciseLoading(false);
     }
@@ -837,6 +836,7 @@ export default function ExercisesPage() {
   };
 
   return (
+    <>
       <div className="p-8 animate-fadeIn">
         <PageHeader
           title={t("exercises.title")}
@@ -1362,124 +1362,255 @@ export default function ExercisesPage() {
           </div>
         </Modal>
 
-        {/* ── Assign modal ── */}
-        <Modal
-          isOpen={!!showAssign}
-          onClose={() => setShowAssign(null)}
-          title={`Assigner : ${showAssign?.title ?? showAssign?.name}`}
-        >
-          <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
-            <p className="text-sm text-gray-600">Sélectionner un patient :</p>
+      </div>
 
-            {/* Search input */}
-            <div className="relative">
-              <svg
-                className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+      {/* ── Assign full-screen modal (portal) ── */}
+      {showAssign && createPortal(
+        <div className="fixed inset-0 z-[9999] flex flex-col bg-white" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white flex-shrink-0">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center"
+                style={{ background: "linear-gradient(135deg, #0052FF, #00A3FF)" }}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-              <input
-                value={assignSearchQuery}
-                onChange={(e) => setAssignSearchQuery(e.target.value)}
-                className="input-field pl-11 py-2.5"
-                placeholder="Rechercher par nom ou email..."
-              />
-            </div>
-
-            {/* Loading state */}
-            {assignPatientsLoading && (
-              <div className="flex items-center justify-center py-8">
-                <div className="w-6 h-6 border-3 border-primary border-t-transparent rounded-full animate-spin" />
-                <span className="ml-2 text-sm text-gray-600">
-                  {t("common.loading")}
-                </span>
+                <Dumbbell size={18} className="text-white" />
               </div>
-            )}
+              <div>
+                <h2 className="text-base font-bold text-gray-900">
+                  Assigner : {showAssign.name}
+                </h2>
+                <p className="text-xs text-gray-400">
+                  Sélectionnez un patient et configurez les paramètres d'entraînement
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowAssign(null)}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <X size={20} className="text-gray-500" />
+            </button>
+          </div>
 
-            {/* No patients */}
-            {!assignPatientsLoading &&
-              !assignPatientsError &&
-              assignPatients.length === 0 && (
-                <div className="text-center py-8 text-gray-400">
-                  <svg
-                    className="w-10 h-10 mx-auto mb-2 text-gray-300"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M17 20h5v-2a3 3 0 00-5.856-1.487M15 10a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
-                  <p className="text-sm">Aucun patient trouvé</p>
+          {/* Body: two columns */}
+          <div className="flex flex-1 min-h-0 overflow-hidden">
+
+            {/* ── LEFT: Patient list ── */}
+            <div className="w-1/2 flex flex-col border-r border-gray-100">
+              <div className="p-4 border-b border-gray-100 space-y-3 flex-shrink-0">
+                <div className="flex items-center gap-2">
+                  <Users size={15} className="text-gray-500" />
+                  <h3 className="font-semibold text-gray-900 text-sm">Sélectionner un patient</h3>
                 </div>
-              )}
+                <div className="relative">
+                  <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    value={assignSearchQuery}
+                    onChange={(e) => setAssignSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400"
+                    placeholder="Rechercher par nom ou email…"
+                  />
+                </div>
+              </div>
 
-            {/* No results after search */}
-            {!assignPatientsLoading &&
-              !assignPatientsError &&
-              assignPatients.length > 0 &&
-              filteredAssignPatients.length === 0 && (
-                <div className="text-center py-8 text-gray-400">
-                  <p className="text-sm">
+              <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                {assignPatientsLoading && (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                    <span className="ml-2 text-sm text-gray-500">Chargement…</span>
+                  </div>
+                )}
+
+                {!assignPatientsLoading && !assignPatientsError && assignPatients.length === 0 && (
+                  <div className="flex flex-col items-center py-12 text-gray-400">
+                    <Users size={32} className="mb-2 text-gray-300" />
+                    <p className="text-sm">Aucun patient trouvé</p>
+                  </div>
+                )}
+
+                {!assignPatientsLoading && !assignPatientsError && assignPatients.length > 0 && filteredAssignPatients.length === 0 && (
+                  <p className="text-sm text-center text-gray-400 py-8">
                     Aucun patient ne correspond à votre recherche
                   </p>
-                </div>
-              )}
+                )}
 
-            {/* Patient list */}
-            {!assignPatientsLoading &&
-              !assignPatientsError &&
-              filteredAssignPatients.length > 0 && (
-                <div className="space-y-2">
-                  {filteredAssignPatients.map((p) => {
-                    const lastAppointment = p.patient?.appointments?.[0];
-                    return (
-                      <button
-                        key={p.userId}
-                        onClick={() => handleAssignExercise(p.userId)}
-                        disabled={assigningExerciseLoading}
-                        className="w-full text-left px-4 py-3 rounded-xl border border-gray-100 hover:border-primary hover:bg-primary/5 transition-all flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                          <span className="text-primary text-sm font-bold">
+                {!assignPatientsLoading && !assignPatientsError && filteredAssignPatients.map((p) => {
+                  const isSelected = assignSelectedPatient?.userId === p.userId;
+                  return (
+                    <button
+                      key={p.userId}
+                      onClick={() => setAssignSelectedPatient(p)}
+                      className={`w-full text-left px-4 py-3 rounded-xl border transition-all flex items-center gap-3 ${
+                        isSelected
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-100 hover:border-blue-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      {p.imageUrl ? (
+                        <img
+                          src={p.imageUrl}
+                          alt=""
+                          className="w-9 h-9 rounded-full object-cover flex-shrink-0 ring-2 ring-white"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                          <span className="text-blue-600 text-sm font-bold">
                             {p.fullName?.charAt(0) ?? "?"}
                           </span>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm text-gray-900">
-                            {p.fullName}
-                          </p>
-                          <p className="text-xs text-gray-500 truncate">
-                            {p.email}
-                          </p>
-                          {lastAppointment?.reason && (
-                            <p className="text-xs text-gray-400 truncate mt-0.5">
-                              Motif: {lastAppointment.reason}
-                            </p>
-                          )}
-                        </div>
-                        {assigningExerciseLoading && (
-                          <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin flex-shrink-0" />
-                        )}
-                      </button>
-                    );
-                  })}
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm text-gray-900 truncate">{p.fullName}</p>
+                        <p className="text-xs text-gray-400 truncate">{p.email}</p>
+                      </div>
+                      {isSelected && <Check size={16} className="text-blue-500 flex-shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ── RIGHT: Training params ── */}
+            <div className="w-1/2 flex flex-col">
+              {assignSelectedPatient ? (
+                <div className="flex flex-col flex-1 p-6 gap-6 overflow-y-auto">
+
+                  {/* Selected patient recap */}
+                  <div className="flex items-center gap-3 p-4 rounded-xl bg-blue-50 border border-blue-100">
+                    {assignSelectedPatient.imageUrl ? (
+                      <img
+                        src={assignSelectedPatient.imageUrl}
+                        alt=""
+                        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                        <span className="text-white font-bold text-sm">
+                          {assignSelectedPatient.fullName?.charAt(0) ?? "?"}
+                        </span>
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm">{assignSelectedPatient.fullName}</p>
+                      <p className="text-xs text-gray-400">{assignSelectedPatient.email}</p>
+                    </div>
+                  </div>
+
+                  {/* Params */}
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-gray-900 text-sm">Paramètres d'entraînement</h3>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Répétitions</label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={assignParams.repetitions}
+                          onChange={(e) => setAssignParams((p) => ({ ...p, repetitions: Number(e.target.value) }))}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Séries</label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={assignParams.series}
+                          onChange={(e) => setAssignParams((p) => ({ ...p, series: Number(e.target.value) }))}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Séances / jour</label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={assignParams.seancesParJour}
+                          onChange={(e) => setAssignParams((p) => ({ ...p, seancesParJour: Number(e.target.value) }))}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Fréquence</label>
+                        <select
+                          value={assignParams.frequence}
+                          onChange={(e) => setAssignParams((p) => ({ ...p, frequence: e.target.value }))}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400 bg-white"
+                        >
+                          <option value="quotidien">Quotidien</option>
+                          <option value="2x_jour">2× par jour</option>
+                          <option value="3x_sem">3× par semaine</option>
+                          <option value="2x_sem">2× par semaine</option>
+                          <option value="1x_sem">1× par semaine</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Consignes douleur</label>
+                      <textarea
+                        value={assignParams.consignesDouleur}
+                        onChange={(e) => setAssignParams((p) => ({ ...p, consignesDouleur: e.target.value }))}
+                        rows={2}
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400 resize-none"
+                        placeholder="Ex : Arrêter si douleur > 5/10…"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Notes</label>
+                      <textarea
+                        value={assignParams.notes}
+                        onChange={(e) => setAssignParams((p) => ({ ...p, notes: e.target.value }))}
+                        rows={2}
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400 resize-none"
+                        placeholder="Remarques supplémentaires…"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Confirm button */}
+                  <button
+                    onClick={handleAssignExercise}
+                    disabled={assigningExerciseLoading}
+                    className="mt-auto w-full py-3 rounded-xl text-white font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60 transition-opacity"
+                    style={{ background: "linear-gradient(135deg, #0052FF, #00A3FF)" }}
+                  >
+                    {assigningExerciseLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Assignation…
+                      </>
+                    ) : (
+                      <>
+                        <Check size={16} />
+                        Confirmer l'assignation
+                      </>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center flex-1 text-gray-400">
+                  <div
+                    className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
+                    style={{ background: "#F8FAFF" }}
+                  >
+                    <Users size={28} className="text-gray-300" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-500">Sélectionnez un patient</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Les paramètres d'entraînement apparaîtront ici
+                  </p>
                 </div>
               )}
+            </div>
           </div>
-        </Modal>
-      </div>
+        </div>,
+        document.body,
+      )}
+    </>
   );
 }

@@ -1,4 +1,4 @@
-// Redesigned following SAHTECK brand guidelines
+﻿// Redesigned following SAHTECK brand guidelines
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
@@ -26,6 +26,24 @@ const riskLabels = { green: "Faible", orange: "Modéré", red: "Élevé" };
 const cardShadow = { boxShadow: "0 2px 12px rgba(0,82,255,0.08)" };
 const gradientBg = { background: "linear-gradient(135deg, #0052FF, #00A3FF)" };
 
+const STATUS_CONFIG = {
+  SCHEDULED:  { label: "Planifié",  color: "#0052FF", bg: "#EFF6FF" },
+  ACEPTED:    { label: "Accepté",   color: "#10B981", bg: "#ECFDF5" },
+  REJECTED:   { label: "Refusé",    color: "#EF4444", bg: "#FEF2F2" },
+  COMPLETED:  { label: "Terminé",   color: "#64748B", bg: "#F1F5F9" },
+  CANCELLED:  { label: "Annulé",    color: "#F59E0B", bg: "#FFFBEB" },
+};
+
+const fmtDate = (iso) => {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+};
+
+const fmtTime = (iso) => {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+};
+
 export default function SpecialistDashboard() {
   const { t } = useTranslation();
   const { specialist } = useAuth();
@@ -51,7 +69,7 @@ export default function SpecialistDashboard() {
         appointmentsCount: statsRes.data.appointmentsCount || 0,
         pendingReports: 0,
         unreadMessages: statsRes.data.unreadedcount || 0,
-        upcomingRDVs: [],
+        upcomingRDVs: statsRes.data.upcomingRDVs || [],
       });
     } catch (err) {
       console.error("Failed to load dashboard data:", err);
@@ -317,26 +335,61 @@ export default function SpecialistDashboard() {
 
             {dashboardData.upcomingRDVs.length > 0 ? (
               <div className="space-y-2">
-                {dashboardData.upcomingRDVs.slice(0, 3).map((rdv) => (
-                  <div
-                    key={rdv.id}
-                    className="flex items-center gap-3 p-2.5 rounded-lg"
-                    style={{ background: "#F8FAFF" }}
-                  >
+                {dashboardData.upcomingRDVs.slice(0, 3).map((rdv) => {
+                  const patientName = rdv.patient?.user?.fullName ?? "Patient";
+                  const patientImg  = rdv.patient?.user?.imageUrl;
+                  const status      = STATUS_CONFIG[rdv.status] ?? STATUS_CONFIG.SCHEDULED;
+                  const date        = rdv.AvailableSlot?.date;
+                  const time        = rdv.AvailableSlot?.startTime;
+
+                  return (
                     <div
-                      className="w-2 h-2 rounded-full flex-shrink-0"
-                      style={{ background: "#0052FF" }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold truncate" style={{ color: "#0A0F1E" }}>
-                        {rdv.patientName}
-                      </p>
-                      <p className="text-xs" style={{ color: "#64748B" }}>
-                        {rdv.date} · {rdv.startTime}
-                      </p>
+                      key={rdv.appointmentId}
+                      className="p-3 rounded-xl border border-gray-100"
+                      style={{ background: "#F8FAFF" }}
+                    >
+                      {/* Row 1 – avatar + name + status badge */}
+                      <div className="flex items-center gap-2 mb-1.5">
+                        {patientImg ? (
+                          <img
+                            src={patientImg}
+                            alt=""
+                            className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-1 ring-white"
+                          />
+                        ) : (
+                          <div
+                            className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[11px] font-bold"
+                            style={{ background: "#EFF6FF", color: "#0052FF" }}
+                          >
+                            {patientName.charAt(0)}
+                          </div>
+                        )}
+                        <p className="text-xs font-semibold flex-1 truncate" style={{ color: "#0A0F1E" }}>
+                          {patientName}
+                        </p>
+                        <span
+                          className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
+                          style={{ color: status.color, background: status.bg }}
+                        >
+                          {status.label}
+                        </span>
+                      </div>
+
+                      {/* Row 2 – reason + date·time */}
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[10px] truncate flex-1" style={{ color: "#94A3B8" }}>
+                          {rdv.reason ?? "—"}
+                        </p>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <Clock size={10} style={{ color: "#64748B" }} />
+                          <span className="text-[10px] font-medium" style={{ color: "#64748B" }}>
+                            {fmtDate(date)} · {fmtTime(time)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="flex flex-col items-center py-4">
