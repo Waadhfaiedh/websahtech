@@ -1,24 +1,42 @@
-﻿import { useState, useEffect, useRef } from "react";
+// Redesigned following SAHTECK brand guidelines
+import { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../context/AuthContext";
 import PageHeader from "../../components/common/PageHeader";
+import Badge from "../../components/common/Badge";
 import api from "../../services/api";
 import Cropper from "react-easy-crop";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import {
+  Building2,
+  Camera,
+  CheckCircle2,
+  ChevronRight,
+  Loader2,
+  LockKeyhole,
+  Mail,
+  MapPin,
+  Phone,
+  ShieldCheck,
+  Star,
+  X,
+} from "lucide-react";
 
 function ImageCropper({ image, onCrop, onClose }) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
-  const onCropComplete = (croppedArea, croppedAreaPixels) => {
-    setCroppedAreaPixels(croppedAreaPixels);
+  const onCropComplete = (croppedArea, croppedAreaPixelsValue) => {
+    setCroppedAreaPixels(croppedAreaPixelsValue);
   };
 
   const createCroppedImage = async () => {
     try {
+      if (!croppedAreaPixels) return;
+
       const imageElement = new Image();
       imageElement.src = image;
       await new Promise((resolve) => {
@@ -45,9 +63,7 @@ function ImageCropper({ image, onCrop, onClose }) {
 
       canvas.toBlob(
         (blob) => {
-          if (blob) {
-            onCrop(blob);
-          }
+          if (blob) onCrop(blob);
         },
         "image/jpeg",
         0.9,
@@ -58,11 +74,31 @@ function ImageCropper({ image, onCrop, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
-      <div className="bg-white rounded-2xl max-w-lg w-full p-6">
-        <h3 className="text-lg font-bold mb-4">Recadrer l'image</h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
+      <div
+        className="w-full max-w-2xl rounded-[12px] bg-white p-5 md:p-6"
+        style={{ boxShadow: "0 2px 12px rgba(0,82,255,0.08)" }}
+      >
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-semibold text-[#0A0F1E]">
+              Recadrer l'image
+            </h3>
+            <p className="text-sm text-[#64748B]">
+              Ajustez le cadrage avant d’enregistrer la photo de profil.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#F8FAFF] text-[#64748B] transition-all duration-200 ease-in-out hover:bg-[#EFF6FF] hover:text-[#0052FF]"
+            aria-label="Fermer"
+          >
+            <X size={18} />
+          </button>
+        </div>
 
-        <div className="relative h-80 mb-4 bg-gray-100 rounded-lg overflow-hidden">
+        <div className="relative mb-4 h-80 overflow-hidden rounded-[12px] bg-[#F8FAFF]">
           <Cropper
             image={image}
             crop={crop}
@@ -74,10 +110,10 @@ function ImageCropper({ image, onCrop, onClose }) {
           />
         </div>
 
-        <div className="mb-4">
+        <div className="mb-5">
           <label
             htmlFor="zoom-slider"
-            className="block text-sm text-gray-600 mb-2"
+            className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[#64748B]"
           >
             Zoom
           </label>
@@ -89,20 +125,22 @@ function ImageCropper({ image, onCrop, onClose }) {
             step={0.1}
             value={zoom}
             onChange={(e) => setZoom(Number.parseFloat(e.target.value))}
-            className="w-full"
+            className="w-full accent-[#0052FF]"
           />
         </div>
 
         <div className="flex gap-3">
           <button
+            type="button"
             onClick={createCroppedImage}
-            className="flex-1 bg-primary text-white py-2 rounded-lg font-semibold hover:bg-primary/90 transition-colors"
+            className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-full bg-gradient-to-r from-[#0052FF] to-[#00A3FF] px-4 py-3 text-sm font-semibold text-white transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-md"
           >
             Appliquer
           </button>
           <button
+            type="button"
             onClick={onClose}
-            className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+            className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-full border border-[#BFDBFE] bg-white px-4 py-3 text-sm font-semibold text-[#0052FF] transition-all duration-200 ease-in-out hover:bg-[#EFF6FF]"
           >
             Annuler
           </button>
@@ -319,339 +357,394 @@ export default function ProfilePage() {
   const handleField = (key, val) => setForm((p) => ({ ...p, [key]: val }));
 
   const fields = [
-    { key: "fullName", label: t("profile.full_name"), type: "input" },
+    { key: "fullName", label: t("profile.full_name"), type: "text" },
     { key: "email", label: t("auth.email"), type: "email" },
     { key: "phone", label: t("profile.phone"), type: "tel" },
-    { key: "specialty", label: t("profile.specialty"), type: "input" },
-    { key: "address", label: t("profile.address"), type: "input" },
+    { key: "specialty", label: t("profile.specialty"), type: "text" },
+    { key: "address", label: t("profile.address"), type: "text" },
   ];
+
+  const validated = specialist?.isValidated;
+  const securityActive = specialist?.security === "MFA";
 
   if (!specialist) {
     return (
-        <div className="p-8 flex items-center justify-center min-h-[400px]">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        </div>
+      <div className="flex min-h-[400px] items-center justify-center bg-[#F8FAFF] p-8">
+        <Loader2 size={32} className="animate-spin text-[#0052FF]" />
+      </div>
     );
   }
 
   return (
     <>
-      <div className="p-8 animate-fadeIn max-w-3xl">
-        <PageHeader title={t("profile.title")} />
+      <div className="animate-fadeIn bg-[#F8FAFF] px-4 py-6 md:px-8 md:py-8">
+        <div className="mx-auto w-full max-w-[1280px]">
+          <PageHeader title={t("profile.title")} />
 
-        {/* Avatar with upload capability */}
-        <div className="card mb-6">
-          <div className="flex items-center gap-6">
-            <div className="relative group">
-              {specialist?.imageUrl ? (
-                <img
-                  src={specialist.imageUrl}
-                  alt={form.fullName}
-                  className="w-20 h-20 rounded-full object-cover shadow-sm"
-                />
-              ) : (
-                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center text-3xl font-bold text-primary">
-                  {form.fullName?.charAt(0) || "?"}
+          <div
+            className="mb-6 rounded-[12px] bg-white p-5 md:p-6"
+            style={{ boxShadow: "0 2px 12px rgba(0,82,255,0.08)" }}
+          >
+            <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  {specialist?.imageUrl ? (
+                    <img
+                      src={specialist.imageUrl}
+                      alt={form.fullName}
+                      className="h-20 w-20 rounded-full object-cover shadow-sm"
+                    />
+                  ) : (
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#0052FF] to-[#00A3FF] text-3xl font-bold text-white shadow-sm">
+                      {form.fullName?.charAt(0) || "?"}
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="absolute -bottom-2 -right-2 inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#0052FF] text-white shadow-md transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:bg-[#0042E6] disabled:opacity-50"
+                    title="Changer la photo"
+                  >
+                    {uploading ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <Camera size={16} />
+                    )}
+                  </button>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
                 </div>
-              )}
+
+                <div className="min-w-0">
+                  <p className="text-xl font-bold text-[#0A0F1E]">
+                    {form.fullName}
+                  </p>
+                  <p className="text-sm text-[#64748B]">
+                    {form.specialty || "Spécialiste"}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Badge
+                      label={validated ? "Compte validé" : "En attente"}
+                      color={validated ? "green" : "gray"}
+                    />
+                    <Badge
+                      label={securityActive ? "2FA activée" : "2FA désactivée"}
+                      color={securityActive ? "blue" : "gray"}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-3 text-sm text-[#64748B] md:grid-cols-2 lg:w-[460px]">
+                <div className="flex items-center gap-3 rounded-[12px] bg-[#F8FAFF] p-3">
+                  <Mail size={18} className="text-[#0052FF]" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[#64748B]">
+                      Email
+                    </p>
+                    <p className="truncate text-sm font-medium text-[#0A0F1E]">
+                      {form.email || "-"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 rounded-[12px] bg-[#F8FAFF] p-3">
+                  <Phone size={18} className="text-[#0052FF]" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[#64748B]">
+                      Téléphone
+                    </p>
+                    <p className="truncate text-sm font-medium text-[#0A0F1E]">
+                      {form.phone || "-"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 rounded-[12px] bg-[#F8FAFF] p-3">
+                  <MapPin size={18} className="text-[#0052FF]" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[#64748B]">
+                      Adresse
+                    </p>
+                    <p className="truncate text-sm font-medium text-[#0A0F1E]">
+                      {form.address || "-"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className="mb-6 rounded-[12px] bg-white p-5 md:p-6"
+            style={{ boxShadow: "0 2px 12px rgba(0,82,255,0.08)" }}
+          >
+            <h2 className="mb-4 text-lg font-semibold text-[#0A0F1E]">
+              Informations professionnelles
+            </h2>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {fields.map((f) => (
+                <div key={f.key}>
+                  <label
+                    htmlFor={f.key}
+                    className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[#64748B]"
+                  >
+                    {f.label}
+                  </label>
+                  <input
+                    id={f.key}
+                    type={f.type}
+                    value={form[f.key] || ""}
+                    onChange={(e) => handleField(f.key, e.target.value)}
+                    className="h-11 w-full rounded-[8px] bg-[#F1F5F9] px-3 text-sm text-[#0A0F1E] outline-none transition-all duration-200 ease-in-out placeholder:text-[#94A3B8] focus:ring-2 focus:ring-[#0052FF]/25"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4">
+              <label
+                htmlFor="bio"
+                className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[#64748B]"
+              >
+                {t("profile.bio")}
+              </label>
+              <textarea
+                id="bio"
+                value={form.bio || ""}
+                onChange={(e) => handleField("bio", e.target.value)}
+                rows={4}
+                className="w-full resize-none rounded-[8px] bg-[#F1F5F9] px-3 py-2.5 text-sm text-[#0A0F1E] outline-none transition-all duration-200 ease-in-out placeholder:text-[#94A3B8] focus:ring-2 focus:ring-[#0052FF]/25"
+                placeholder="Présentation de votre parcours et expertise..."
+              />
+            </div>
+
+            {specialist?.primaryClinic?.name && (
+              <div className="mt-4 rounded-[12px] bg-[#F8FAFF] p-4">
+                <div className="mb-2 flex items-center gap-2 text-[#64748B]">
+                  <Building2 size={18} className="text-[#0052FF]" />
+                  <p className="text-xs font-semibold uppercase tracking-wide">
+                    Clinique principale
+                  </p>
+                </div>
+                <p className="text-sm font-semibold text-[#0A0F1E]">
+                  {specialist.primaryClinic.name}
+                </p>
+                {specialist.primaryClinic.address && (
+                  <p className="mt-1 text-xs text-[#64748B]">
+                    {specialist.primaryClinic.address}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {(specialist?.licenseNumber || specialist?.rating > 0) && (
+            <div
+              className="mb-6 rounded-[12px] bg-white p-5 md:p-6"
+              style={{ boxShadow: "0 2px 12px rgba(0,82,255,0.08)" }}
+            >
+              <h2 className="mb-4 text-lg font-semibold text-[#0A0F1E]">
+                Informations légales
+              </h2>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {specialist?.licenseNumber && (
+                  <div className="rounded-[12px] bg-[#F8FAFF] p-4">
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#64748B]">
+                      Numéro de licence
+                    </p>
+                    <p className="text-sm font-medium text-[#0A0F1E]">
+                      {specialist.licenseNumber}
+                    </p>
+                  </div>
+                )}
+                {specialist?.rating > 0 && (
+                  <div className="rounded-[12px] bg-[#F8FAFF] p-4">
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#64748B]">
+                      Évaluation
+                    </p>
+                    <p className="text-sm font-medium text-[#0A0F1E]">
+                      {specialist.rating}/5 ({specialist.reviewsCount || 0}{" "}
+                      avis)
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div
+            className="mb-6 rounded-[12px] bg-white p-5 md:p-6"
+            style={{ boxShadow: "0 2px 12px rgba(0,82,255,0.08)" }}
+          >
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#EFF6FF] text-[#0052FF]">
+                <ShieldCheck size={20} />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-[#0A0F1E]">
+                  Paramètres de sécurité
+                </h2>
+                <p className="text-sm text-[#64748B]">
+                  Gérez l’authentification à deux facteurs de votre compte.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4 rounded-[12px] bg-[#F8FAFF] p-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-start gap-3">
+                <div
+                  className={`flex h-11 w-11 items-center justify-center rounded-full ${securityActive ? "bg-[#ECFDF5] text-[#10B981]" : "bg-[#FFFBEB] text-[#F59E0B]"}`}
+                >
+                  <LockKeyhole size={18} />
+                </div>
+                <div>
+                  <p className="font-semibold text-[#0A0F1E]">
+                    Authentification à deux facteurs
+                  </p>
+                  <p className="mt-1 text-sm text-[#64748B]">
+                    {securityActive
+                      ? "Authentification multi-facteurs (2FA) activée"
+                      : "Authentification simple (SFA) activée"}
+                  </p>
+                </div>
+              </div>
 
               <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="absolute -bottom-2 -right-2 p-1.5 bg-primary rounded-full text-white shadow-md hover:bg-primary/90 transition-all disabled:opacity-50"
-                title="Changer la photo"
+                type="button"
+                onClick={handleToggleSecurity}
+                disabled={loading}
+                className={`inline-flex min-h-[44px] items-center justify-center rounded-full px-4 py-3 text-sm font-semibold transition-all duration-200 ease-in-out disabled:opacity-50 ${
+                  securityActive
+                    ? "bg-[#FEF2F2] text-[#EF4444] hover:bg-[#FEE2E2]"
+                    : "bg-gradient-to-r from-[#0052FF] to-[#00A3FF] text-white hover:-translate-y-0.5 hover:shadow-md"
+                }`}
               >
-                {uploading ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
-                )}
+                {securityActive ? "Désactiver 2FA" : "Activer 2FA"}
               </button>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-            </div>
-
-            <div>
-              <p className="font-semibold text-gray-900">{form.fullName}</p>
-              <p className="text-sm text-gray-500">
-                {form.specialty || "Spécialiste"}
-              </p>
-              <p className="text-xs text-gray-400 mt-1">
-                {specialist?.isValidated
-                  ? "✓ Compte validé"
-                  : "⏳ En attente de validation"}
-              </p>
             </div>
           </div>
-        </div>
 
-        {/* Fields */}
-        <div className="card mb-6">
-          <h2 className="font-bold text-gray-900 mb-4">
-            Informations professionnelles
-          </h2>
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            {fields.map((f) => (
-              <div key={f.key}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {f.label}
+          <button
+            type="button"
+            onClick={() => navigate("/specialist/feedback")}
+            className="mb-6 w-full rounded-[12px] bg-white p-5 text-left transition-all duration-200 ease-in-out hover:-translate-y-0.5"
+            style={{ boxShadow: "0 2px 12px rgba(0,82,255,0.08)" }}
+          >
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0052FF] to-[#00A3FF] text-white">
+                <Star size={20} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="mb-0.5 font-semibold text-[#0A0F1E]">
+                  Donner mon avis
+                </p>
+                <p className="text-sm text-[#64748B]">
+                  Partagez votre expérience ou signalez un problème à
+                  l'administration
+                </p>
+              </div>
+              <ChevronRight size={20} className="text-[#94A3B8]" />
+            </div>
+          </button>
+
+          <div
+            className="mb-6 rounded-[12px] bg-white p-5 md:p-6"
+            style={{ boxShadow: "0 2px 12px rgba(0,82,255,0.08)" }}
+          >
+            <h2 className="mb-4 text-lg font-semibold text-[#0A0F1E]">
+              {t("profile.change_password")}
+            </h2>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div>
+                <label
+                  htmlFor="current-password"
+                  className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[#64748B]"
+                >
+                  {t("profile.current_password")}
                 </label>
                 <input
-                  type={f.type}
-                  value={form[f.key] || ""}
-                  onChange={(e) => handleField(f.key, e.target.value)}
-                  className="input-field"
+                  id="current-password"
+                  type="password"
+                  value={pwForm.current}
+                  onChange={(e) =>
+                    setPwForm((p) => ({ ...p, current: e.target.value }))
+                  }
+                  className="h-11 w-full rounded-[8px] bg-[#F1F5F9] px-3 text-sm text-[#0A0F1E] outline-none transition-all duration-200 ease-in-out focus:ring-2 focus:ring-[#0052FF]/25"
                 />
               </div>
-            ))}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t("profile.bio")}
-            </label>
-            <textarea
-              value={form.bio || ""}
-              onChange={(e) => handleField("bio", e.target.value)}
-              rows={4}
-              className="input-field resize-none"
-              placeholder="Présentation de votre parcours et expertise..."
-            />
-          </div>
-
-          {specialist?.primaryClinic?.name && (
-            <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <p className="text-xs font-medium text-gray-500 mb-1">Clinique principale</p>
-              <p className="text-sm text-gray-800 font-semibold">{specialist.primaryClinic.name}</p>
-              {specialist.primaryClinic.address && (
-                <p className="text-xs text-gray-500 mt-0.5">{specialist.primaryClinic.address}</p>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* License Info */}
-        {(specialist?.licenseNumber || specialist?.rating > 0) && (
-          <div className="card mb-6">
-            <h2 className="font-bold text-gray-900 mb-4">
-              Informations légales
-            </h2>
-            <div className="grid grid-cols-2 gap-4">
-              {specialist?.licenseNumber && (
-                <div>
-                  <label
-                    htmlFor="license-number"
-                    className="block text-sm font-medium text-gray-500 mb-1"
-                  >
-                    Numéro de licence
-                  </label>
-                  <p id="license-number" className="text-sm text-gray-800">
-                    {specialist.licenseNumber}
-                  </p>
-                </div>
-              )}
-              {specialist?.rating > 0 && (
-                <div>
-                  <label
-                    htmlFor="rating"
-                    className="block text-sm font-medium text-gray-500 mb-1"
-                  >
-                    Évaluation
-                  </label>
-                  <p id="rating" className="text-sm text-gray-800">
-                    {specialist.rating}/5 ({specialist.reviewsCount || 0} avis)
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Security Settings */}
-        <div className="card mb-6">
-          <h2 className="font-bold text-gray-900 mb-4">
-            Paramètres de sécurité
-          </h2>
-          <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <div>
-              <p className="font-medium text-gray-900">
-                Authentification à deux facteurs
-              </p>
-              <p className="text-sm text-gray-600 mt-1">
-                {specialist?.security === "MFA"
-                  ? "Authentification multi-facteurs (2FA) activée"
-                  : "Authentification simple (SFA) activée"}
-              </p>
+              <div>
+                <label
+                  htmlFor="new-password"
+                  className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[#64748B]"
+                >
+                  {t("profile.new_password")}
+                </label>
+                <input
+                  id="new-password"
+                  type="password"
+                  value={pwForm.new}
+                  onChange={(e) =>
+                    setPwForm((p) => ({ ...p, new: e.target.value }))
+                  }
+                  className="h-11 w-full rounded-[8px] bg-[#F1F5F9] px-3 text-sm text-[#0A0F1E] outline-none transition-all duration-200 ease-in-out focus:ring-2 focus:ring-[#0052FF]/25"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="confirm-password"
+                  className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[#64748B]"
+                >
+                  {t("profile.confirm_password")}
+                </label>
+                <input
+                  id="confirm-password"
+                  type="password"
+                  value={pwForm.confirm}
+                  onChange={(e) =>
+                    setPwForm((p) => ({ ...p, confirm: e.target.value }))
+                  }
+                  className="h-11 w-full rounded-[8px] bg-[#F1F5F9] px-3 text-sm text-[#0A0F1E] outline-none transition-all duration-200 ease-in-out focus:ring-2 focus:ring-[#0052FF]/25"
+                />
+              </div>
             </div>
             <button
-              onClick={handleToggleSecurity}
-              disabled={loading}
-              className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                specialist?.security === "MFA"
-                  ? "bg-orange-500 text-white hover:bg-orange-600"
-                  : "bg-green-500 text-white hover:bg-green-600"
-              } disabled:opacity-50`}
+              type="button"
+              onClick={handlePasswordChange}
+              className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-full border border-[#BFDBFE] bg-white px-4 py-3 text-sm font-semibold text-[#0052FF] transition-all duration-200 ease-in-out hover:bg-[#EFF6FF]"
             >
-              {specialist?.security === "MFA"
-                ? "Désactiver 2FA"
-                : "Activer 2FA"}
+              Changer le mot de passe
             </button>
           </div>
-        </div>
 
-         {/* Feedback / Reviews access */}
-        <button
-          type="button"
-          onClick={() => navigate("/specialist/feedback")}
-          className="card mb-6 w-full text-left hover:shadow-md hover:border-primary/30 border border-transparent transition-all group"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:bg-primary/15 transition-colors">
-              <svg
-                className="w-6 h-6 text-primary"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.175 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.05 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z"
-                />
-              </svg>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-900 mb-0.5">
-                Donner mon avis
-              </p>
-              <p className="text-sm text-gray-500">
-                Partagez votre expérience ou signalez un problème à
-                l'administration
-              </p>
-            </div>
-            <svg
-              className="w-5 h-5 text-gray-400 group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </div>
-        </button>
-
-        {/* Change password */}
-        <div className="card mb-6">
-          <h2 className="font-bold text-gray-900 mb-4">
-            {t("profile.change_password")}
-          </h2>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t("profile.current_password")}
-              </label>
-              <input
-                type="password"
-                value={pwForm.current}
-                onChange={(e) =>
-                  setPwForm((p) => ({ ...p, current: e.target.value }))
-                }
-                className="input-field"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t("profile.new_password")}
-              </label>
-              <input
-                type="password"
-                value={pwForm.new}
-                onChange={(e) =>
-                  setPwForm((p) => ({ ...p, new: e.target.value }))
-                }
-                className="input-field"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t("profile.confirm_password")}
-              </label>
-              <input
-                type="password"
-                value={pwForm.confirm}
-                onChange={(e) =>
-                  setPwForm((p) => ({ ...p, confirm: e.target.value }))
-                }
-                className="input-field"
-              />
-            </div>
-          </div>
-          <button onClick={handlePasswordChange} className="btn-secondary mt-3">
-            Changer le mot de passe
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={loading}
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-gradient-to-r from-[#0052FF] to-[#00A3FF] px-6 py-3 text-base font-semibold text-white transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {loading ? (
+              <>
+                <Loader2 size={18} className="animate-spin" />
+                Enregistrement...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 size={18} />
+                {t("profile.save")}
+              </>
+            )}
           </button>
         </div>
-
-        <button
-          onClick={handleSave}
-          disabled={loading}
-          className="btn-primary px-8 py-3 text-base disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-        >
-          {loading ? (
-            <>
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              Enregistrement...
-            </>
-          ) : (
-            <>
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-              {t("profile.save")}
-            </>
-          )}
-        </button>
       </div>
 
-      {/* Image Cropper Modal */}
       {showCropper && (
         <ImageCropper
           image={tempImage}

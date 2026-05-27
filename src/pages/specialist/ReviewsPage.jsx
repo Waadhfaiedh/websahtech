@@ -1,6 +1,15 @@
-﻿import { useState, useEffect } from "react";
+// Redesigned following SAHTECK brand guidelines
+import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
+import {
+  AlertCircle,
+  Calendar,
+  Loader2,
+  MessageSquare,
+  Star,
+  Trash2,
+} from "lucide-react";
 import PageHeader from "../../components/common/PageHeader";
 import Badge from "../../components/common/Badge";
 import Modal from "../../components/common/Modal";
@@ -19,24 +28,22 @@ const StarRating = ({ value, onChange, interactive = false }) => {
       {[1, 2, 3, 4, 5].map((n) => (
         <button
           key={n}
-          type={interactive ? "button" : "div"}
-          onClick={() => interactive && onChange(n)}
+          type="button"
+          onClick={() => interactive && onChange?.(n)}
           disabled={!interactive}
-          className={
+          aria-label={`Noter ${n} sur 5`}
+          className={`transition-all duration-200 ease-in-out ${
             interactive
-              ? "cursor-pointer hover:scale-110 transition-transform"
-              : ""
-          }
+              ? "hover:-translate-y-0.5 hover:scale-110"
+              : "cursor-default"
+          }`}
         >
-          <svg
-            className={`w-6 h-6 ${
-              n <= value ? "text-yellow-400" : "text-gray-200"
-            } ${interactive ? "transition-colors" : ""}`}
-            fill="currentColor"
-            viewBox="0 0 20 20"
-          >
-            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.175 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.05 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z" />
-          </svg>
+          <Star
+            size={20}
+            className={
+              n <= value ? "fill-[#F59E0B] text-[#F59E0B]" : "text-[#E2E8F0]"
+            }
+          />
         </button>
       ))}
     </div>
@@ -50,18 +57,17 @@ StarRating.propTypes = {
 };
 
 const StarRow = ({ value = 0, size = "sm" }) => {
-  const px = size === "lg" ? "w-5 h-5" : "w-4 h-4";
+  const iconSize = size === "lg" ? 20 : 16;
   return (
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((n) => (
-        <svg
+        <Star
           key={n}
-          className={`${px} ${n <= value ? "text-yellow-400" : "text-gray-200"}`}
-          fill="currentColor"
-          viewBox="0 0 20 20"
-        >
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.175 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.05 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z" />
-        </svg>
+          size={iconSize}
+          className={
+            n <= value ? "fill-[#F59E0B] text-[#F59E0B]" : "text-[#E2E8F0]"
+          }
+        />
       ))}
     </div>
   );
@@ -79,8 +85,6 @@ export default function SpecialistReviewsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [selectedReview, setSelectedReview] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-
-  // Form state
   const [formData, setFormData] = useState({
     rating: 5,
     category: "GENERAL",
@@ -117,7 +121,7 @@ export default function SpecialistReviewsPage() {
     try {
       setSubmitting(true);
       const newReview = await createReview(formData);
-      setReviews([newReview, ...reviews]);
+      setReviews((prev) => [newReview, ...prev]);
       setFormData({
         rating: 5,
         category: "GENERAL",
@@ -160,25 +164,44 @@ export default function SpecialistReviewsPage() {
     });
   };
 
+  const isEmpty = !loading && reviews.length === 0;
+  const hasReviews = !loading && reviews.length > 0;
+
   return (
-      <div className="p-8 animate-fadeIn">
+    <div className="animate-fadeIn bg-[#F8FAFF] px-4 py-6 md:px-8 md:py-8">
+      <div className="mx-auto w-full max-w-[1280px]">
         <PageHeader
-          title="Mes avis sur la plateforme"
-          subtitle={`Vous avez soumis ${reviews.length} avis`}
+          title={t("reviews.title", {
+            defaultValue: "Mes avis sur la plateforme",
+          })}
+          subtitle={t("reviews.subtitle", {
+            defaultValue: `Vous avez soumis ${reviews.length} avis`,
+          })}
         />
 
-        {/* Create Review Form */}
-        <div className="card mb-8">
-          <h2 className="text-lg font-bold text-gray-900 mb-6">
-            Soumettre un nouvel avis
-          </h2>
+        <div
+          className="mb-8 rounded-[12px] bg-white p-5 md:p-6"
+          style={{ boxShadow: "0 2px 12px rgba(0,82,255,0.08)" }}
+        >
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-[#0052FF] to-[#00A3FF] text-white shadow-sm">
+              <MessageSquare size={20} />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-[#0A0F1E]">
+                Soumettre un nouvel avis
+              </h2>
+              <p className="text-sm text-[#64748B]">
+                Partagez votre retour sur la plateforme
+              </p>
+            </div>
+          </div>
 
           <form onSubmit={handleSubmitReview} className="space-y-5">
-            {/* Rating */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#64748B]">
                 Note
-              </label>
+              </div>
               <StarRating
                 value={formData.rating}
                 onChange={(rating) => setFormData({ ...formData, rating })}
@@ -186,11 +209,10 @@ export default function SpecialistReviewsPage() {
               />
             </div>
 
-            {/* Category */}
             <div>
               <label
                 htmlFor="category"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[#64748B]"
               >
                 Catégorie
               </label>
@@ -200,7 +222,7 @@ export default function SpecialistReviewsPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, category: e.target.value })
                 }
-                className="input-field w-full"
+                className="h-11 w-full rounded-[8px] bg-[#F1F5F9] px-3 text-sm text-[#0A0F1E] outline-none transition-all duration-200 ease-in-out focus:ring-2 focus:ring-[#0052FF]/25"
               >
                 {REVIEW_CATEGORIES.map((c) => (
                   <option key={c.value} value={c.value}>
@@ -210,11 +232,10 @@ export default function SpecialistReviewsPage() {
               </select>
             </div>
 
-            {/* Comment */}
             <div>
               <label
                 htmlFor="text"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[#64748B]"
               >
                 Commentaire
               </label>
@@ -226,21 +247,27 @@ export default function SpecialistReviewsPage() {
                 }
                 placeholder="Partagez votre avis sur la plateforme..."
                 rows={4}
-                className="input-field w-full resize-none"
+                className="w-full resize-none rounded-[8px] bg-[#F1F5F9] px-3 py-2.5 text-sm text-[#0A0F1E] outline-none transition-all duration-200 ease-in-out placeholder:text-[#94A3B8] focus:ring-2 focus:ring-[#0052FF]/25"
               />
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="mt-1 text-xs text-[#64748B]">
                 {formData.text.length}/500 caractères
               </p>
             </div>
 
-            {/* Submit Button */}
             <div className="flex gap-3 pt-4">
               <button
                 type="submit"
                 disabled={submitting || !formData.text.trim()}
-                className="btn-primary flex-1 justify-center disabled:opacity-50"
+                className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-full bg-gradient-to-r from-[#0052FF] to-[#00A3FF] px-4 py-3 text-sm font-semibold text-white transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-md disabled:opacity-50"
               >
-                {submitting ? "Envoi en cours..." : "Soumettre l'avis"}
+                {submitting ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Loader2 size={18} className="animate-spin" />
+                    Envoi en cours...
+                  </span>
+                ) : (
+                  "Soumettre l'avis"
+                )}
               </button>
               <button
                 type="button"
@@ -251,7 +278,7 @@ export default function SpecialistReviewsPage() {
                     text: "",
                   })
                 }
-                className="btn-secondary flex-1 justify-center"
+                className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-full border border-[#BFDBFE] bg-white px-4 py-3 text-sm font-semibold text-[#0052FF] transition-all duration-200 ease-in-out hover:bg-[#EFF6FF]"
               >
                 Annuler
               </button>
@@ -259,64 +286,67 @@ export default function SpecialistReviewsPage() {
           </form>
         </div>
 
-        {/* Reviews List */}
         <div>
-          <h2 className="text-lg font-bold text-gray-900 mb-6">
+          <h2 className="mb-6 text-lg font-semibold text-[#0A0F1E]">
             Vos avis ({reviews.length})
           </h2>
 
-          {loading ? (
+          {loading && (
             <div className="flex items-center justify-center py-20">
-              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+              <Loader2 size={32} className="animate-spin text-[#0052FF]" />
             </div>
-          ) : reviews.length === 0 ? (
-            <div className="card text-center py-16">
-              <svg
-                className="w-12 h-12 text-gray-300 mx-auto mb-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2h-3l-4 4z"
-                />
-              </svg>
-              <p className="text-gray-500 font-medium">
+          )}
+
+          {isEmpty && (
+            <div
+              className="rounded-[12px] bg-white px-6 py-16 text-center"
+              style={{ boxShadow: "0 2px 12px rgba(0,82,255,0.08)" }}
+            >
+              <AlertCircle size={48} className="mx-auto text-[#CBD5E1]" />
+              <p className="mt-4 text-sm font-medium text-[#64748B]">
                 Aucun avis soumis pour le moment
               </p>
             </div>
-          ) : (
+          )}
+
+          {hasReviews && (
             <div className="grid gap-4 md:grid-cols-2">
               {reviews.map((r) => (
                 <button
                   key={r.id}
                   type="button"
-                  className="card hover:shadow-md transition-shadow cursor-pointer text-left w-full"
+                  className="w-full rounded-[12px] bg-white p-5 text-left transition-all duration-200 ease-in-out hover:-translate-y-0.5"
+                  style={{ boxShadow: "0 2px 12px rgba(0,82,255,0.08)" }}
                   onClick={() => setSelectedReview(r)}
                 >
-                  <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="mb-4 flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-medium text-sm text-gray-900">
+                      <p className="text-sm font-semibold text-[#0A0F1E]">
                         Avis du {formatDate(r.createdAt)}
                       </p>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        {getCategoryLabel(r.category)}
-                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <Badge
+                          label={getCategoryLabel(r.category)}
+                          color="gray"
+                        />
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[#ECFDF5] px-2.5 py-1 text-xs font-medium text-[#10B981]">
+                          <Calendar size={14} />
+                          {formatDate(r.createdAt)}
+                        </span>
+                      </div>
                     </div>
                     <StarRow value={r.rating} />
                   </div>
 
-                  <p className="text-sm text-gray-700 line-clamp-3">{r.text}</p>
+                  <p className="line-clamp-3 text-sm text-[#64748B]">
+                    {r.text}
+                  </p>
                 </button>
               ))}
             </div>
           )}
         </div>
 
-        {/* Delete Confirmation Modal */}
         <Modal
           isOpen={!!deleteConfirm}
           onClose={() => setDeleteConfirm(null)}
@@ -325,27 +355,15 @@ export default function SpecialistReviewsPage() {
         >
           <div className="space-y-4 py-2">
             <div className="flex items-center justify-center">
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                <svg
-                  className="w-6 h-6 text-red-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                  />
-                </svg>
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FEF2F2] text-[#EF4444]">
+                <Trash2 size={22} />
               </div>
             </div>
             <div className="text-center">
-              <h3 className="text-lg font-bold text-gray-900 mb-2">
+              <h3 className="mb-2 text-lg font-semibold text-[#0A0F1E]">
                 Supprimer cet avis ?
               </h3>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-[#64748B]">
                 Cette action est irréversible. L'avis sera définitivement
                 supprimé.
               </p>
@@ -353,13 +371,13 @@ export default function SpecialistReviewsPage() {
             <div className="flex gap-3 pt-4">
               <button
                 onClick={() => setDeleteConfirm(null)}
-                className="btn-secondary flex-1 justify-center"
+                className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-full border border-[#BFDBFE] bg-white px-4 py-3 text-sm font-semibold text-[#0052FF] transition-all duration-200 ease-in-out hover:bg-[#EFF6FF]"
               >
                 Annuler
               </button>
               <button
                 onClick={handleDeleteReview}
-                className="btn-danger flex-1 justify-center"
+                className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-full bg-[#FEF2F2] px-4 py-3 text-sm font-semibold text-[#EF4444] transition-all duration-200 ease-in-out hover:bg-[#FEE2E2]"
               >
                 Supprimer
               </button>
@@ -367,7 +385,6 @@ export default function SpecialistReviewsPage() {
           </div>
         </Modal>
 
-        {/* Review Detail Modal */}
         <Modal
           isOpen={!!selectedReview}
           onClose={() => setSelectedReview(null)}
@@ -376,65 +393,65 @@ export default function SpecialistReviewsPage() {
         >
           {selectedReview && (
             <div className="space-y-5">
-              {/* Meta */}
-              <div className="flex items-start justify-between gap-4 pb-4 border-b border-gray-100">
-                <div>
-                  <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">
-                    Date
-                  </p>
-                  <p className="text-sm font-medium text-gray-900">
-                    {formatDate(selectedReview.createdAt)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">
-                    Note
-                  </p>
-                  <div className="flex items-center">
+              <div className="rounded-[12px] bg-[#F8FAFF] p-4">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#64748B]">
+                      Date
+                    </p>
+                    <p className="text-sm font-medium text-[#0A0F1E]">
+                      {formatDate(selectedReview.createdAt)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#64748B]">
+                      Note
+                    </p>
                     <StarRow value={selectedReview.rating} size="lg" />
                   </div>
                 </div>
               </div>
 
-              {/* Category & Info */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xs text-gray-400 mb-1">Catégorie</p>
-                  <p className="text-sm font-medium text-gray-800">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <div className="rounded-[12px] bg-[#F8FAFF] p-4">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#64748B]">
+                    Catégorie
+                  </p>
+                  <p className="text-sm font-medium text-[#0A0F1E]">
                     {getCategoryLabel(selectedReview.category)}
                   </p>
                 </div>
-                <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xs text-gray-400 mb-1">Note</p>
-                  <p className="text-sm font-medium text-gray-800">
+                <div className="rounded-[12px] bg-[#F8FAFF] p-4">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#64748B]">
+                    Note
+                  </p>
+                  <p className="text-sm font-medium text-[#0A0F1E]">
                     {selectedReview.rating}/5
                   </p>
                 </div>
               </div>
 
-              {/* Comment */}
               <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#64748B]">
                   Votre commentaire
                 </p>
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                <div className="rounded-[12px] bg-[#F8FAFF] p-4">
+                  <p className="whitespace-pre-wrap text-sm text-[#64748B]">
                     {selectedReview.text}
                   </p>
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="flex gap-3 pt-4 border-t border-gray-100">
+              <div className="flex gap-3 pt-4">
                 <button
                   onClick={() => setDeleteConfirm(selectedReview.id)}
-                  className="btn-danger flex-1 justify-center"
+                  className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-full bg-[#FEF2F2] px-4 py-3 text-sm font-semibold text-[#EF4444] transition-all duration-200 ease-in-out hover:bg-[#FEE2E2]"
                 >
                   Supprimer
                 </button>
                 <button
                   onClick={() => setSelectedReview(null)}
-                  className="btn-secondary flex-1 justify-center"
+                  className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-full border border-[#BFDBFE] bg-white px-4 py-3 text-sm font-semibold text-[#0052FF] transition-all duration-200 ease-in-out hover:bg-[#EFF6FF]"
                 >
                   Fermer
                 </button>
@@ -443,5 +460,6 @@ export default function SpecialistReviewsPage() {
           )}
         </Modal>
       </div>
+    </div>
   );
 }
