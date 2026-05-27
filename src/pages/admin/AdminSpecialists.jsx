@@ -1,3 +1,4 @@
+// Redesigned following SAHTECK brand guidelines
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import AdminLayout from "../../components/layout/AdminLayout";
@@ -6,6 +7,17 @@ import Badge from "../../components/common/Badge";
 import Modal from "../../components/common/Modal";
 import api from "../../services/api";
 import { toast } from "react-toastify";
+import {
+  ArrowRight,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  Stethoscope,
+  Trash2,
+  UserCheck,
+  UserRound,
+  Users,
+} from "lucide-react";
 
 export default function AdminSpecialists() {
   const { t } = useTranslation();
@@ -87,149 +99,200 @@ export default function AdminSpecialists() {
       s.email?.toLowerCase().includes(search.toLowerCase()),
   );
 
+  const validatedCount = specialists.filter(
+    (s) => s.specialist?.isValidated,
+  ).length;
+  const pendingCount = total - validatedCount;
+
   return (
     <AdminLayout>
-      <div className="p-8 animate-fadeIn">
-        <PageHeader
-          title={t("admin.specialist_management")}
-          subtitle={`${total} spécialistes`}
-        />
+      <div className="mx-auto max-w-[1280px] px-6 py-8 lg:px-8">
+        <section className="rounded-2xl bg-gradient-to-br from-[#0052FF] to-[#00A3FF] p-6 text-white shadow-[0_12px_32px_rgba(0,82,255,0.18)] lg:p-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl space-y-4">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur-sm">
+                <Sparkles className="h-3.5 w-3.5" />
+                Validation des spécialistes
+              </div>
+              <div>
+                <PageHeader
+                  title={t("admin.specialist_management")}
+                  subtitle={`${total} spécialistes`}
+                />
+                <p className="mt-2 max-w-xl text-sm text-white/80">
+                  Consultez les profils, approuvez les comptes et accédez aux
+                  informations de cabinet depuis un tableau de gestion plus
+                  clair.
+                </p>
+              </div>
+            </div>
 
-        <div className="relative mb-6">
-          <svg
-            className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl bg-white/15 px-4 py-3 backdrop-blur-sm">
+                <p className="text-xs font-medium text-white/70">Total</p>
+                <p className="mt-1 text-xl font-bold">{total}</p>
+              </div>
+              <div className="rounded-2xl bg-white/15 px-4 py-3 backdrop-blur-sm">
+                <p className="text-xs font-medium text-white/70">Validés</p>
+                <p className="mt-1 text-xl font-bold">{validatedCount}</p>
+              </div>
+              <div className="rounded-2xl bg-white/15 px-4 py-3 backdrop-blur-sm">
+                <p className="text-xs font-medium text-white/70">En attente</p>
+                <p className="mt-1 text-xl font-bold">{pendingCount}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div className="mt-6 rounded-2xl bg-white p-5 shadow-[0_2px_12px_rgba(0,82,255,0.08)]">
+          <p className="mb-2 text-xs font-semibold text-[#64748B]">
+            Rechercher un spécialiste
+          </p>
+          <div className="relative max-w-xl">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#94A3B8]" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-lg bg-[#F1F5F9] py-3 pl-11 pr-4 text-sm text-[#0A0F1E] outline-none transition-all duration-200 ease-in-out placeholder:text-[#94A3B8] focus:ring-2 focus:ring-[#0052FF]"
+              placeholder="Nom, spécialité ou email"
             />
-          </svg>
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="input-field pl-10 max-w-sm"
-            placeholder="Rechercher..."
-          />
+          </div>
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <div className="mt-6 rounded-2xl bg-white p-6 shadow-[0_2px_12px_rgba(0,82,255,0.08)]">
+            <div className="space-y-3">
+              {new Array(5).fill(null).map((_, index) => (
+                <div
+                  key={`specialist-skeleton-${index}`}
+                  className="h-16 animate-pulse rounded-xl bg-[#F8FAFF]"
+                />
+              ))}
+            </div>
           </div>
         ) : (
-          <div className="card overflow-hidden p-0">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  {[
-                    "Nom",
-                    "Spécialité",
-                    "Email",
-                    "Cabinet",
-                    "Statut",
-                    "Actions",
-                  ].map((h) => (
-                    <th
-                      key={h}
-                      className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide"
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {filtered.map((sp) => (
-                  <tr
-                    key={sp.userId}
-                    className="hover:bg-gray-50/50 transition-colors"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        {sp.imageUrl ? (
-                          <img
-                            src={sp.imageUrl}
-                            alt={sp.fullName}
-                            className="w-9 h-9 rounded-full object-cover flex-shrink-0"
-                          />
-                        ) : (
-                          <div className="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-primary text-sm font-bold">
-                              {sp.fullName?.charAt(0) ?? "?"}
-                            </span>
-                          </div>
-                        )}
-                        <span className="font-medium text-gray-900 text-sm">
-                          {sp.fullName}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {sp.specialist?.speciality ?? "—"}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {sp.email}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {sp.specialist?.primaryClinic?.name ?? "—"}
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge
-                        label={
-                          sp.specialist?.isValidated ? "Validé" : "En attente"
-                        }
-                        color={
-                          sp.specialist?.isValidated ? "active" : "pending"
-                        }
-                      />
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setSelected(sp)}
-                          className="text-xs text-primary hover:underline"
-                        >
-                          {t("admin.view")}
-                        </button>
-                        {!sp.specialist?.isValidated && (
-                          <button
-                            onClick={() => validate(sp.userId)}
-                            className="text-xs text-green-600 hover:underline"
-                          >
-                            {t("admin.approve")}
-                          </button>
-                        )}
-                        <button
-                          onClick={() => deleteSpecialist(sp.userId)}
-                          className="text-xs text-red-400 hover:text-red-600"
-                        >
-                          {t("admin.delete")}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {filtered.length === 0 && (
+          <div className="mt-6 overflow-hidden rounded-2xl bg-white shadow-[0_2px_12px_rgba(0,82,255,0.08)]">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[960px]">
+                <thead className="bg-[#F8FAFF]">
                   <tr>
-                    <td
-                      colSpan={6}
-                      className="text-center py-12 text-gray-400 text-sm"
-                    >
-                      Aucun spécialiste trouvé
-                    </td>
+                    {[
+                      "Nom",
+                      "Spécialité",
+                      "Email",
+                      "Cabinet",
+                      "Statut",
+                      "Actions",
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.12em] text-[#64748B]"
+                      >
+                        {h}
+                      </th>
+                    ))}
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filtered.map((sp, index) => {
+                    const validated = Boolean(sp.specialist?.isValidated);
+
+                    return (
+                      <tr
+                        key={sp.userId}
+                        className={`border-t border-[#EEF2FF] transition-colors duration-200 hover:bg-[#EFF6FF] ${index % 2 === 0 ? "bg-white" : "bg-[#F8FAFF]"}`}
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            {sp.imageUrl ? (
+                              <img
+                                src={sp.imageUrl}
+                                alt={sp.fullName}
+                                className="h-11 w-11 flex-shrink-0 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#0052FF] to-[#00A3FF] text-sm font-semibold text-white shadow-sm">
+                                {sp.fullName?.charAt(0) ?? "?"}
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-sm font-semibold text-[#0A0F1E]">
+                                {sp.fullName}
+                              </p>
+                              <p className="text-xs text-[#64748B]">
+                                {sp.specialist?.location ??
+                                  "Profil spécialiste"}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-[#64748B]">
+                          {sp.specialist?.speciality ?? "—"}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-[#64748B]">
+                          {sp.email}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-[#64748B]">
+                          {sp.specialist?.primaryClinic?.name ?? "—"}
+                        </td>
+                        <td className="px-6 py-4">
+                          <Badge
+                            label={validated ? "Validé" : "En attente"}
+                            color={validated ? "active" : "pending"}
+                          />
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <button
+                              onClick={() => setSelected(sp)}
+                              className="inline-flex items-center gap-2 rounded-full border border-[#BFDBFE] bg-[#EFF6FF] px-3 py-2 text-xs font-semibold text-[#0052FF] transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:bg-[#DBEAFE]"
+                            >
+                              Voir
+                              <ArrowRight className="h-3.5 w-3.5" />
+                            </button>
+                            {!validated && (
+                              <button
+                                onClick={() => validate(sp.userId)}
+                                className="inline-flex items-center gap-2 rounded-full bg-[#ECFDF5] px-3 py-2 text-xs font-semibold text-[#10B981] transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:bg-[#D1FAE5]"
+                              >
+                                <UserCheck className="h-3.5 w-3.5" />
+                                Valider
+                              </button>
+                            )}
+                            <button
+                              onClick={() => deleteSpecialist(sp.userId)}
+                              className="inline-flex items-center gap-2 rounded-full bg-[#FEF2F2] px-3 py-2 text-xs font-semibold text-[#EF4444] transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:bg-[#FEE2E2]"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              Supprimer
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+
+                  {filtered.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-16">
+                        <div className="mx-auto max-w-md text-center">
+                          <Users className="mx-auto h-12 w-12 text-[#CBD5E1]" />
+                          <p className="mt-4 text-sm font-medium text-[#64748B]">
+                            Aucun spécialiste trouvé
+                          </p>
+                          <p className="mt-1 text-xs text-[#94A3B8]">
+                            Essayez un autre nom, une spécialité ou un email.
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
-        {/* Detail Modal */}
         <Modal
           isOpen={!!selected}
           onClose={() => setSelected(null)}
@@ -237,78 +300,123 @@ export default function AdminSpecialists() {
           size="lg"
         >
           {selected && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                {selected.imageUrl ? (
-                  <img
-                    src={selected.imageUrl}
-                    alt={selected.fullName}
-                    className="w-14 h-14 rounded-2xl object-cover"
-                  />
-                ) : (
-                  <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-xl font-bold text-primary">
-                    {selected.fullName?.charAt(0) ?? "?"}
+            <div className="space-y-6">
+              <div className="rounded-2xl bg-[#F8FAFF] p-5">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                  {selected.imageUrl ? (
+                    <img
+                      src={selected.imageUrl}
+                      alt={selected.fullName}
+                      className="h-20 w-20 rounded-full object-cover shadow-sm"
+                    />
+                  ) : (
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#0052FF] to-[#00A3FF] text-2xl font-bold text-white shadow-sm">
+                      {selected.fullName?.charAt(0) ?? "?"}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h3 className="text-xl font-bold text-[#0A0F1E]">
+                        {selected.fullName}
+                      </h3>
+                      <Badge
+                        label={
+                          selected.specialist?.isValidated
+                            ? "Validé"
+                            : "En attente"
+                        }
+                        color={
+                          selected.specialist?.isValidated
+                            ? "active"
+                            : "pending"
+                        }
+                      />
+                    </div>
+                    <p className="mt-1 text-sm text-[#0052FF]">
+                      {selected.specialist?.speciality ?? "—"}
+                    </p>
+                    <p className="mt-2 text-sm text-[#64748B]">
+                      {selected.specialist?.primaryClinic?.name ??
+                        "Cabinet non renseigné"}
+                    </p>
                   </div>
-                )}
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">
-                    {selected.fullName}
-                  </h3>
-                  <p className="text-primary">
-                    {selected.specialist?.speciality ?? "—"}
-                  </p>
-                  <Badge
-                    label={
-                      selected.specialist?.isValidated ? "Validé" : "En attente"
-                    }
-                    color={
-                      selected.specialist?.isValidated ? "active" : "pending"
-                    }
-                  />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 bg-gray-50 rounded-xl p-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {[
-                  { label: "Email", val: selected.email },
-                  { label: "Téléphone", val: selected.phone ?? "—" },
-                  { label: "Cabinet", val: selected.specialist?.primaryClinic?.name ?? "—" },
+                  { label: "Email", val: selected.email, icon: UserRound },
+                  {
+                    label: "Téléphone",
+                    val: selected.phone ?? "—",
+                    icon: ShieldCheck,
+                  },
+                  {
+                    label: "Cabinet",
+                    val: selected.specialist?.primaryClinic?.name ?? "—",
+                    icon: Stethoscope,
+                  },
                   {
                     label: "Localisation",
                     val: selected.specialist?.location ?? "—",
+                    icon: Sparkles,
                   },
                   {
                     label: "Note",
                     val: selected.specialist?.rating
                       ? `${selected.specialist.rating}/5`
                       : "—",
+                    icon: UserCheck,
                   },
                   {
                     label: "Avis",
                     val: selected.specialist?.reviewsCount ?? 0,
+                    icon: Users,
                   },
                   {
                     label: "Numéro de licence",
                     val: selected.specialist?.licenseNumber ?? "—",
+                    icon: ShieldCheck,
                   },
-                  { label: "Genre", val: selected.gender ?? "—" },
-                  { label: "Adresse", val: selected.address ?? "—" },
-                ].map((item) => (
-                  <div key={item.label}>
-                    <p className="text-xs text-gray-400">{item.label}</p>
-                    <p className="text-sm font-medium text-gray-800">
-                      {item.val}
-                    </p>
-                  </div>
-                ))}
+                  {
+                    label: "Genre",
+                    val: selected.gender ?? "—",
+                    icon: UserRound,
+                  },
+                  {
+                    label: "Adresse",
+                    val: selected.address ?? "—",
+                    icon: Sparkles,
+                  },
+                ].map((item) => {
+                  const Icon = item.icon;
+
+                  return (
+                    <div
+                      key={item.label}
+                      className="rounded-xl bg-white p-4 shadow-[0_2px_12px_rgba(0,82,255,0.08)] transition-colors duration-200 hover:bg-[#F8FAFF]"
+                    >
+                      <div className="mb-2 flex items-center gap-2 text-[#64748B]">
+                        <Icon className="h-4 w-4" />
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em]">
+                          {item.label}
+                        </p>
+                      </div>
+                      <p className="text-sm font-medium text-[#0A0F1E]">
+                        {item.val}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
 
-              <div className="flex gap-2 pt-2">
+              <div className="flex flex-col gap-3 pt-2 sm:flex-row">
                 {!selected.specialist?.isValidated && (
                   <button
                     onClick={() => validate(selected.userId)}
-                    className="btn-primary flex-1 justify-center"
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#0052FF] to-[#00A3FF] px-5 py-3 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(0,82,255,0.18)] transition-all duration-200 ease-in-out hover:-translate-y-0.5"
                   >
+                    <UserCheck className="h-4 w-4" />
                     {t("admin.approve")}
                   </button>
                 )}
@@ -317,14 +425,16 @@ export default function AdminSpecialists() {
                     deleteSpecialist(selected.userId);
                     setSelected(null);
                   }}
-                  className="btn-danger flex-1 justify-center"
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-[#FEF2F2] px-5 py-3 text-sm font-semibold text-[#EF4444] transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:bg-[#FEE2E2]"
                 >
+                  <Trash2 className="h-4 w-4" />
                   {t("admin.delete")}
                 </button>
                 <button
                   onClick={() => setSelected(null)}
-                  className="btn-secondary flex-1 justify-center"
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-[#BFDBFE] bg-white px-5 py-3 text-sm font-semibold text-[#0052FF] transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:bg-[#EFF6FF]"
                 >
+                  <ArrowRight className="h-4 w-4 rotate-180" />
                   {t("common.close")}
                 </button>
               </div>

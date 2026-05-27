@@ -1,6 +1,17 @@
+// Redesigned following SAHTECK brand guidelines
 import { NavLink, useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
+import {
+  LayoutDashboard,
+  Users,
+  UserCheck,
+  Users2,
+  CheckCircle,
+  Star,
+  User,
+  LogOut,
+} from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import Logo from "../common/Logo";
 import LanguageSwitcher from "../common/LanguageSwitcher";
@@ -10,135 +21,37 @@ const navItems = [
   {
     key: "admin_dashboard",
     path: "/admin/dashboard",
-    icon: (
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-        />
-      </svg>
-    ),
+    icon: LayoutDashboard,
   },
   {
     key: "specialists",
     path: "/admin/specialists",
-    icon: (
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
-    ),
+    icon: UserCheck,
   },
   {
     key: "admins",
     path: "/admin/admins",
-    icon: (
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0zm-3-8l1.8 3.6L18 7.4l-2.5 2.4L16 13l-4-2.1L8 13l.5-3.2L6 7.4l5.2-.8L12 3z"
-        />
-      </svg>
-    ),
+    icon: UserCheck,
   },
   {
     key: "patients",
     path: "/admin/patients",
-    icon: (
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
-        />
-      </svg>
-    ),
+    icon: Users2,
   },
   {
     key: "moderation",
     path: "/admin/posts",
-    icon: (
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
-    ),
+    icon: CheckCircle,
   },
   {
     key: "reviews",
     path: "/admin/reviews",
-    icon: (
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.175 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.05 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z"
-        />
-      </svg>
-    ),
-},
+    icon: Star,
+  },
   {
     key: "profile",
     path: "/admin/profile",
-    icon: (
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-        />
-      </svg>
-    ),
+    icon: User,
   },
 ];
 
@@ -169,79 +82,77 @@ export default function AdminLayout({ children }) {
   }
 
   return (
-    <div className="flex h-screen bg-surface overflow-hidden">
-      <aside className="w-64 bg-white border-r border-gray-100 flex flex-col flex-shrink-0 shadow-sm">
-        <div className="p-5 border-b border-gray-100">
+    <div className="flex h-screen bg-[#F8FAFF] overflow-hidden">
+      <aside className="w-64 bg-white border-r border-[#E2E8F0] flex flex-col flex-shrink-0 shadow-sm">
+        {/* Logo Section */}
+        <div className="p-6 border-b border-[#E2E8F0]">
           <Logo size="sm" />
         </div>
 
-        {/* User info */}
-        <div className="px-4 py-4 border-b border-gray-100">
+        {/* User Info Card */}
+        <div className="p-4 m-4 bg-gradient-to-br from-[#EFF6FF] to-[#F8FAFF] rounded-xl border border-[#E2E8F0]">
           <div className="flex items-center gap-3">
             {profileImage ? (
               <img
                 src={profileImage}
                 alt={displayName}
-                className="w-10 h-10 rounded-full object-cover"
+                className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
               />
             ) : (
-              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                <span className="text-red-600 font-bold text-sm">
+              <div className="w-12 h-12 bg-gradient-to-br from-[#0052FF] to-[#00A3FF] rounded-lg flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-bold text-sm">
                   {displayName.charAt(0)}
                 </span>
               </div>
             )}
-            <div className="overflow-hidden">
-              <p className="font-semibold text-sm text-gray-800 truncate">
+            <div className="overflow-hidden flex-1">
+              <p className="font-semibold text-sm text-[#0A0F1E] truncate">
                 {displayName}
               </p>
-              <p className="text-xs text-red-500 font-medium">{userRole}</p>
+              <p className="text-xs text-[#0052FF] font-medium mt-0.5">
+                {userRole === "ADMIN" ? "Administrateur" : userRole}
+              </p>
             </div>
           </div>
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.key}
-              to={item.path}
-              className={({ isActive }) =>
-                `sidebar-link ${isActive ? "active" : ""}`
-              }
-            >
-              {item.icon}
-              <span>{t(`nav.${item.key}`)}</span>
-            </NavLink>
-          ))}
+          {navItems.map((item) => {
+            const IconComponent = item.icon;
+            return (
+              <NavLink
+                key={item.key}
+                to={item.path}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    isActive
+                      ? "bg-gradient-to-r from-[#0052FF] to-[#00A3FF] text-white shadow-sm"
+                      : "text-[#64748B] hover:bg-[#F1F5F9] hover:text-[#0052FF]"
+                  }`
+                }
+              >
+                <IconComponent size={20} />
+                <span>{t(`nav.${item.key}`)}</span>
+              </NavLink>
+            );
+          })}
         </nav>
 
-        {/* Bottom section */}
-        <div className="p-4 border-t border-gray-100 space-y-3">
+        {/* Bottom Section */}
+        <div className="p-4 border-t border-[#E2E8F0] space-y-3">
           <LanguageSwitcher />
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-red-500 hover:bg-red-50 transition-colors text-sm font-medium"
+            className="flex items-center gap-3 w-full px-4 py-2.5 rounded-lg text-[#EF4444] hover:bg-[#FEF2F2] transition-all duration-200 text-sm font-medium"
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-              />
-            </svg>
+            <LogOut size={20} />
             {t("nav.logout")}
           </button>
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto">{children}</main>
+      <main className="flex-1 overflow-y-auto bg-[#F8FAFF]">{children}</main>
     </div>
   );
 }

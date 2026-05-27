@@ -99,7 +99,7 @@ export default function ChatPage() {
     const loadAiHistory = async () => {
       try {
         setAiLoading(true);
-        const { data } = await api.get("/ai/history");
+        const { data } = await api.get("/chat/ai/history");
         if (!cancelled) {
           setAiMessages(
             (data || []).map((m) => ({
@@ -367,7 +367,7 @@ export default function ChatPage() {
     setAiTyping(true);
 
     try {
-      const { data } = await api.post("/ai/ask", { message: content });
+      const { data } = await api.post("/chat/ai/ask", { message: content });
       setAiMessages((prev) => [
         ...prev,
         {
@@ -403,7 +403,7 @@ export default function ChatPage() {
     const previous = aiMessages;
     setAiMessages([]);
     try {
-      await api.delete("/ai/history");
+      await api.delete("/chat/ai/history");
     } catch (error) {
       console.error("Failed to clear AI history:", error);
       toast.error("Impossible d'effacer l'historique");

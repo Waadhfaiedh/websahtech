@@ -1,8 +1,25 @@
+// Redesigned following SAHTECK brand guidelines
 import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { io } from "socket.io-client";
 import { toast } from "react-toastify";
+import {
+  LayoutDashboard,
+  Users,
+  BarChart3,
+  MessageSquare,
+  FileText,
+  Home,
+  Zap,
+  Search,
+  Calendar,
+  User,
+  Star,
+  Building2,
+  LogOut,
+  Zap as Sparkles,
+} from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import api, { API_BASE_URL } from "../../services/api";
 import Logo from "../common/Logo";
@@ -74,7 +91,10 @@ function buildAppointmentPreview(payload) {
     : "";
   return {
     title: `Nouveau rendez-vous — ${patient}`,
-    body: [date, time, payload?.place].filter(Boolean).join(" · ").slice(0, 120),
+    body: [date, time, payload?.place]
+      .filter(Boolean)
+      .join(" · ")
+      .slice(0, 120),
   };
 }
 
@@ -113,187 +133,19 @@ async function maybeShowSystemNotification({ title, body, onClick }) {
   showSystemNotification({ title, body, onClick });
 }
 
-const icons = {
-  dashboard: (
-    <svg
-      className="w-5 h-5"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-      />
-    </svg>
-  ),
-  patients: (
-    <svg
-      className="w-5 h-5"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
-      />
-    </svg>
-  ),
-  reports: (
-    <svg
-      className="w-5 h-5"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-      />
-    </svg>
-  ),
-  chat: (
-    <svg
-      className="w-5 h-5"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-      />
-    </svg>
-  ),
-  posts: (
-    <svg
-      className="w-5 h-5"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
-      />
-    </svg>
-  ),
-  accueil: (
-    <svg
-      className="w-5 h-5"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M4 6h16M4 10h16M4 14h16M4 18h16"
-      />
-    </svg>
-  ),
-  exercises: (
-    <svg
-      className="w-5 h-5"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-      />
-    </svg>
-  ),
-  search: (
-    <svg
-      className="w-5 h-5"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-      />
-    </svg>
-  ),
-  planning: (
-    <svg
-      className="w-5 h-5"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-      />
-    </svg>
-  ),
-  profile: (
-    <svg
-      className="w-5 h-5"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-      />
-    </svg>
-  ),
-  reviews: (
-    <svg
-      className="w-5 h-5"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.175 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.05 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z"
-      />
-    </svg>
-  ),
-  clinics: (
-    <svg
-      className="w-5 h-5"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-      />
-    </svg>
-  ),
+const iconMap = {
+  dashboard: LayoutDashboard,
+  patients: Users,
+  reports: BarChart3,
+  chat: MessageSquare,
+  posts: FileText,
+  accueil: Home,
+  exercises: Zap,
+  search: Search,
+  planning: Calendar,
+  profile: User,
+  reviews: Star,
+  clinics: Building2,
 };
 
 const navItems = [
@@ -443,107 +295,104 @@ export default function SpecialistLayout() {
 
   return (
     <>
-    <div className="flex h-screen bg-surface overflow-hidden">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-100 flex flex-col flex-shrink-0 shadow-sm">
-        <div className="p-5 border-b border-gray-100">
-          <Logo size="sm" />
-        </div>
+      <div className="flex h-screen bg-[#F8FAFF] overflow-hidden">
+        {/* Sidebar */}
+        <aside className="w-64 bg-white border-r border-[#E2E8F0] flex flex-col flex-shrink-0 shadow-sm">
+          <div className="p-5 border-b border-[#E2E8F0]">
+            <Logo size="sm" />
+          </div>
 
-        {/* User info */}
-        <div className="px-4 py-4 border-b border-gray-100">
-          <div className="flex items-center gap-3">
-            {profileImage ? (
-              <img
-                src={profileImage}
-                alt={displayName}
-                className="w-10 h-10 rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                <span className="text-primary font-bold text-sm">
-                  {displayName.charAt(0)}
-                </span>
-              </div>
-            )}
-            <div className="overflow-hidden">
-              <p className="font-semibold text-sm text-gray-800 truncate">
-                {displayName}
-              </p>
-              {displaySpecialty && (
-                <p className="text-xs text-gray-500 truncate">
-                  {displaySpecialty}
-                </p>
+          {/* User info */}
+          <div className="px-4 py-4 border-b border-[#E2E8F0]">
+            <div className="flex items-center gap-3">
+              {profileImage ? (
+                <img
+                  src={profileImage}
+                  alt={displayName}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-10 h-10 bg-gradient-to-br from-[#0052FF] to-[#00A3FF] rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-white font-bold text-sm">
+                    {displayName.charAt(0)}
+                  </span>
+                </div>
               )}
+              <div className="overflow-hidden">
+                <p className="font-semibold text-sm text-[#0A0F1E] truncate">
+                  {displayName}
+                </p>
+                {displaySpecialty && (
+                  <p className="text-xs text-[#64748B] truncate">
+                    {displaySpecialty}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.key}
-              to={item.path}
-              className={({ isActive }) =>
-                `sidebar-link ${isActive ? "active" : ""}`
-              }
+          {/* Navigation */}
+          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+            {navItems.map((item) => {
+              const IconComponent = iconMap[item.key];
+              return (
+                <NavLink
+                  key={item.key}
+                  to={item.path}
+                  className={({ isActive }) =>
+                    isActive
+                      ? "flex items-center gap-3 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#0052FF] to-[#00A3FF] text-white shadow-sm transition-all duration-200"
+                      : "flex items-center gap-3 px-4 py-2.5 rounded-xl text-[#64748B] hover:bg-[#F1F5F9] transition-colors duration-200"
+                  }
+                >
+                  {IconComponent && (
+                    <IconComponent size={20} className="flex-shrink-0" />
+                  )}
+                  <span className="flex-1 text-sm font-medium">
+                    {t(`nav.${item.key}`)}
+                  </span>
+                  {item.key === "planning" && appointmentBadge > 0 && (
+                    <span className="bg-[#EF4444] text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center leading-none">
+                      {appointmentBadge > 9 ? "9+" : appointmentBadge}
+                    </span>
+                  )}
+                </NavLink>
+              );
+            })}
+          </nav>
+
+          {/* Bottom */}
+          <div className="p-4 border-t border-[#E2E8F0] space-y-3">
+            <LanguageSwitcher />
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-[#EF4444] hover:bg-[#FEF2F2] transition-colors text-sm font-medium"
             >
-              {icons[item.key]}
-              <span className="flex-1">{t(`nav.${item.key}`)}</span>
-              {item.key === "planning" && appointmentBadge > 0 && (
-                <span className="bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center leading-none">
-                  {appointmentBadge > 9 ? "9+" : appointmentBadge}
-                </span>
-              )}
-            </NavLink>
-          ))}
-        </nav>
+              <LogOut size={20} />
+              {t("nav.logout")}
+            </button>
+          </div>
+        </aside>
 
-        {/* Bottom */}
-        <div className="p-4 border-t border-gray-100 space-y-3">
-          <LanguageSwitcher />
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-red-500 hover:bg-red-50 transition-colors text-sm font-medium"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-              />
-            </svg>
-            {t("nav.logout")}
-          </button>
-        </div>
-      </aside>
+        {/* Main content */}
+        <main className="flex-1 overflow-y-auto">
+          <Outlet />
+        </main>
+      </div>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-y-auto"><Outlet /></main>
-    </div>
-
-    {/* Floating AI assistant button — hidden on the chat page itself */}
-    {location.pathname !== "/specialist/chat" && (
-      <button
-        onClick={() => navigate("/specialist/chat", { state: { openAi: true } })}
-        aria-label="Assistant IA"
-        title="Assistant IA"
-        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 text-white shadow-lg shadow-purple-500/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
-      >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-        </svg>
-      </button>
-    )}
+      {/* Floating AI assistant button — hidden on the chat page itself */}
+      {location.pathname !== "/specialist/chat" && (
+        <button
+          onClick={() =>
+            navigate("/specialist/chat", { state: { openAi: true } })
+          }
+          aria-label="Assistant IA"
+          title="Assistant IA"
+          className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-[#0052FF] to-[#00A3FF] text-white shadow-lg shadow-blue-500/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+        >
+          <Sparkles size={24} />
+        </button>
+      )}
     </>
   );
 }
-

@@ -1,3 +1,5 @@
+// Redesigned following SAHTECK brand guidelines
+
 import { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
@@ -7,8 +9,26 @@ import PageHeader from "../../components/common/PageHeader";
 import api from "../../services/api";
 import Cropper from "react-easy-crop";
 import { toast } from "react-toastify";
+import {
+  Camera,
+  Check,
+  ShieldCheck,
+  Lock,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Building2,
+  FileText,
+  Ruler,
+  Weight,
+  Globe,
+  Settings2,
+  Shield,
+  Upload,
+} from "lucide-react";
 
-// ─── ImageCropper Component (same as specialist page) ──────────────
+// ─── ImageCropper Component ───────────────────────────────────────
 function ImageCropper({ image, onCrop, onClose }) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -22,6 +42,7 @@ function ImageCropper({ image, onCrop, onClose }) {
     try {
       const imageElement = new Image();
       imageElement.src = image;
+
       await new Promise((resolve) => {
         imageElement.onload = resolve;
       });
@@ -59,54 +80,61 @@ function ImageCropper({ image, onCrop, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
-      <div className="bg-white rounded-2xl max-w-lg w-full p-6">
-        <h3 className="text-lg font-bold mb-4">Recadrer l'image</h3>
-
-        <div className="relative h-80 mb-4 bg-gray-100 rounded-lg overflow-hidden">
-          <Cropper
-            image={image}
-            crop={crop}
-            zoom={zoom}
-            aspect={1}
-            onCropChange={setCrop}
-            onZoomChange={setZoom}
-            onCropComplete={onCropComplete}
-          />
+    <div className="fixed inset-0 z-50 bg-[#0A0F1E]/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="w-full max-w-xl bg-white rounded-3xl shadow-2xl overflow-hidden">
+        <div className="p-6 border-b border-slate-100">
+          <h3 className="text-[20px] font-bold text-[#0A0F1E]">
+            Recadrer l'image
+          </h3>
+          <p className="text-sm text-[#64748B] mt-1">
+            Ajustez votre photo de profil avant l’enregistrement.
+          </p>
         </div>
 
-        <div className="mb-4">
-          <label
-            htmlFor="zoom-slider"
-            className="block text-sm text-gray-600 mb-2"
-          >
-            Zoom
-          </label>
-          <input
-            id="zoom-slider"
-            type="range"
-            min={1}
-            max={3}
-            step={0.1}
-            value={zoom}
-            onChange={(e) => setZoom(Number.parseFloat(e.target.value))}
-            className="w-full"
-          />
-        </div>
+        <div className="p-6">
+          <div className="relative h-80 rounded-2xl overflow-hidden bg-[#F1F5F9]">
+            <Cropper
+              image={image}
+              crop={crop}
+              zoom={zoom}
+              aspect={1}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={onCropComplete}
+            />
+          </div>
 
-        <div className="flex gap-3">
-          <button
-            onClick={createCroppedImage}
-            className="flex-1 bg-primary text-white py-2 rounded-lg font-semibold hover:bg-primary/90 transition-colors"
-          >
-            Appliquer
-          </button>
-          <button
-            onClick={onClose}
-            className="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
-          >
-            Annuler
-          </button>
+          <div className="mt-6">
+            <label className="block text-xs font-semibold text-[#64748B] mb-3 uppercase tracking-wide">
+              Zoom
+            </label>
+
+            <input
+              type="range"
+              min={1}
+              max={3}
+              step={0.1}
+              value={zoom}
+              onChange={(e) => setZoom(Number.parseFloat(e.target.value))}
+              className="w-full accent-[#0052FF]"
+            />
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 mt-8">
+            <button
+              onClick={createCroppedImage}
+              className="flex-1 h-12 rounded-full bg-gradient-to-r from-[#0052FF] to-[#00A3FF] text-white font-semibold shadow-[0_8px_24px_rgba(0,82,255,0.24)] hover:scale-[1.01] transition-all duration-200"
+            >
+              Appliquer
+            </button>
+
+            <button
+              onClick={onClose}
+              className="flex-1 h-12 rounded-full border border-[#D6E4FF] bg-white text-[#0052FF] font-semibold hover:bg-[#EFF6FF] transition-all duration-200"
+            >
+              Annuler
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -122,30 +150,26 @@ ImageCropper.propTypes = {
 const ROLE_UI = {
   ADMIN: {
     label: "Administrateur",
-    type: "admin",
-    bgClass: "bg-red-500",
-    textClass: "text-red-500",
+    badge:
+      "bg-[#FEF2F2] text-[#EF4444] border border-[#FECACA]",
   },
   DOCTOR: {
     label: "Médecin",
-    type: "doctor",
-    bgClass: "bg-blue-500",
-    textClass: "text-blue-500",
+    badge:
+      "bg-[#EFF6FF] text-[#0052FF] border border-[#BFDBFE]",
   },
   PATIENT: {
     label: "Patient",
-    type: "patient",
-    bgClass: "bg-green-500",
-    textClass: "text-green-500",
+    badge:
+      "bg-[#ECFDF5] text-[#10B981] border border-[#A7F3D0]",
   },
 };
 
 const getRoleUi = (role) =>
   ROLE_UI[role] || {
     label: role || "",
-    type: "patient",
-    bgClass: "bg-green-500",
-    textClass: "text-green-500",
+    badge:
+      "bg-[#ECFDF5] text-[#10B981] border border-[#A7F3D0]",
   };
 
 const addNumberFieldIfPresent = (target, key, value) => {
@@ -158,12 +182,14 @@ const addDoctorFields = (target, form) => {
   if (form.bio) target.bio = form.bio;
   if (form.clinic) target.clinic = form.clinic;
   if (form.location) target.location = form.location;
+
   addNumberFieldIfPresent(target, "latitude", form.latitude);
   addNumberFieldIfPresent(target, "longitude", form.longitude);
 };
 
 const addPatientFields = (target, form) => {
   if (form.age) target.age = form.age;
+
   addNumberFieldIfPresent(target, "weight", form.weight);
   addNumberFieldIfPresent(target, "height", form.height);
 };
@@ -187,16 +213,56 @@ const buildUpdateData = (form, role) => {
   return updateData;
 };
 
-// ─── Main AdminProfile Component ───────────────────────────────────
+// ─── Reusable Input ───────────────────────────────────────────────
+function InputField({
+  label,
+  icon: Icon,
+  className = "",
+  ...props
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-[#64748B] mb-2 uppercase tracking-wide">
+        {label}
+      </label>
+
+      <div className="relative">
+        {Icon && (
+          <Icon
+            size={18}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-[#94A3B8]"
+          />
+        )}
+
+        <input
+          {...props}
+          className={`w-full h-12 rounded-xl bg-[#F1F5F9] border border-transparent focus:border-[#0052FF] focus:ring-4 focus:ring-[#0052FF]/10 outline-none transition-all duration-200 text-sm text-[#0A0F1E] placeholder:text-[#94A3B8] ${
+            Icon ? "pl-12" : "px-4"
+          } pr-4 ${className}`}
+        />
+      </div>
+    </div>
+  );
+}
+
+InputField.propTypes = {
+  label: PropTypes.string.isRequired,
+  icon: PropTypes.elementType,
+  className: PropTypes.string,
+};
+
+// ─── Main AdminProfile Component ─────────────────────────────────
 export default function AdminProfile() {
   const { t } = useTranslation();
   const { token } = useAuth();
+
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [showCropper, setShowCropper] = useState(false);
   const [tempImage, setTempImage] = useState(null);
   const fileInputRef = useRef(null);
+
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -211,11 +277,16 @@ export default function AdminProfile() {
     latitude: "",
     longitude: "",
   });
-  const [pwForm, setPwForm] = useState({ current: "", new: "", confirm: "" });
+
+  const [pwForm, setPwForm] = useState({
+    current: "",
+    new: "",
+    confirm: "",
+  });
+
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
 
-  // ─── Load profile data ─────────────────────────────────────────
   useEffect(() => {
     fetchProfile();
   }, []);
@@ -223,8 +294,11 @@ export default function AdminProfile() {
   const fetchProfile = async () => {
     try {
       setLoading(true);
+
       const res = await api.get("/users/profile");
+
       setProfile(res.data);
+
       setForm({
         fullName: res.data.fullName || "",
         email: res.data.email || "",
@@ -239,21 +313,25 @@ export default function AdminProfile() {
         latitude: res.data.specialist?.latitude?.toString() || "",
         longitude: res.data.specialist?.longitude?.toString() || "",
       });
+
       setError(null);
     } catch (err) {
       console.error("Failed to load profile:", err);
+
       setError("Impossible de charger le profil");
+
       toast.error(
-        err.response?.data?.message || "Impossible de charger le profil",
+        err.response?.data?.message ||
+          "Impossible de charger le profil",
       );
     } finally {
       setLoading(false);
     }
   };
 
-  // ─── Handle file selection – open cropper ──────────────────────
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
+
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
@@ -267,42 +345,54 @@ export default function AdminProfile() {
     }
 
     const reader = new FileReader();
+
     reader.onload = (e) => {
       setTempImage(e.target.result);
       setShowCropper(true);
     };
+
     reader.readAsDataURL(file);
 
-    // Reset input so same file can be selected again
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
-  // ─── Upload cropped image ──────────────────────────────────────
   const uploadImage = async (croppedBlob) => {
     const formData = new FormData();
+
     formData.append("file", croppedBlob, "profile.jpg");
 
     setUploading(true);
     setShowCropper(false);
 
     try {
-      const res = await api.post("/users/upload-image", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
+      const res = await api.post(
+        "/users/upload-image",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
 
-      setProfile((prev) => ({ ...prev, imageUrl: res.data.imageUrl }));
+      setProfile((prev) => ({
+        ...prev,
+        imageUrl: res.data.imageUrl,
+      }));
+
       toast.success(
-        res.data?.message || "Photo de profil mise à jour avec succès",
+        res.data?.message ||
+          "Photo de profil mise à jour avec succès",
       );
     } catch (err) {
       console.error("Failed to upload image:", err);
+
       toast.error(
-        err.response?.data?.message || "Erreur lors de l'upload de l'image",
+        err.response?.data?.message ||
+          "Erreur lors de l'upload de l'image",
       );
     } finally {
       setUploading(false);
@@ -310,18 +400,29 @@ export default function AdminProfile() {
     }
   };
 
-  // ─── Update profile using /users/update-user ───────────────────
   const handleSave = async () => {
     setSaving(true);
-    try {
-      const updateData = buildUpdateData(form, profile?.role);
 
-      const res = await api.patch("/users/update-user", updateData);
-      toast.success(res.data?.message || "Profil enregistré avec succès");
+    try {
+      const updateData = buildUpdateData(
+        form,
+        profile?.role,
+      );
+
+      const res = await api.patch(
+        "/users/update-user",
+        updateData,
+      );
+
+      toast.success(
+        res.data?.message ||
+          "Profil enregistré avec succès",
+      );
 
       await fetchProfile();
     } catch (err) {
       console.error("Failed to update profile:", err);
+
       toast.error(
         err.response?.data?.message ||
           "Erreur lors de la mise à jour du profil",
@@ -331,27 +432,52 @@ export default function AdminProfile() {
     }
   };
 
-  // ─── Change password ───────────────────────────────────────────
   const handlePwSave = async () => {
-    if (!pwForm.current || !pwForm.new || pwForm.new !== pwForm.confirm) {
+    if (
+      !pwForm.current ||
+      !pwForm.new ||
+      pwForm.new !== pwForm.confirm
+    ) {
       toast.error(
-        "Veuillez remplir tous les champs correctement. Le nouveau mot de passe doit correspondre à la confirmation.",
+        "Veuillez remplir tous les champs correctement.",
       );
+
       return;
     }
+
     if (pwForm.new.length < 6) {
-      toast.error("Le mot de passe doit contenir au moins 6 caractères");
+      toast.error(
+        "Le mot de passe doit contenir au moins 6 caractères",
+      );
+
       return;
     }
+
     try {
-      const res = await api.patch("/users/change-password", {
-        currentPassword: pwForm.current,
-        newPassword: pwForm.new,
+      const res = await api.patch(
+        "/users/change-password",
+        {
+          currentPassword: pwForm.current,
+          newPassword: pwForm.new,
+        },
+      );
+
+      setPwForm({
+        current: "",
+        new: "",
+        confirm: "",
       });
-      setPwForm({ current: "", new: "", confirm: "" });
-      toast.success(res.data?.message || "Mot de passe modifié avec succès");
+
+      toast.success(
+        res.data?.message ||
+          "Mot de passe modifié avec succès",
+      );
     } catch (err) {
-      console.error("Failed to change password:", err);
+      console.error(
+        "Failed to change password:",
+        err,
+      );
+
       toast.error(
         err.response?.data?.message ||
           "Erreur lors du changement de mot de passe",
@@ -359,18 +485,31 @@ export default function AdminProfile() {
     }
   };
 
-  // ─── Toggle security (2FA/SFA) ────────────────────────────────
   const handleToggleSecurity = async () => {
     setSaving(true);
+
     try {
-      const res = await api.patch("/users/update-otp", {});
+      const res = await api.patch(
+        "/users/update-otp",
+        {},
+      );
+
       setProfile((prev) => ({
         ...prev,
-        security: prev?.security === "MFA" ? "SFA" : "MFA",
+        security:
+          prev?.security === "MFA" ? "SFA" : "MFA",
       }));
-      toast.success(res.data?.message || "Paramètres de sécurité mis à jour");
+
+      toast.success(
+        res.data?.message ||
+          "Paramètres de sécurité mis à jour",
+      );
     } catch (err) {
-      console.error("Failed to update security:", err);
+      console.error(
+        "Failed to update security:",
+        err,
+      );
+
       toast.error(
         err.response?.data?.message ||
           "Erreur lors de la mise à jour des paramètres de sécurité",
@@ -381,7 +520,12 @@ export default function AdminProfile() {
   };
 
   const getUserInitial = () => {
-    if (profile?.fullName) return profile.fullName.charAt(0).toUpperCase();
+    if (profile?.fullName) {
+      return profile.fullName
+        .charAt(0)
+        .toUpperCase();
+    }
+
     return "A";
   };
 
@@ -390,8 +534,8 @@ export default function AdminProfile() {
   if (loading) {
     return (
       <AdminLayout>
-        <div className="p-8 flex items-center justify-center min-h-[400px]">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="min-h-[500px] flex items-center justify-center bg-[#F8FAFF]">
+          <div className="w-12 h-12 rounded-full border-4 border-[#0052FF]/20 border-t-[#0052FF] animate-spin" />
         </div>
       </AdminLayout>
     );
@@ -400,9 +544,11 @@ export default function AdminProfile() {
   if (error) {
     return (
       <AdminLayout>
-        <div className="p-8">
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-center">
-            {error}
+        <div className="p-8 bg-[#F8FAFF] min-h-screen">
+          <div className="max-w-xl mx-auto bg-[#FEF2F2] border border-[#FECACA] rounded-2xl p-6 text-center">
+            <p className="text-[#EF4444] font-medium">
+              {error}
+            </p>
           </div>
         </div>
       </AdminLayout>
@@ -411,478 +557,567 @@ export default function AdminProfile() {
 
   return (
     <AdminLayout>
-      <div className="p-8 animate-fadeIn max-w-2xl">
-        <PageHeader title={t("profile.title")} />
+      <div className="min-h-screen bg-[#F8FAFF]">
+        <div className="max-w-6xl mx-auto px-4 md:px-8 py-8">
+          <PageHeader title={t("profile.title")} />
 
-        {/* Avatar with upload capability (cropper enabled) */}
-        <div className="card mb-6">
-          <div className="flex items-center gap-5">
-            <div className="relative group">
-              {profile?.imageUrl ? (
-                <img
-                  src={profile.imageUrl}
-                  alt={profile.fullName}
-                  className="w-20 h-20 rounded-2xl object-cover shadow-sm"
-                />
-              ) : (
-                <div
-                  className={`w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-bold text-white ${
-                    roleUi.bgClass
-                  }`}
-                >
-                  {getUserInitial()}
+          {/* ─── Profile Hero ───────────────────────── */}
+          <div className="bg-white rounded-3xl p-6 md:p-8 shadow-[0_2px_12px_rgba(0,82,255,0.08)] mb-8">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+              <div className="flex items-center gap-5">
+                <div className="relative group">
+                  {profile?.imageUrl ? (
+                    <img
+                      src={profile.imageUrl}
+                      alt={profile.fullName}
+                      className="w-24 h-24 rounded-3xl object-cover shadow-lg"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#0052FF] to-[#00A3FF] flex items-center justify-center text-white text-3xl font-bold shadow-lg">
+                      {getUserInitial()}
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() =>
+                      fileInputRef.current?.click()
+                    }
+                    disabled={uploading}
+                    className="absolute -bottom-2 -right-2 w-11 h-11 rounded-full bg-gradient-to-r from-[#0052FF] to-[#00A3FF] flex items-center justify-center text-white shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-50"
+                  >
+                    {uploading ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Camera size={20} />
+                    )}
+                  </button>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                </div>
+
+                <div>
+                  <h1 className="text-[28px] font-bold text-[#0A0F1E]">
+                    {profile?.fullName}
+                  </h1>
+
+                  <div className="flex items-center gap-3 mt-2">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${roleUi.badge}`}
+                    >
+                      {roleUi.label}
+                    </span>
+
+                    <span className="text-sm text-[#64748B]">
+                      {profile?.email}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="h-12 px-6 rounded-full bg-gradient-to-r from-[#0052FF] to-[#00A3FF] text-white font-semibold flex items-center justify-center gap-2 shadow-[0_8px_24px_rgba(0,82,255,0.24)] hover:scale-[1.01] transition-all duration-200 disabled:opacity-50"
+              >
+                {saving ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Enregistrement...
+                  </>
+                ) : (
+                  <>
+                    <Check size={18} />
+                    {t("common.save")}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* ─── Main Grid ─────────────────────────── */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            {/* Left Column */}
+            <div className="xl:col-span-2 space-y-8">
+              {/* Account Info */}
+              <div className="bg-white rounded-3xl p-6 shadow-[0_2px_12px_rgba(0,82,255,0.08)]">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-11 h-11 rounded-2xl bg-[#EFF6FF] flex items-center justify-center">
+                    <User
+                      size={20}
+                      className="text-[#0052FF]"
+                    />
+                  </div>
+
+                  <div>
+                    <h2 className="text-[20px] font-semibold text-[#0A0F1E]">
+                      Informations du compte
+                    </h2>
+
+                    <p className="text-sm text-[#64748B]">
+                      Gérez vos informations personnelles.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <InputField
+                    label={t("profile.full_name")}
+                    icon={User}
+                    value={form.fullName}
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        fullName: e.target.value,
+                      }))
+                    }
+                  />
+
+                  <InputField
+                    label={t("auth.email")}
+                    type="email"
+                    icon={Mail}
+                    value={form.email}
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        email: e.target.value,
+                      }))
+                    }
+                  />
+
+                  <InputField
+                    label="Téléphone"
+                    type="tel"
+                    icon={Phone}
+                    value={form.phone}
+                    maxLength={8}
+                    placeholder="12345678"
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        phone: e.target.value,
+                      }))
+                    }
+                  />
+
+                  <InputField
+                    label="Adresse"
+                    icon={MapPin}
+                    value={form.address}
+                    placeholder="Votre adresse"
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        address: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Patient Section */}
+              {profile?.role === "PATIENT" && (
+                <div className="bg-white rounded-3xl p-6 shadow-[0_2px_12px_rgba(0,82,255,0.08)]">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-11 h-11 rounded-2xl bg-[#ECFDF5] flex items-center justify-center">
+                      <ShieldCheck
+                        size={20}
+                        className="text-[#10B981]"
+                      />
+                    </div>
+
+                    <div>
+                      <h2 className="text-[20px] font-semibold text-[#0A0F1E]">
+                        Informations médicales
+                      </h2>
+
+                      <p className="text-sm text-[#64748B]">
+                        Données de santé du patient.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <InputField
+                      label="Âge"
+                      type="number"
+                      icon={User}
+                      value={form.age}
+                      placeholder="30"
+                      onChange={(e) =>
+                        setForm((p) => ({
+                          ...p,
+                          age: e.target.value,
+                        }))
+                      }
+                    />
+
+                    <InputField
+                      label="Poids (kg)"
+                      type="number"
+                      step="0.1"
+                      icon={Weight}
+                      value={form.weight}
+                      placeholder="70.5"
+                      onChange={(e) =>
+                        setForm((p) => ({
+                          ...p,
+                          weight: e.target.value,
+                        }))
+                      }
+                    />
+
+                    <InputField
+                      label="Taille (cm)"
+                      type="number"
+                      step="0.1"
+                      icon={Ruler}
+                      value={form.height}
+                      placeholder="175"
+                      onChange={(e) =>
+                        setForm((p) => ({
+                          ...p,
+                          height: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
                 </div>
               )}
 
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="absolute bottom-0 right-0 p-1.5 bg-gray-800 rounded-full text-white hover:bg-gray-700 transition-colors disabled:opacity-50"
-                title="Changer la photo"
-              >
-                {uploading ? (
-                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
+              {/* Doctor Section */}
+              {profile?.role === "DOCTOR" &&
+                profile?.specialist && (
+                  <div className="bg-white rounded-3xl p-6 shadow-[0_2px_12px_rgba(0,82,255,0.08)]">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-11 h-11 rounded-2xl bg-[#EFF6FF] flex items-center justify-center">
+                        <Building2
+                          size={20}
+                          className="text-[#0052FF]"
+                        />
+                      </div>
+
+                      <div>
+                        <h2 className="text-[20px] font-semibold text-[#0A0F1E]">
+                          Informations professionnelles
+                        </h2>
+
+                        <p className="text-sm text-[#64748B]">
+                          Profil professionnel du spécialiste.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-5">
+                      <div>
+                        <label className="block text-xs font-semibold text-[#64748B] mb-2 uppercase tracking-wide">
+                          Bio
+                        </label>
+
+                        <div className="relative">
+                          <FileText
+                            size={18}
+                            className="absolute left-4 top-4 text-[#94A3B8]"
+                          />
+
+                          <textarea
+                            rows={4}
+                            value={form.bio}
+                            onChange={(e) =>
+                              setForm((p) => ({
+                                ...p,
+                                bio: e.target.value,
+                              }))
+                            }
+                            placeholder="Description de votre parcours..."
+                            className="w-full rounded-xl bg-[#F1F5F9] border border-transparent focus:border-[#0052FF] focus:ring-4 focus:ring-[#0052FF]/10 outline-none transition-all duration-200 text-sm text-[#0A0F1E] placeholder:text-[#94A3B8] pl-12 pr-4 py-4 resize-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <InputField
+                          label="Cabinet"
+                          icon={Building2}
+                          value={form.clinic}
+                          placeholder="Nom du cabinet"
+                          onChange={(e) =>
+                            setForm((p) => ({
+                              ...p,
+                              clinic: e.target.value,
+                            }))
+                          }
+                        />
+
+                        <InputField
+                          label="Localisation"
+                          icon={MapPin}
+                          value={form.location}
+                          placeholder="Ville, pays"
+                          onChange={(e) =>
+                            setForm((p) => ({
+                              ...p,
+                              location: e.target.value,
+                            }))
+                          }
+                        />
+
+                        <InputField
+                          label="Latitude"
+                          type="number"
+                          step="any"
+                          icon={Globe}
+                          value={form.latitude}
+                          placeholder="36.8065"
+                          onChange={(e) =>
+                            setForm((p) => ({
+                              ...p,
+                              latitude: e.target.value,
+                            }))
+                          }
+                        />
+
+                        <InputField
+                          label="Longitude"
+                          type="number"
+                          step="any"
+                          icon={Globe}
+                          value={form.longitude}
+                          placeholder="10.1815"
+                          onChange={(e) =>
+                            setForm((p) => ({
+                              ...p,
+                              longitude: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 rounded-2xl bg-[#F8FAFF] border border-[#E2E8F0]">
+                        <div>
+                          <p className="font-semibold text-[#0A0F1E]">
+                            Statut du spécialiste
+                          </p>
+
+                          <p className="text-sm text-[#64748B] mt-1">
+                            Validation administrative.
+                          </p>
+                        </div>
+
+                        <span
+                          className={`px-4 py-2 rounded-full text-sm font-semibold ${
+                            profile.specialist
+                              .isValidated
+                              ? "bg-[#ECFDF5] text-[#10B981]"
+                              : "bg-[#FFFBEB] text-[#F59E0B]"
+                          }`}
+                        >
+                          {profile.specialist
+                            .isValidated
+                            ? "Validé"
+                            : "En attente"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 )}
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-            </div>
 
-            <div>
-              <p className="font-bold text-lg text-gray-900">
-                {profile?.fullName}
-              </p>
-              <p className={`font-medium text-sm ${roleUi.textClass}`}>
-                {roleUi.label}
-              </p>
-              <p className="text-gray-400 text-sm mt-0.5">{profile?.email}</p>
-            </div>
-          </div>
-        </div>
+              {/* Password */}
+              <div className="bg-white rounded-3xl p-6 shadow-[0_2px_12px_rgba(0,82,255,0.08)]">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-11 h-11 rounded-2xl bg-[#FEF2F2] flex items-center justify-center">
+                    <Lock
+                      size={20}
+                      className="text-[#EF4444]"
+                    />
+                  </div>
 
-        {/* Rest of your form remains the same (basic info, patient/specialist sections, password) */}
-        {/* ... (keep all the existing JSX from your original AdminProfile after this point) ... */}
+                  <div>
+                    <h2 className="text-[20px] font-semibold text-[#0A0F1E]">
+                      {t("profile.change_password")}
+                    </h2>
 
-        {/* Basic Info */}
-        <div className="card mb-6">
-          <h2 className="font-bold text-gray-900 mb-4">
-            Informations du compte
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t("profile.full_name")}
-              </label>
-              <input
-                value={form.fullName}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, fullName: e.target.value }))
-                }
-                className="input-field"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t("auth.email")}
-              </label>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, email: e.target.value }))
-                }
-                className="input-field"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="phone"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Téléphone (8 chiffres)
-              </label>
-              <input
-                id="phone"
-                type="tel"
-                value={form.phone}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, phone: e.target.value }))
-                }
-                className="input-field"
-                placeholder="12345678"
-                maxLength={8}
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="address"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Adresse
-              </label>
-              <input
-                id="address"
-                value={form.address}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, address: e.target.value }))
-                }
-                className="input-field"
-                placeholder="Votre adresse"
-              />
-            </div>
-          </div>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="btn-primary mt-4 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {saving ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Enregistrement...
-              </>
-            ) : (
-              <>
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-                {t("common.save")}
-              </>
-            )}
-          </button>
-        </div>
+                    <p className="text-sm text-[#64748B]">
+                      Mettez à jour votre mot de passe.
+                    </p>
+                  </div>
+                </div>
 
-        {/* Patient specific info */}
-        {profile?.role === "PATIENT" && (
-          <div className="card mb-6">
-            <h2 className="font-bold text-gray-900 mb-4">
-              Informations médicales
-            </h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="age"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Âge
-                </label>
-                <input
-                  id="age"
-                  type="number"
-                  value={form.age}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, age: e.target.value }))
-                  }
-                  className="input-field"
-                  placeholder="30"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="weight"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Poids (kg)
-                </label>
-                <input
-                  id="weight"
-                  type="number"
-                  step="0.1"
-                  value={form.weight}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, weight: e.target.value }))
-                  }
-                  className="input-field"
-                  placeholder="70.5"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="height"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Taille (cm)
-                </label>
-                <input
-                  id="height"
-                  type="number"
-                  step="0.1"
-                  value={form.height}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, height: e.target.value }))
-                  }
-                  className="input-field"
-                  placeholder="175"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Specialist specific info */}
-        {profile?.role === "DOCTOR" && profile?.specialist && (
-          <div className="card mb-6">
-            <h2 className="font-bold text-gray-900 mb-4">
-              Informations professionnelles
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label
-                  htmlFor="bio"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Bio
-                </label>
-                <textarea
-                  id="bio"
-                  value={form.bio}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, bio: e.target.value }))
-                  }
-                  className="input-field"
-                  rows={3}
-                  placeholder="Description de votre parcours et spécialités..."
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="clinic"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Cabinet
-                </label>
-                <input
-                  id="clinic"
-                  value={form.clinic}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, clinic: e.target.value }))
-                  }
-                  className="input-field"
-                  placeholder="Nom de votre cabinet"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="location"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Localisation
-                </label>
-                <input
-                  id="location"
-                  value={form.location}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, location: e.target.value }))
-                  }
-                  className="input-field"
-                  placeholder="Ville, pays"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="latitude"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Latitude
-                  </label>
-                  <input
-                    id="latitude"
-                    type="number"
-                    step="any"
-                    value={form.latitude}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  <InputField
+                    label={t(
+                      "profile.current_password",
+                    )}
+                    type="password"
+                    icon={Lock}
+                    value={pwForm.current}
+                    placeholder="••••••••"
                     onChange={(e) =>
-                      setForm((p) => ({ ...p, latitude: e.target.value }))
+                      setPwForm((p) => ({
+                        ...p,
+                        current: e.target.value,
+                      }))
                     }
-                    className="input-field"
-                    placeholder="36.8065"
+                  />
+
+                  <InputField
+                    label={t("profile.new_password")}
+                    type="password"
+                    icon={Shield}
+                    value={pwForm.new}
+                    placeholder="••••••••"
+                    onChange={(e) =>
+                      setPwForm((p) => ({
+                        ...p,
+                        new: e.target.value,
+                      }))
+                    }
+                  />
+
+                  <InputField
+                    label={t(
+                      "profile.confirm_password",
+                    )}
+                    type="password"
+                    icon={Check}
+                    value={pwForm.confirm}
+                    placeholder="••••••••"
+                    onChange={(e) =>
+                      setPwForm((p) => ({
+                        ...p,
+                        confirm: e.target.value,
+                      }))
+                    }
                   />
                 </div>
-                <div>
-                  <label
-                    htmlFor="longitude"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Longitude
-                  </label>
-                  <input
-                    id="longitude"
-                    type="number"
-                    step="any"
-                    value={form.longitude}
-                    onChange={(e) =>
-                      setForm((p) => ({ ...p, longitude: e.target.value }))
-                    }
-                    className="input-field"
-                    placeholder="10.1815"
-                  />
+
+                <button
+                  onClick={handlePwSave}
+                  className="mt-6 h-12 px-6 rounded-full bg-gradient-to-r from-[#0052FF] to-[#00A3FF] text-white font-semibold hover:scale-[1.01] transition-all duration-200 shadow-[0_8px_24px_rgba(0,82,255,0.24)]"
+                >
+                  {t("profile.change_password")}
+                </button>
+              </div>
+            </div>
+
+            {/* Right Column */}
+            <div className="space-y-8">
+              {/* Security */}
+              <div className="bg-white rounded-3xl p-6 shadow-[0_2px_12px_rgba(0,82,255,0.08)]">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-11 h-11 rounded-2xl bg-[#EFF6FF] flex items-center justify-center">
+                    <Settings2
+                      size={20}
+                      className="text-[#0052FF]"
+                    />
+                  </div>
+
+                  <div>
+                    <h2 className="text-[20px] font-semibold text-[#0A0F1E]">
+                      Sécurité
+                    </h2>
+
+                    <p className="text-sm text-[#64748B]">
+                      Protection du compte.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl bg-[#F8FAFF] border border-[#E2E8F0] p-5">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0052FF] to-[#00A3FF] flex items-center justify-center text-white shrink-0">
+                      <ShieldCheck size={22} />
+                    </div>
+
+                    <div className="flex-1">
+                      <p className="font-semibold text-[#0A0F1E]">
+                        Authentification 2FA
+                      </p>
+
+                      <p className="text-sm text-[#64748B] mt-1">
+                        {profile?.security === "MFA"
+                          ? "Authentification multi-facteurs activée"
+                          : "Authentification simple activée"}
+                      </p>
+
+                      <button
+                        onClick={handleToggleSecurity}
+                        disabled={saving}
+                        className={`mt-5 h-11 px-5 rounded-full font-semibold transition-all duration-200 ${
+                          profile?.security === "MFA"
+                            ? "bg-[#FEF2F2] text-[#EF4444] hover:bg-[#FEE2E2]"
+                            : "bg-gradient-to-r from-[#0052FF] to-[#00A3FF] text-white shadow-[0_8px_24px_rgba(0,82,255,0.24)]"
+                        }`}
+                      >
+                        {profile?.security === "MFA"
+                          ? "Désactiver 2FA"
+                          : "Activer 2FA"}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div>
-                <label
-                  htmlFor="doctor-status"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Statut
-                </label>
-                <p
-                  className={`text-sm font-medium ${profile.specialist.isValidated ? "text-green-600" : "text-orange-500"}`}
-                >
-                  <span id="doctor-status" className="sr-only">
-                    Statut du spécialiste
-                  </span>
-                  {profile.specialist.isValidated
-                    ? "✓ Validé"
-                    : "⏳ En attente de validation"}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* Admin specific info */}
-        {profile?.role === "ADMIN" && profile?.admin && (
-          <div className="card mb-6">
-            <h2 className="font-bold text-gray-900 mb-4">
-              Privilèges administrateur
-            </h2>
-            <div className="flex items-center gap-2">
-              <div
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
-                  profile.admin.canModerate
-                    ? "bg-green-100 text-green-700"
-                    : "bg-gray-100 text-gray-500"
-                }`}
-              >
-                {profile.admin.canModerate
-                  ? "✓ Peut modérer"
-                  : "Modération désactivée"}
-              </div>
-            </div>
-          </div>
-        )}
+              {/* Admin Card */}
+              {profile?.role === "ADMIN" &&
+                profile?.admin && (
+                  <div className="bg-white rounded-3xl p-6 shadow-[0_2px_12px_rgba(0,82,255,0.08)]">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-11 h-11 rounded-2xl bg-[#FEF2F2] flex items-center justify-center">
+                        <Shield
+                          size={20}
+                          className="text-[#EF4444]"
+                        />
+                      </div>
 
-        {/* Security Settings */}
-        <div className="card mb-6">
-          <h2 className="font-bold text-gray-900 mb-4">
-            Paramètres de sécurité
-          </h2>
-          <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <div>
-              <p className="font-medium text-gray-900">
-                Authentification à deux facteurs
-              </p>
-              <p className="text-sm text-gray-600 mt-1">
-                {profile?.security === "MFA"
-                  ? "Authentification multi-facteurs (2FA) activée"
-                  : "Authentification simple (SFA) activée"}
-              </p>
-            </div>
-            <button
-              onClick={handleToggleSecurity}
-              disabled={saving}
-              className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                profile?.security === "MFA"
-                  ? "bg-orange-500 text-white hover:bg-orange-600"
-                  : "bg-green-500 text-white hover:bg-green-600"
-              } disabled:opacity-50`}
-            >
-              {profile?.security === "MFA" ? "Désactiver 2FA" : "Activer 2FA"}
-            </button>
-          </div>
-        </div>
+                      <div>
+                        <h2 className="text-[20px] font-semibold text-[#0A0F1E]">
+                          Administration
+                        </h2>
 
-        {/* Password change */}
-        <div className="card">
-          <h2 className="font-bold text-gray-900 mb-4">
-            {t("profile.change_password")}
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t("profile.current_password")}
-              </label>
-              <input
-                type="password"
-                value={pwForm.current}
-                onChange={(e) =>
-                  setPwForm((p) => ({ ...p, current: e.target.value }))
-                }
-                className="input-field"
-                placeholder="••••••••"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t("profile.new_password")}
-              </label>
-              <input
-                type="password"
-                value={pwForm.new}
-                onChange={(e) =>
-                  setPwForm((p) => ({ ...p, new: e.target.value }))
-                }
-                className="input-field"
-                placeholder="••••••••"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t("profile.confirm_password")}
-              </label>
-              <input
-                type="password"
-                value={pwForm.confirm}
-                onChange={(e) =>
-                  setPwForm((p) => ({ ...p, confirm: e.target.value }))
-                }
-                className="input-field"
-                placeholder="••••••••"
-              />
+                        <p className="text-sm text-[#64748B]">
+                          Permissions administrateur.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 rounded-2xl bg-[#F8FAFF] border border-[#E2E8F0]">
+                      <div>
+                        <p className="font-semibold text-[#0A0F1E]">
+                          Modération
+                        </p>
+
+                        <p className="text-sm text-[#64748B] mt-1">
+                          Accès aux outils de gestion.
+                        </p>
+                      </div>
+
+                      <span
+                        className={`px-4 py-2 rounded-full text-sm font-semibold ${
+                          profile.admin.canModerate
+                            ? "bg-[#ECFDF5] text-[#10B981]"
+                            : "bg-[#F1F5F9] text-[#64748B]"
+                        }`}
+                      >
+                        {profile.admin.canModerate
+                          ? "Activé"
+                          : "Désactivé"}
+                      </span>
+                    </div>
+                  </div>
+                )}
             </div>
           </div>
-          <button onClick={handlePwSave} className="btn-primary mt-4">
-            {t("profile.change_password")}
-          </button>
         </div>
       </div>
 
-      {/* Image Cropper Modal */}
+      {/* Cropper */}
       {showCropper && (
         <ImageCropper
           image={tempImage}
