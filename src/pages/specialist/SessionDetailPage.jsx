@@ -1,8 +1,18 @@
-﻿import { useState, useEffect } from "react";
+﻿// Redesigned following SAHTECK brand guidelines
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import api from "../../services/api";
 
+import {
+  ArrowLeft,
+  Stethoscope,
+  Microscope,
+  ClipboardList,
+  Pill,
+  Activity,
+  Check,
+} from "lucide-react";
 import { stripPending } from "../../components/forms/physioPayload";
 
 // Form sections
@@ -12,35 +22,41 @@ import DiagnosticForm from "../../components/forms/DiagnosticForm";
 import ConduiteATenirForm from "../../components/forms/ConduiteATenirForm";
 import PhysiotherapieForm from "../../components/forms/PhysiotherapieForm";
 
+// Brand constants
+const CARD_SHADOW = "0 2px 12px rgba(0,82,255,0.08)";
+const PAGE_BG = "#F8FAFF";
+const TEXT_PRIMARY = "#0A0F1E";
+const TEXT_SECONDARY = "#64748B";
+
 const SECTIONS = [
   {
     id: "examen-clinique",
     label: "Examen Clinique",
-    icon: "🩺",
+    icon: Stethoscope,
     component: ExamenCliniqueForm,
   },
   {
     id: "examen-complementaire",
     label: "Examen Complémentaire",
-    icon: "🔍",
+    icon: Microscope,
     component: ExamenComplementaireForm,
   },
   {
     id: "diagnostic",
     label: "Diagnostic",
-    icon: "📋",
+    icon: ClipboardList,
     component: DiagnosticForm,
   },
   {
     id: "conduite-a-tenir",
     label: "Conduite à Tenir",
-    icon: "💊",
+    icon: Pill,
     component: ConduiteATenirForm,
   },
   {
     id: "physiotherapie",
     label: "Physiothérapie",
-    icon: "🏃",
+    icon: Activity,
     component: PhysiotherapieForm,
   },
 ];
@@ -53,7 +69,7 @@ const SECTION_KEYS = {
   physiotherapie: "physiotherapie",
 };
 
-// ── Parse JSON fields from API response ────────────────────────────────────
+// â”€â”€ Parse JSON fields from API response â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const parseJsonField = (value) => {
   if (typeof value === "string") {
     try {
@@ -83,7 +99,7 @@ const normalizeExamenClinique = (examen) => {
   };
 };
 
-// ── Bilan kinésithérapique payload builder ──────────────────────────────────
+// â”€â”€ Bilan kinÃ©sithÃ©rapique payload builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const buildPhysiotherapieBilanPayload = (bilan = {}) => ({
   // Session-specific pain
   intensiteEVA: bilan.intensiteEVA,
@@ -102,7 +118,7 @@ const buildPhysiotherapieBilanPayload = (bilan = {}) => ({
   quickDashScore: JSON.stringify(bilan.quickDASH),
   dashArabeScore: JSON.stringify(bilan.dashArabeScore),
 
-  // ROM active — all 7 movements
+  // ROM active â€” all 7 movements
   antepulsionActive: bilan.mobiliteArticulaire?.antepulsion_active,
   extensionActive: bilan.mobiliteArticulaire?.extension_active,
   abductionActive: bilan.mobiliteArticulaire?.abduction_active,
@@ -111,7 +127,7 @@ const buildPhysiotherapieBilanPayload = (bilan = {}) => ({
   rotationExterneActive: bilan.mobiliteArticulaire?.rot_ext_active,
   rotationInterneActive: bilan.mobiliteArticulaire?.rot_int_active,
 
-  // ROM passive — all 7 movements
+  // ROM passive â€” all 7 movements
   antepulsionPassive: bilan.mobiliteArticulaire?.antepulsion_passive,
   extensionPassive: bilan.mobiliteArticulaire?.extension_passive,
   abductionPassive: bilan.mobiliteArticulaire?.abduction_passive,
@@ -125,7 +141,7 @@ const buildPhysiotherapieBilanPayload = (bilan = {}) => ({
   arcDouloureuxIntervalle: bilan.analyseQualitative?.arcDouloureuxIntervalle,
   finDeCourse: bilan.analyseQualitative?.finDeCourse,
 
-  // Cutané-trophique
+  // CutanÃ©-trophique
   cutanePlaie: bilan.cutanePlaie,
   cutaneCicatrice: bilan.cutaneCicatrice,
   trophiqueOedeme: bilan.trophiqueOedeme,
@@ -147,7 +163,7 @@ const buildPhysiotherapieBilanPayload = (bilan = {}) => ({
   rachisCervical: bilan.rachisCervical,
   coude: bilan.coude,
 
-  // Muscle testing MRC — correct keys from testingMusculaire object
+  // Muscle testing MRC â€” correct keys from testingMusculaire object
   deltoideTesting: bilan.testingMusculaire?.deltoide,
   susEpineuxTesting: bilan.testingMusculaire?.supra_epineux,
   infraEpineuxTesting: bilan.testingMusculaire?.infra_epineux,
@@ -179,7 +195,7 @@ const buildPhysiotherapieBilanPayload = (bilan = {}) => ({
   testNeer: bilan.testsSpecifiques?.neer,
   testHawkins: bilan.testsSpecifiques?.hawkins,
 
-  // Functional assessment — lives under bilanFonctionnel.testsSimples
+  // Functional assessment â€” lives under bilanFonctionnel.testsSimples
   mainBouche: bilan.bilanFonctionnel?.testsSimples?.mainBouche !== "impossible",
   mainTete: bilan.bilanFonctionnel?.testsSimples?.mainTete !== "impossible",
   mainNuque: bilan.bilanFonctionnel?.testsSimples?.mainNuque !== "impossible",
@@ -189,7 +205,7 @@ const buildPhysiotherapieBilanPayload = (bilan = {}) => ({
   observations: bilan.observations,
 });
 
-// ── Protocole de rééducation payload builder ────────────────────────────────
+// â”€â”€ Protocole de rÃ©Ã©ducation payload builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const buildProtocolePayload = (p = {}) => ({
   ...p,
   objectifsCourt: p.objectifsCourt,
@@ -233,7 +249,7 @@ const buildProtocolePayload = (p = {}) => ({
   pompagesCapsulaires: p.pompagesCapsulaires,
   leveesDeTension: p.leveesDeTension,
   techManuAutre: p.techManuAutre,
-  balnéotherapie: p.balneotherapie,
+  balneotherapie: p.balneotherapie,
 
   // Renforcement
   renforcement: p.renforcement,
@@ -250,7 +266,7 @@ const buildProtocolePayload = (p = {}) => ({
   muscleBicepsTriceps: p.muscleBicepsTriceps,
   renforcementAutre: p.renforcementAutre,
 
-  // Contrôle moteur
+  // ContrÃ´le moteur
   proprioception: p.proprioception,
   stabilisationScapDyn: p.stabilisationScapDyn,
   recentrageGH: p.recentrageGH,
@@ -261,7 +277,7 @@ const buildProtocolePayload = (p = {}) => ({
   correctionCompensations: p.correctionCompensations,
   controleMoteurAutre: p.controleMoteurAutre,
 
-  // Réathlétisation
+  // RÃ©athlÃ©tisation
   gestesSpecifiques: p.gestesSpecifiques,
   pliometrieMS: p.pliometrieMS,
   travailArme: p.travailArme,
@@ -293,7 +309,7 @@ const buildProtocolePayload = (p = {}) => ({
   eduActivitesPrivilegier: p.eduActivitesPrivilegier,
   eduNotes: p.eduNotes,
 
-  // Critères de progression
+  // CritÃ¨res de progression
   criteresRomFlexion: p.criteresRomFlexion,
   criteresRomAbduction: p.criteresRomAbduction,
   criteresRomRotExt: p.criteresRomRotExt,
@@ -320,7 +336,7 @@ const buildProtocolePayload = (p = {}) => ({
   decroissanceProgressive: p.decroissanceProgressive,
   modalitesSevrage: p.modalitesSevrage,
 
-  // Orthèse
+  // OrthÃ¨se
   orthese: p.orthese,
   typeOrthese: p.typeOrthese,
   observations: p.observations,
@@ -354,7 +370,7 @@ export default function SessionDetailPage() {
       setSession(data);
       // Patient and interrogatoire come embedded in the session response
       if (data.patient) {
-        // Flatten user fields (fullName, gender, email…) onto the patient object
+        // Flatten user fields (fullName, gender, emailâ€¦) onto the patient object
         const { user, ...patientRest } = data.patient;
         setPatient({ ...patientRest, ...user });
         setInterrogatoire(data.patient.interrogatoire ?? null);
@@ -387,7 +403,6 @@ export default function SessionDetailPage() {
 
   const handleSaveSection = async (sectionId, data) => {
     try {
-      const clamp = (v) => Math.max(0, Number.parseInt(v, 10) || 0);
       let endpoint = `/doctors/sessions/${sessionId}/${sectionId}`;
       let payload = data;
 
@@ -395,15 +410,14 @@ export default function SessionDetailPage() {
         const subTab = data?.activeSubTab || "bilan";
         endpoint = `/doctors/sessions/${sessionId}/physiotherapie/${subTab}`;
         // PhysiotherapieForm.handleSave already ran the normalizers from
-        // physioPayload.js — just strip the _pendingBackend key before sending.
-        const subPayload =
-          data[
-            subTab === "bilan"
-              ? "bilan"
-              : subTab === "protocole"
-                ? "protocole"
-                : "resultat"
-          ];
+        // physioPayload.js â€” just strip the _pendingBackend key before sending.
+        let subPayloadKey = "resultat";
+        if (subTab === "bilan") {
+          subPayloadKey = "bilan";
+        } else if (subTab === "protocole") {
+          subPayloadKey = "protocole";
+        }
+        const subPayload = data[subPayloadKey];
         if (!subPayload)
           throw new Error("Sous-section de physiotherapie invalide");
         payload = stripPending(subPayload);
@@ -422,9 +436,12 @@ export default function SessionDetailPage() {
 
   if (loading) {
     return (
-        <div className="p-8 flex items-center justify-center min-h-[400px]">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        </div>
+      <div
+        className="min-h-full px-4 py-6 sm:px-6 lg:px-8 flex items-center justify-center"
+        style={{ background: PAGE_BG }}
+      >
+        <div className="w-8 h-8 border-4 border-[#0052FF] border-t-transparent rounded-full animate-spin" />
+      </div>
     );
   }
 
@@ -432,88 +449,97 @@ export default function SessionDetailPage() {
     (s) => s.id === activeSection,
   )?.component;
   const currentPatientId = session?.patientId ?? patientId;
-  console.log(patient);
+
   return (
-      <div className="p-8 animate-fadeIn">
+    <div
+      className="min-h-full px-4 py-6 sm:px-6 lg:px-8 animate-fadeIn"
+      style={{ background: PAGE_BG }}
+    >
+      <div className="mx-auto max-w-7xl space-y-6">
         {/* Back button */}
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-sm text-gray-500 hover:text-primary mb-6 transition-colors"
+          className="inline-flex items-center gap-2 text-sm font-medium text-[#64748B] hover:text-[#0052FF] transition-colors"
         >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
+          <ArrowLeft size={16} />
           Retour
         </button>
 
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Session Médicale</h1>
-          {patient?.fullName && (
-            <p className="text-base font-medium text-primary mt-0.5">
-              {patient?.fullName}
-            </p>
-          )}
-          <p className="text-sm text-gray-500 mt-1">
-            {session?.sessionDate &&
-              new Date(session.sessionDate).toLocaleDateString("fr-FR", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-          </p>
-        </div>
+        {/* Header section */}
+        <section
+          className="relative overflow-hidden rounded-[24px] p-6 sm:p-8 text-white"
+          style={{
+            background: "linear-gradient(135deg, #0052FF, #00A3FF)",
+            boxShadow: CARD_SHADOW,
+          }}
+        >
+          <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-white/10 translate-x-12 -translate-y-12" />
+          <div className="absolute bottom-0 left-1/2 h-24 w-24 rounded-full bg-white/10 -translate-x-full translate-y-8" />
+
+          <div className="relative z-10 space-y-1">
+            <h1 className="text-3xl sm:text-[32px] font-bold tracking-tight">
+              Session Médicale
+            </h1>
+            {patient?.fullName && (
+              <p className="text-lg text-white/90">{patient?.fullName}</p>
+            )}
+            {session?.sessionDate && (
+              <p className="text-sm text-white/80">
+                {new Date(session.sessionDate).toLocaleDateString("fr-FR", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </p>
+            )}
+          </div>
+        </section>
 
         {/* Two column layout */}
-        <div className="grid grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
           {/* Sidebar navigation */}
           <div className="col-span-1">
-            <div className="card p-0 overflow-hidden sticky top-8">
-              <nav className="space-y-1">
-                {SECTIONS.map((section) => (
+            <nav
+              className="rounded-[12px] overflow-hidden space-y-1 sticky top-8"
+              style={{ boxShadow: CARD_SHADOW }}
+            >
+              {SECTIONS.map((section, index) => {
+                const isActive = activeSection === section.id;
+                const IconComponent = section.icon;
+                const hasData = hasSectionData(section.id);
+
+                return (
                   <button
                     key={section.id}
                     onClick={() => setActiveSection(section.id)}
-                    className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-all border-l-4 ${
-                      activeSection === section.id
-                        ? "bg-primary/10 border-l-primary text-primary font-medium"
-                        : "border-l-transparent text-gray-700 hover:bg-gray-50"
+                    className={`w-full text-left px-5 py-4 flex items-center gap-3 transition-all duration-200 ease-in-out border-l-4 ${
+                      isActive
+                        ? "bg-gradient-to-r from-[#0052FF] to-[#0047db] border-l-[#0052FF] text-white font-semibold"
+                        : "bg-white border-l-transparent text-[#0A0F1E] hover:bg-[#F1F5F9]"
                     }`}
                   >
-                    <span className="text-lg">{section.icon}</span>
+                    <IconComponent
+                      size={20}
+                      className={isActive ? "#FFFFFF" : "#0052FF"}
+                      style={{ color: isActive ? "#FFFFFF" : "#0052FF" }}
+                    />
                     <span className="text-sm flex-1">{section.label}</span>
-                    {hasSectionData(section.id) && (
-                      <svg
-                        className="w-4 h-4 text-green-500"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
+                    {hasData && (
+                      <Check
+                        size={16}
+                        className={isActive ? "text-white" : "text-[#10B981]"}
+                        style={{ color: isActive ? "#FFFFFF" : "#10B981" }}
+                      />
                     )}
                   </button>
-                ))}
-              </nav>
-            </div>
+                );
+              })}
+            </nav>
           </div>
 
           {/* Form area */}
-          <div className="col-span-3">
+          <div className="col-span-1 lg:col-span-3">
             {CurrentFormComponent && (
               <CurrentFormComponent
                 session={session}
@@ -530,5 +556,6 @@ export default function SessionDetailPage() {
           </div>
         </div>
       </div>
+    </div>
   );
 }

@@ -1,12 +1,13 @@
-﻿import { useState, useEffect, useMemo } from "react";
+﻿/* eslint-disable sonarjs/cognitive-complexity */
+import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
-import { Dumbbell, X, Search, Users, Check } from "lucide-react";
+import { Dumbbell, X, Search, Users, Check, Plus, Upload } from "lucide-react";
 import PageHeader from "../../components/common/PageHeader";
 import Modal from "../../components/common/Modal";
-import { mockPatients } from "../../services/mockData";
+
 import api from "../../services/api";
 
 // ── Enum maps ────────────────────────────────────────────────────────────────
@@ -62,21 +63,9 @@ const VideoBlock = ({ videoUrl }) => {
 
   if (!videoUrl || videoError) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 gap-2">
-        <svg
-          className="w-10 h-10"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"
-          />
-        </svg>
-        <span className="text-xs text-gray-400">Pas de vidéo</span>
+      <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-[#CBD5E1]">
+        <Video size={40} />
+        <span className="text-xs text-[#94A3B8]">Pas de vidéo</span>
       </div>
     );
   }
@@ -102,27 +91,9 @@ const VideoBlock = ({ videoUrl }) => {
         href={videoUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="w-full h-full flex flex-col items-center justify-center gap-2 text-primary hover:text-primary/70 transition-colors"
+        className="flex h-full w-full flex-col items-center justify-center gap-2 text-[#0052FF] transition-colors hover:text-[#0047db]"
       >
-        <svg
-          className="w-10 h-10"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
+        <Dumbbell size={40} />
         <span className="text-xs font-medium">Voir la vidéo</span>
       </a>
     );
@@ -132,11 +103,13 @@ const VideoBlock = ({ videoUrl }) => {
   return (
     <video
       src={videoUrl}
-      className="w-full h-full object-cover"
+      className="h-full w-full object-cover"
       controls
       preload="metadata"
       onError={() => setVideoError(true)}
-    />
+    >
+      <track kind="captions" srcLang="fr" label="Français" />
+    </video>
   );
 };
 
@@ -159,7 +132,10 @@ const MyExerciseCard = ({
   const MAX_AVATARS = 4;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-200 flex flex-col overflow-hidden group">
+    <div
+      className="group flex flex-col overflow-hidden rounded-[12px] bg-white"
+      style={{ boxShadow: "0 2px 12px rgba(0,82,255,0.08)" }}
+    >
       {/* ── Video / thumbnail ── */}
       <div className="relative w-full h-44 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden flex-shrink-0">
         <VideoBlock videoUrl={exercise.videoUrl} />
@@ -352,6 +328,8 @@ MyExerciseCard.propTypes = {
     ),
   }).isRequired,
   onAssign: PropTypes.func,
+  onEdit: PropTypes.func,
+  onDelete: PropTypes.func,
   assignLabel: PropTypes.string,
 };
 
@@ -455,19 +433,7 @@ const PublicExerciseCard = ({ exercise, onAssign, assignLabel }) => {
               onClick={() => onAssign(exercise)}
               className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold bg-primary text-white px-3 py-2 rounded-lg hover:bg-primary/90 transition-colors"
             >
-              <svg
-                className="w-3.5 h-3.5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
+              <Plus size={14} />
               {assignLabel}
             </button>
           )}
@@ -525,7 +491,7 @@ export default function ExercisesPage() {
   const [editingExercise, setEditingExercise] = useState(null);
   // Delete confirmation modal state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState(null); // { exerciseId, name }
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Assign modal state
@@ -533,9 +499,17 @@ export default function ExercisesPage() {
   const [assignPatientsLoading, setAssignPatientsLoading] = useState(false);
   const [assignPatientsError, setAssignPatientsError] = useState(null);
   const [assignSearchQuery, setAssignSearchQuery] = useState("");
-  const [assigningExerciseLoading, setAssigningExerciseLoading] = useState(false);
+  const [assigningExerciseLoading, setAssigningExerciseLoading] =
+    useState(false);
   const [assignSelectedPatient, setAssignSelectedPatient] = useState(null);
-  const [assignParams, setAssignParams] = useState({ repetitions: 10, series: 3, seancesParJour: 1, frequence: "quotidien", consignesDouleur: "", notes: "" });
+  const [assignParams, setAssignParams] = useState({
+    repetitions: 10,
+    series: 3,
+    seancesParJour: 1,
+    frequence: "quotidien",
+    consignesDouleur: "",
+    notes: "",
+  });
 
   const EMPTY_FORM = {
     name: "",
@@ -549,8 +523,8 @@ export default function ExercisesPage() {
   };
   const [addForm, setAddForm] = useState(EMPTY_FORM);
   const [addLoading, setAddLoading] = useState(false);
+  const submitLabel = editingExercise ? "Modifier" : t("common.add");
 
-  // Helper to open the add modal for editing
   const openEdit = (exercise) => {
     setEditingExercise(exercise);
     setAddForm({
@@ -559,16 +533,16 @@ export default function ExercisesPage() {
       videoUrl: exercise.videoUrl || "",
       videoFile: null,
       videoMode: exercise.videoUrl ? "url" : "file",
-      categories: Array.isArray(exercise.category)
-        ? exercise.category
-        : exercise.category
-          ? [exercise.category]
-          : [],
-      sides: Array.isArray(exercise.side)
-        ? exercise.side
-        : exercise.side
-          ? [exercise.side]
-          : [],
+      categories: (() => {
+        if (Array.isArray(exercise.category)) return exercise.category;
+        if (exercise.category) return [exercise.category];
+        return [];
+      })(),
+      sides: (() => {
+        if (Array.isArray(exercise.side)) return exercise.side;
+        if (exercise.side) return [exercise.side];
+        return [];
+      })(),
       isPublic: !!exercise.isPublic,
     });
     setShowAdd(true);
@@ -619,7 +593,14 @@ export default function ExercisesPage() {
       setAssignPatients([]);
       setAssignSearchQuery("");
       setAssignSelectedPatient(null);
-      setAssignParams({ repetitions: 10, series: 3, seancesParJour: 1, frequence: "quotidien", consignesDouleur: "", notes: "" });
+      setAssignParams({
+        repetitions: 10,
+        series: 3,
+        seancesParJour: 1,
+        frequence: "quotidien",
+        consignesDouleur: "",
+        notes: "",
+      });
       return;
     }
 
@@ -709,7 +690,9 @@ export default function ExercisesPage() {
       const response = await api.get("/doctors/exercises");
       setMyExercises(response.data?.data ?? response.data ?? []);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Erreur lors de l'assignation");
+      toast.error(
+        err.response?.data?.message || "Erreur lors de l'assignation",
+      );
     } finally {
       setAssigningExerciseLoading(false);
     }
@@ -842,20 +825,11 @@ export default function ExercisesPage() {
           title={t("exercises.title")}
           action={
             activeTab === "my" && (
-              <button onClick={() => setShowAdd(true)} className="btn-primary">
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
+              <button
+                onClick={() => setShowAdd(true)}
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#0052FF] to-[#00A3FF] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <Plus size={16} />
                 {t("exercises.add_exercise")}
               </button>
             )
@@ -863,16 +837,19 @@ export default function ExercisesPage() {
         />
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-6 bg-white rounded-xl p-1 border border-gray-100 shadow-sm w-fit">
+        <div
+          className="mb-6 inline-flex rounded-[12px] bg-white p-1"
+          style={{ boxShadow: "0 2px 12px rgba(0,82,255,0.08)" }}
+        >
           <button
             onClick={() => setActiveTab("my")}
-            className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === "my" ? "bg-primary text-white" : "text-gray-600 hover:text-primary"}`}
+            className={`rounded-lg px-5 py-2.5 text-sm font-semibold transition-all duration-200 ease-in-out ${activeTab === "my" ? "bg-[#0052FF] text-white shadow-sm" : "text-[#64748B] hover:bg-[#F8FAFF] hover:text-[#0052FF]"}`}
           >
             {t("exercises.my_exercises")}
           </button>
           <button
             onClick={() => setActiveTab("search")}
-            className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === "search" ? "bg-primary text-white" : "text-gray-600 hover:text-primary"}`}
+            className={`rounded-lg px-5 py-2.5 text-sm font-semibold transition-all duration-200 ease-in-out ${activeTab === "search" ? "bg-[#0052FF] text-white shadow-sm" : "text-[#64748B] hover:bg-[#F8FAFF] hover:text-[#0052FF]"}`}
           >
             {t("exercises.search_exercises")}
           </button>
@@ -890,13 +867,19 @@ export default function ExercisesPage() {
               </div>
             )}
             {myError && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+              <div className="rounded-[12px] border border-[#FECACA] bg-[#FEF2F2] p-4 text-sm text-[#EF4444]">
                 {myError}
               </div>
             )}
             {!myLoading && !myError && myExercises.length === 0 && (
-              <div className="text-center py-12 text-gray-500">
-                <p>{t("exercises.no_exercises")}</p>
+              <div
+                className="rounded-[12px] bg-white p-10 text-center"
+                style={{ boxShadow: "0 2px 12px rgba(0,82,255,0.08)" }}
+              >
+                <Dumbbell size={48} className="mx-auto text-[#CBD5E1]" />
+                <p className="mt-3 text-sm text-[#64748B]">
+                  {t("exercises.no_exercises")}
+                </p>
               </div>
             )}
             {!myLoading && !myError && myExercises.length > 0 && (
@@ -920,22 +903,16 @@ export default function ExercisesPage() {
         {activeTab === "search" && (
           <div>
             {/* Filters bar */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6 space-y-4">
+            <div
+              className="mb-6 space-y-4 rounded-[12px] bg-white p-4"
+              style={{ boxShadow: "0 2px 12px rgba(0,82,255,0.08)" }}
+            >
               {/* Name search */}
               <div className="relative">
-                <svg
-                  className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
+                <Search
+                  size={18}
+                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8]"
+                />
                 <input
                   value={searchName}
                   onChange={(e) => setSearchName(e.target.value)}
@@ -947,9 +924,9 @@ export default function ExercisesPage() {
               <div className="flex flex-col sm:flex-row gap-4">
                 {/* Category filter */}
                 <div className="flex-1">
-                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                  <div className="block text-xs font-semibold uppercase tracking-wide text-[#64748B] mb-1.5">
                     Catégorie
-                  </label>
+                  </div>
                   <select
                     value={filterCategory}
                     onChange={(e) => setFilterCategory(e.target.value)}
@@ -966,9 +943,9 @@ export default function ExercisesPage() {
 
                 {/* Side filter — linked with category (AND logic) */}
                 <div className="sm:w-56">
-                  <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                  <div className="block text-xs font-semibold uppercase tracking-wide text-[#64748B] mb-1.5">
                     Côté
-                  </label>
+                  </div>
                   <div className="flex gap-2">
                     <button
                       onClick={() => setFilterSide("")}
@@ -1069,21 +1046,14 @@ export default function ExercisesPage() {
             {!publicLoading &&
               !publicError &&
               filteredExercises.length === 0 && (
-                <div className="text-center py-16 text-gray-400">
-                  <svg
-                    className="w-12 h-12 mx-auto mb-3 text-gray-300"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <p className="text-sm">Aucun exercice trouvé</p>
+                <div
+                  className="rounded-[12px] bg-white p-12 text-center"
+                  style={{ boxShadow: "0 2px 12px rgba(0,82,255,0.08)" }}
+                >
+                  <Users size={48} className="mx-auto text-[#CBD5E1]" />
+                  <p className="mt-3 text-sm text-[#64748B]">
+                    Aucun exercice trouvé
+                  </p>
                 </div>
               )}
             {!publicLoading && !publicError && filteredExercises.length > 0 && (
@@ -1125,9 +1095,9 @@ export default function ExercisesPage() {
           <div className="space-y-5 max-h-[75vh] overflow-y-auto pr-1">
             {/* Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <div className="block text-xs font-semibold uppercase tracking-wide text-[#64748B] mb-2">
                 Nom
-              </label>
+              </div>
               <input
                 value={addForm.name}
                 onChange={(e) =>
@@ -1140,9 +1110,9 @@ export default function ExercisesPage() {
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <div className="block text-xs font-semibold uppercase tracking-wide text-[#64748B] mb-2">
                 Description
-              </label>
+              </div>
               <textarea
                 value={addForm.description}
                 onChange={(e) =>
@@ -1156,9 +1126,9 @@ export default function ExercisesPage() {
 
             {/* Categories */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="block text-xs font-semibold uppercase tracking-wide text-[#64748B] mb-2">
                 Catégories <span className="text-red-500">*</span>
-              </label>
+              </div>
               <div className="flex flex-wrap gap-2">
                 {ALL_CATEGORIES.map((cat) => (
                   <button
@@ -1179,9 +1149,9 @@ export default function ExercisesPage() {
 
             {/* Sides */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="block text-xs font-semibold uppercase tracking-wide text-[#64748B] mb-2">
                 Côté <span className="text-red-500">*</span>
-              </label>
+              </div>
               <div className="flex gap-3">
                 {ALL_SIDES.map((side) => (
                   <button
@@ -1202,9 +1172,9 @@ export default function ExercisesPage() {
 
             {/* Video source toggle */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="block text-xs font-semibold uppercase tracking-wide text-[#64748B] mb-2">
                 Vidéo <span className="text-red-500">*</span>
-              </label>
+              </div>
               <div className="flex gap-2 mb-3">
                 {[
                   { val: "url", label: "Lien externe" },
@@ -1259,19 +1229,7 @@ export default function ExercisesPage() {
                     htmlFor="video-upload"
                     className="cursor-pointer flex flex-col items-center gap-2"
                   >
-                    <svg
-                      className="w-8 h-8 text-gray-300"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"
-                      />
-                    </svg>
+                    <Upload size={32} className="text-[#CBD5E1]" />
                     {addForm.videoFile ? (
                       <span className="text-sm text-primary font-medium">
                         {addForm.videoFile.name}
@@ -1287,21 +1245,23 @@ export default function ExercisesPage() {
             </div>
 
             {/* isPublic toggle */}
-            <label className="flex items-center gap-3 cursor-pointer select-none">
-              <div
+            <div className="flex items-center gap-3 select-none">
+              <button
+                type="button"
                 onClick={() =>
                   setAddForm((p) => ({ ...p, isPublic: !p.isPublic }))
                 }
-                className={`relative w-11 h-6 rounded-full transition-colors ${addForm.isPublic ? "bg-primary" : "bg-gray-200"}`}
+                className={`relative h-6 w-11 rounded-full transition-colors ${addForm.isPublic ? "bg-[#0052FF]" : "bg-[#E2E8F0]"}`}
+                aria-pressed={addForm.isPublic}
               >
                 <span
-                  className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${addForm.isPublic ? "translate-x-5" : ""}`}
+                  className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${addForm.isPublic ? "translate-x-5" : ""}`}
                 />
-              </div>
+              </button>
               <span className="text-sm font-medium text-gray-700">
                 Exercice public{addForm.isPublic ? " — visible par tous" : ""}
               </span>
-            </label>
+            </div>
 
             {/* Submit */}
             <button
@@ -1314,10 +1274,8 @@ export default function ExercisesPage() {
                   <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   {editingExercise ? "Mise à jour…" : "Création…"}
                 </span>
-              ) : editingExercise ? (
-                "Modifier"
               ) : (
-                t("common.add")
+                submitLabel
               )}
             </button>
           </div>
@@ -1361,256 +1319,335 @@ export default function ExercisesPage() {
             </div>
           </div>
         </Modal>
-
       </div>
 
       {/* ── Assign full-screen modal (portal) ── */}
-      {showAssign && createPortal(
-        <div className="fixed inset-0 z-[9999] flex flex-col bg-white" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
-
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white flex-shrink-0">
-            <div className="flex items-center gap-3">
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center"
-                style={{ background: "linear-gradient(135deg, #0052FF, #00A3FF)" }}
-              >
-                <Dumbbell size={18} className="text-white" />
-              </div>
-              <div>
-                <h2 className="text-base font-bold text-gray-900">
-                  Assigner : {showAssign.name}
-                </h2>
-                <p className="text-xs text-gray-400">
-                  Sélectionnez un patient et configurez les paramètres d'entraînement
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => setShowAssign(null)}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <X size={20} className="text-gray-500" />
-            </button>
-          </div>
-
-          {/* Body: two columns */}
-          <div className="flex flex-1 min-h-0 overflow-hidden">
-
-            {/* ── LEFT: Patient list ── */}
-            <div className="w-1/2 flex flex-col border-r border-gray-100">
-              <div className="p-4 border-b border-gray-100 space-y-3 flex-shrink-0">
-                <div className="flex items-center gap-2">
-                  <Users size={15} className="text-gray-500" />
-                  <h3 className="font-semibold text-gray-900 text-sm">Sélectionner un patient</h3>
+      {showAssign &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[9999] flex flex-col bg-white"
+            style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center"
+                  style={{
+                    background: "linear-gradient(135deg, #0052FF, #00A3FF)",
+                  }}
+                >
+                  <Dumbbell size={18} className="text-white" />
                 </div>
-                <div className="relative">
-                  <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    value={assignSearchQuery}
-                    onChange={(e) => setAssignSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400"
-                    placeholder="Rechercher par nom ou email…"
-                  />
-                </div>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                {assignPatientsLoading && (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                    <span className="ml-2 text-sm text-gray-500">Chargement…</span>
-                  </div>
-                )}
-
-                {!assignPatientsLoading && !assignPatientsError && assignPatients.length === 0 && (
-                  <div className="flex flex-col items-center py-12 text-gray-400">
-                    <Users size={32} className="mb-2 text-gray-300" />
-                    <p className="text-sm">Aucun patient trouvé</p>
-                  </div>
-                )}
-
-                {!assignPatientsLoading && !assignPatientsError && assignPatients.length > 0 && filteredAssignPatients.length === 0 && (
-                  <p className="text-sm text-center text-gray-400 py-8">
-                    Aucun patient ne correspond à votre recherche
+                <div>
+                  <h2 className="text-base font-bold text-gray-900">
+                    Assigner : {showAssign.name}
+                  </h2>
+                  <p className="text-xs text-gray-400">
+                    Sélectionnez un patient et configurez les paramètres
+                    d'entraînement
                   </p>
-                )}
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAssign(null)}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <X size={20} className="text-gray-500" />
+              </button>
+            </div>
 
-                {!assignPatientsLoading && !assignPatientsError && filteredAssignPatients.map((p) => {
-                  const isSelected = assignSelectedPatient?.userId === p.userId;
-                  return (
-                    <button
-                      key={p.userId}
-                      onClick={() => setAssignSelectedPatient(p)}
-                      className={`w-full text-left px-4 py-3 rounded-xl border transition-all flex items-center gap-3 ${
-                        isSelected
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-100 hover:border-blue-300 hover:bg-gray-50"
-                      }`}
-                    >
-                      {p.imageUrl ? (
+            {/* Body: two columns */}
+            <div className="flex flex-1 min-h-0 overflow-hidden">
+              {/* ── LEFT: Patient list ── */}
+              <div className="w-1/2 flex flex-col border-r border-gray-100">
+                <div className="p-4 border-b border-gray-100 space-y-3 flex-shrink-0">
+                  <div className="flex items-center gap-2">
+                    <Users size={15} className="text-gray-500" />
+                    <h3 className="font-semibold text-gray-900 text-sm">
+                      Sélectionner un patient
+                    </h3>
+                  </div>
+                  <div className="relative">
+                    <Search
+                      size={15}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                    />
+                    <input
+                      value={assignSearchQuery}
+                      onChange={(e) => setAssignSearchQuery(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400"
+                      placeholder="Rechercher par nom ou email…"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                  {assignPatientsLoading && (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                      <span className="ml-2 text-sm text-gray-500">
+                        Chargement…
+                      </span>
+                    </div>
+                  )}
+
+                  {!assignPatientsLoading &&
+                    !assignPatientsError &&
+                    assignPatients.length === 0 && (
+                      <div className="flex flex-col items-center py-12 text-gray-400">
+                        <Users size={32} className="mb-2 text-gray-300" />
+                        <p className="text-sm">Aucun patient trouvé</p>
+                      </div>
+                    )}
+
+                  {!assignPatientsLoading &&
+                    !assignPatientsError &&
+                    assignPatients.length > 0 &&
+                    filteredAssignPatients.length === 0 && (
+                      <p className="text-sm text-center text-gray-400 py-8">
+                        Aucun patient ne correspond à votre recherche
+                      </p>
+                    )}
+
+                  {!assignPatientsLoading &&
+                    !assignPatientsError &&
+                    filteredAssignPatients.map((p) => {
+                      const isSelected =
+                        assignSelectedPatient?.userId === p.userId;
+                      return (
+                        <button
+                          key={p.userId}
+                          onClick={() => setAssignSelectedPatient(p)}
+                          className={`w-full text-left px-4 py-3 rounded-xl border transition-all flex items-center gap-3 ${
+                            isSelected
+                              ? "border-blue-500 bg-blue-50"
+                              : "border-gray-100 hover:border-blue-300 hover:bg-gray-50"
+                          }`}
+                        >
+                          {p.imageUrl ? (
+                            <img
+                              src={p.imageUrl}
+                              alt=""
+                              className="w-9 h-9 rounded-full object-cover flex-shrink-0 ring-2 ring-white"
+                            />
+                          ) : (
+                            <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                              <span className="text-blue-600 text-sm font-bold">
+                                {p.fullName?.charAt(0) ?? "?"}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm text-gray-900 truncate">
+                              {p.fullName}
+                            </p>
+                            <p className="text-xs text-gray-400 truncate">
+                              {p.email}
+                            </p>
+                          </div>
+                          {isSelected && (
+                            <Check
+                              size={16}
+                              className="text-blue-500 flex-shrink-0"
+                            />
+                          )}
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+
+              {/* ── RIGHT: Training params ── */}
+              <div className="w-1/2 flex flex-col">
+                {assignSelectedPatient ? (
+                  <div className="flex flex-col flex-1 p-6 gap-6 overflow-y-auto">
+                    {/* Selected patient recap */}
+                    <div className="flex items-center gap-3 p-4 rounded-xl bg-blue-50 border border-blue-100">
+                      {assignSelectedPatient.imageUrl ? (
                         <img
-                          src={p.imageUrl}
+                          src={assignSelectedPatient.imageUrl}
                           alt=""
-                          className="w-9 h-9 rounded-full object-cover flex-shrink-0 ring-2 ring-white"
+                          className="w-10 h-10 rounded-full object-cover flex-shrink-0"
                         />
                       ) : (
-                        <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                          <span className="text-blue-600 text-sm font-bold">
-                            {p.fullName?.charAt(0) ?? "?"}
+                        <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                          <span className="text-white font-bold text-sm">
+                            {assignSelectedPatient.fullName?.charAt(0) ?? "?"}
                           </span>
                         </div>
                       )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm text-gray-900 truncate">{p.fullName}</p>
-                        <p className="text-xs text-gray-400 truncate">{p.email}</p>
+                      <div>
+                        <p className="font-semibold text-gray-900 text-sm">
+                          {assignSelectedPatient.fullName}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {assignSelectedPatient.email}
+                        </p>
                       </div>
-                      {isSelected && <Check size={16} className="text-blue-500 flex-shrink-0" />}
+                    </div>
+
+                    {/* Params */}
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-gray-900 text-sm">
+                        Paramètres d'entraînement
+                      </h3>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <div className="block text-xs font-semibold uppercase tracking-wide text-[#64748B] mb-1">
+                            Répétitions
+                          </div>
+                          <input
+                            type="number"
+                            min={1}
+                            value={assignParams.repetitions}
+                            onChange={(e) =>
+                              setAssignParams((p) => ({
+                                ...p,
+                                repetitions: Number(e.target.value),
+                              }))
+                            }
+                            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400"
+                          />
+                        </div>
+                        <div>
+                          <div className="block text-xs font-semibold uppercase tracking-wide text-[#64748B] mb-1">
+                            Séries
+                          </div>
+                          <input
+                            type="number"
+                            min={1}
+                            value={assignParams.series}
+                            onChange={(e) =>
+                              setAssignParams((p) => ({
+                                ...p,
+                                series: Number(e.target.value),
+                              }))
+                            }
+                            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400"
+                          />
+                        </div>
+                        <div>
+                          <div className="block text-xs font-semibold uppercase tracking-wide text-[#64748B] mb-1">
+                            Séances / jour
+                          </div>
+                          <input
+                            type="number"
+                            min={1}
+                            value={assignParams.seancesParJour}
+                            onChange={(e) =>
+                              setAssignParams((p) => ({
+                                ...p,
+                                seancesParJour: Number(e.target.value),
+                              }))
+                            }
+                            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400"
+                          />
+                        </div>
+                        <div>
+                          <div className="block text-xs font-semibold uppercase tracking-wide text-[#64748B] mb-1">
+                            Fréquence
+                          </div>
+                          <select
+                            value={assignParams.frequence}
+                            onChange={(e) =>
+                              setAssignParams((p) => ({
+                                ...p,
+                                frequence: e.target.value,
+                              }))
+                            }
+                            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400 bg-white"
+                          >
+                            <option value="quotidien">Quotidien</option>
+                            <option value="2x_jour">2× par jour</option>
+                            <option value="3x_sem">3× par semaine</option>
+                            <option value="2x_sem">2× par semaine</option>
+                            <option value="1x_sem">1× par semaine</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="block text-xs font-semibold uppercase tracking-wide text-[#64748B] mb-1">
+                          Consignes douleur
+                        </div>
+                        <textarea
+                          value={assignParams.consignesDouleur}
+                          onChange={(e) =>
+                            setAssignParams((p) => ({
+                              ...p,
+                              consignesDouleur: e.target.value,
+                            }))
+                          }
+                          rows={2}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400 resize-none"
+                          placeholder="Ex : Arrêter si douleur > 5/10…"
+                        />
+                      </div>
+
+                      <div>
+                        <div className="block text-xs font-semibold uppercase tracking-wide text-[#64748B] mb-1">
+                          Notes
+                        </div>
+                        <textarea
+                          value={assignParams.notes}
+                          onChange={(e) =>
+                            setAssignParams((p) => ({
+                              ...p,
+                              notes: e.target.value,
+                            }))
+                          }
+                          rows={2}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400 resize-none"
+                          placeholder="Remarques supplémentaires…"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Confirm button */}
+                    <button
+                      onClick={handleAssignExercise}
+                      disabled={assigningExerciseLoading}
+                      className="mt-auto w-full py-3 rounded-xl text-white font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60 transition-opacity"
+                      style={{
+                        background: "linear-gradient(135deg, #0052FF, #00A3FF)",
+                      }}
+                    >
+                      {assigningExerciseLoading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Assignation…
+                        </>
+                      ) : (
+                        <>
+                          <Check size={16} />
+                          Confirmer l'assignation
+                        </>
+                      )}
                     </button>
-                  );
-                })}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center flex-1 text-gray-400">
+                    <div
+                      className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
+                      style={{ background: "#F8FAFF" }}
+                    >
+                      <Users size={28} className="text-gray-300" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-500">
+                      Sélectionnez un patient
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Les paramètres d'entraînement apparaîtront ici
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
-
-            {/* ── RIGHT: Training params ── */}
-            <div className="w-1/2 flex flex-col">
-              {assignSelectedPatient ? (
-                <div className="flex flex-col flex-1 p-6 gap-6 overflow-y-auto">
-
-                  {/* Selected patient recap */}
-                  <div className="flex items-center gap-3 p-4 rounded-xl bg-blue-50 border border-blue-100">
-                    {assignSelectedPatient.imageUrl ? (
-                      <img
-                        src={assignSelectedPatient.imageUrl}
-                        alt=""
-                        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
-                        <span className="text-white font-bold text-sm">
-                          {assignSelectedPatient.fullName?.charAt(0) ?? "?"}
-                        </span>
-                      </div>
-                    )}
-                    <div>
-                      <p className="font-semibold text-gray-900 text-sm">{assignSelectedPatient.fullName}</p>
-                      <p className="text-xs text-gray-400">{assignSelectedPatient.email}</p>
-                    </div>
-                  </div>
-
-                  {/* Params */}
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-gray-900 text-sm">Paramètres d'entraînement</h3>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Répétitions</label>
-                        <input
-                          type="number"
-                          min={1}
-                          value={assignParams.repetitions}
-                          onChange={(e) => setAssignParams((p) => ({ ...p, repetitions: Number(e.target.value) }))}
-                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Séries</label>
-                        <input
-                          type="number"
-                          min={1}
-                          value={assignParams.series}
-                          onChange={(e) => setAssignParams((p) => ({ ...p, series: Number(e.target.value) }))}
-                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Séances / jour</label>
-                        <input
-                          type="number"
-                          min={1}
-                          value={assignParams.seancesParJour}
-                          onChange={(e) => setAssignParams((p) => ({ ...p, seancesParJour: Number(e.target.value) }))}
-                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Fréquence</label>
-                        <select
-                          value={assignParams.frequence}
-                          onChange={(e) => setAssignParams((p) => ({ ...p, frequence: e.target.value }))}
-                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400 bg-white"
-                        >
-                          <option value="quotidien">Quotidien</option>
-                          <option value="2x_jour">2× par jour</option>
-                          <option value="3x_sem">3× par semaine</option>
-                          <option value="2x_sem">2× par semaine</option>
-                          <option value="1x_sem">1× par semaine</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-1">Consignes douleur</label>
-                      <textarea
-                        value={assignParams.consignesDouleur}
-                        onChange={(e) => setAssignParams((p) => ({ ...p, consignesDouleur: e.target.value }))}
-                        rows={2}
-                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400 resize-none"
-                        placeholder="Ex : Arrêter si douleur > 5/10…"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-1">Notes</label>
-                      <textarea
-                        value={assignParams.notes}
-                        onChange={(e) => setAssignParams((p) => ({ ...p, notes: e.target.value }))}
-                        rows={2}
-                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400 resize-none"
-                        placeholder="Remarques supplémentaires…"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Confirm button */}
-                  <button
-                    onClick={handleAssignExercise}
-                    disabled={assigningExerciseLoading}
-                    className="mt-auto w-full py-3 rounded-xl text-white font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-60 transition-opacity"
-                    style={{ background: "linear-gradient(135deg, #0052FF, #00A3FF)" }}
-                  >
-                    {assigningExerciseLoading ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Assignation…
-                      </>
-                    ) : (
-                      <>
-                        <Check size={16} />
-                        Confirmer l'assignation
-                      </>
-                    )}
-                  </button>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center flex-1 text-gray-400">
-                  <div
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
-                    style={{ background: "#F8FAFF" }}
-                  >
-                    <Users size={28} className="text-gray-300" />
-                  </div>
-                  <p className="text-sm font-medium text-gray-500">Sélectionnez un patient</p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Les paramètres d'entraînement apparaîtront ici
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>,
-        document.body,
-      )}
+          </div>,
+          document.body,
+        )}
     </>
   );
 }
