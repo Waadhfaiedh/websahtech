@@ -289,7 +289,7 @@
     "private": "Privé"
   },
   "admin": {
-    "total_specialists": "Spécialistes acceptés",
+    "total_specialists": "total specialists",
     "pending_specialists": "En attente d'approbation",
     "total_patients": "Total patients",
     "pending_patients": "Patients en attente",
