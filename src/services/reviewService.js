@@ -6,6 +6,7 @@ const ENDPOINTS = {
   mine: "users/reviews/mine",
   create: "users/reviews",
   delete: (id) => `admins/reviews/${id}`,
+  deleteMine: (id) => `users/reviews/${id}`,
 };
 
 // ─── Review categories (used by both admin filter and specialist form) ───
@@ -46,11 +47,18 @@ export const deleteReview = async (id) => {
   return res.data;
 };
 
+// ─── Specialist: delete their own review ──────────────────────
+export const deleteMyReview = async (id) => {
+  const res = await api.delete(ENDPOINTS.deleteMine(id));
+  return res.data;
+};
+
 export default {
   fetchAllReviews,
   fetchMyReviews,
   createReview,
   deleteReview,
+  deleteMyReview,
   REVIEW_CATEGORIES,
   getCategoryLabel,
 };

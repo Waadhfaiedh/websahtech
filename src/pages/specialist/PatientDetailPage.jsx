@@ -310,6 +310,26 @@ export default function PatientDetailPage() {
                             {session.notes}
                           </span>
                         )}
+
+                        {session.specialist?.user && (
+                          <div className="flex items-center gap-2 mt-2">
+                            {session.specialist.user.imageUrl ? (
+                              <img
+                                src={session.specialist.user.imageUrl}
+                                alt={session.specialist.user.fullName || "Dr"}
+                                className="h-6 w-6 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="h-6 w-6 rounded-full bg-[#EFF6FF] flex items-center justify-center text-xs text-[#0052FF]">
+                                {session.specialist.user.fullName?.charAt(0) ??
+                                  "D"}
+                              </div>
+                            )}
+                            <span className="text-xs text-[#64748B] font-medium">
+                              {session.specialist.user.fullName}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {session.examenClinique && (
@@ -359,6 +379,271 @@ export default function PatientDetailPage() {
           <Plus size={14} />
           Créer la première session
         </button>
+      </div>
+    );
+  };
+
+  const renderTreatmentContent = () => {
+    if (loadingAssignedExercises) {
+      return (
+        <div className="flex items-center justify-center py-12">
+          <div className="w-8 h-8 border-4 border-[#0052FF] border-t-transparent rounded-full animate-spin" />
+        </div>
+      );
+    }
+
+    if (assignedExercises.length === 0) {
+      return (
+        <div
+          className="rounded-[12px] bg-white p-8 text-center"
+          style={{ boxShadow: CARD_SHADOW }}
+        >
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#EFF6FF] mb-3">
+            <FileText size={32} className="text-slate-300" />
+          </div>
+          <p className="text-sm text-[#64748B]">
+            Aucun exercice assigné à ce patient.
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-3">
+        {assignedExercises.map((assignment) => {
+          const ex = assignment.exercise ?? {};
+          const isExpanded = expandedId === assignment.assignmentId;
+          const form = assignForms[assignment.assignmentId] ?? {};
+          const isSaving = savingId === assignment.assignmentId;
+          const isRemoving = removingId === assignment.assignmentId;
+          return (
+            <div
+              key={assignment.assignmentId}
+              className="rounded-[12px] bg-white border-l-4 border-[#0052FF] overflow-hidden transition-all duration-200 ease-in-out hover:shadow-md"
+              style={{
+                boxShadow: isExpanded
+                  ? "0 8px 30px rgba(0,82,255,0.10)"
+                  : CARD_SHADOW,
+              }}
+            >
+              <button
+                className="w-full flex items-start justify-between p-5 hover:bg-[#F1F5F9] transition-colors text-left"
+                onClick={() =>
+                  setExpandedId((prev) =>
+                    prev === assignment.assignmentId
+                      ? null
+                      : assignment.assignmentId,
+                  )
+                }
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-2">
+                    <span className="font-semibold text-[#0A0F1E] text-sm">
+                      {ex.name ?? "Exercice"}
+                    </span>
+                    {ex.category && (
+                      <span className="text-xs bg-[#EFF6FF] text-[#0052FF] px-2.5 py-1 rounded-full font-medium">
+                        {ex.category}
+                      </span>
+                    )}
+                    {ex.side && (
+                      <span className="text-xs bg-slate-100 text-[#64748B] px-2.5 py-1 rounded-full font-medium">
+                        {ex.side}
+                      </span>
+                    )}
+                  </div>
+                  {ex.description && (
+                    <p className="text-xs text-[#64748B] mt-1 truncate">
+                      {ex.description}
+                    </p>
+                  )}
+                  <div className="flex gap-4 mt-2 text-xs text-[#64748B] font-medium">
+                    <span>
+                      {form.repetitions ?? assignment.repetitions} rép. ×{" "}
+                      {form.series ?? assignment.series} séries
+                    </span>
+                    <span>•</span>
+                    <span>
+                      {form.seancesParJour ?? assignment.seancesParJour}x/jour
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 ml-4 flex-shrink-0">
+                  {ex.videoUrl && (
+                    <a
+                      href={ex.videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="p-2 text-[#0052FF] hover:bg-[#EFF6FF] rounded-lg transition-colors"
+                      title="Voir la vidéo"
+                    >
+                      <Play size={16} />
+                    </a>
+                  )}
+                  <ChevronDown
+                    size={18}
+                    className={`text-[#0052FF] transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                  />
+                </div>
+              </button>
+
+              {isExpanded && (
+                <div className="px-5 pb-5 space-y-4 border-t border-slate-100 bg-[#F8FAFF]">
+                  <div className="grid grid-cols-2 gap-4 mt-4">
+                    {[
+                      {
+                        key: "repetitions",
+                        label: "Répétitions",
+                        min: 1,
+                        max: 100,
+                      },
+                      {
+                        key: "series",
+                        label: "Séries",
+                        min: 1,
+                        max: 20,
+                      },
+                      {
+                        key: "seancesParJour",
+                        label: "Séances / jour",
+                        min: 1,
+                        max: 5,
+                      },
+                    ].map(({ key, label, min, max }) => {
+                      const fieldId = `assignment-${assignment.assignmentId}-${key}`;
+                      return (
+                        <div key={key}>
+                          <label
+                            htmlFor={fieldId}
+                            className="block text-xs font-semibold uppercase tracking-wide text-[#64748B] mb-2"
+                          >
+                            {label}
+                          </label>
+                          <input
+                            id={fieldId}
+                            type="number"
+                            min={min}
+                            max={max}
+                            value={form[key] ?? ""}
+                            onChange={(e) =>
+                              updateAssignFormValue(
+                                assignment.assignmentId,
+                                key,
+                                Number.parseInt(e.target.value) || min,
+                              )
+                            }
+                            className="w-full px-3 py-2.5 bg-[#F1F5F9] border border-transparent rounded-[8px] text-sm text-[#0A0F1E] placeholder-[#94A3B8] transition-all focus:outline-none focus:border-[#0052FF] focus:ring-2 focus:ring-[#0052FF]/20"
+                          />
+                        </div>
+                      );
+                    })}
+                    <div>
+                      <label
+                        htmlFor={`assignment-${assignment.assignmentId}-frequence`}
+                        className="block text-xs font-semibold uppercase tracking-wide text-[#64748B] mb-2"
+                      >
+                        Fréquence
+                      </label>
+                      <select
+                        id={`assignment-${assignment.assignmentId}-frequence`}
+                        value={form.frequence ?? "quotidien"}
+                        onChange={(e) =>
+                          updateAssignFormValue(
+                            assignment.assignmentId,
+                            "frequence",
+                            e.target.value,
+                          )
+                        }
+                        className="w-full px-3 py-2.5 bg-[#F1F5F9] border border-transparent rounded-[8px] text-sm text-[#0A0F1E] transition-all focus:outline-none focus:border-[#0052FF] focus:ring-2 focus:ring-[#0052FF]/20"
+                      >
+                        <option value="quotidien">Quotidien</option>
+                        <option value="2x_jour">2x / jour</option>
+                        <option value="3x_sem">3x / semaine</option>
+                        <option value="2x_sem">2x / semaine</option>
+                        <option value="1x_sem">1x / semaine</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {[
+                    {
+                      key: "consignesDouleur",
+                      label: "Consignes douleur",
+                      placeholder: "Seuil EVA à ne pas dépasser...",
+                    },
+                    {
+                      key: "notes",
+                      label: "Notes",
+                      placeholder: "Notes supplémentaires...",
+                    },
+                  ].map(({ key, label, placeholder }) => {
+                    const fieldId = `assignment-${assignment.assignmentId}-${key}`;
+                    return (
+                      <div key={key}>
+                        <label
+                          htmlFor={fieldId}
+                          className="block text-xs font-semibold uppercase tracking-wide text-[#64748B] mb-2"
+                        >
+                          {label}
+                        </label>
+                        <textarea
+                          id={fieldId}
+                          value={form[key] ?? ""}
+                          onChange={(e) =>
+                            updateAssignFormValue(
+                              assignment.assignmentId,
+                              key,
+                              e.target.value,
+                            )
+                          }
+                          rows={2}
+                          className="w-full px-3 py-2.5 bg-[#F1F5F9] border border-transparent rounded-[8px] text-sm text-[#0A0F1E] placeholder-[#94A3B8] transition-all resize-none focus:outline-none focus:border-[#0052FF] focus:ring-2 focus:ring-[#0052FF]/20"
+                          placeholder={placeholder}
+                        />
+                      </div>
+                    );
+                  })}
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={() =>
+                        handleSaveAssignment(assignment.assignmentId)
+                      }
+                      disabled={isSaving}
+                      className="flex-1 py-2.5 bg-[#0052FF] text-white text-xs font-semibold rounded-[8px] hover:bg-[#0047db] transition-all duration-200 disabled:opacity-60 flex items-center justify-center gap-1.5"
+                    >
+                      {isSaving ? (
+                        <>
+                          <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Sauvegarde...
+                        </>
+                      ) : (
+                        <>
+                          <Check size={14} />
+                          Sauvegarder
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={() =>
+                        handleRemoveAssignment(assignment.assignmentId)
+                      }
+                      disabled={isRemoving}
+                      className="px-3 py-2.5 bg-[#FEF2F2] text-[#EF4444] text-xs font-semibold rounded-[8px] hover:bg-[#FECACA] transition-all duration-200 disabled:opacity-60 flex items-center gap-1.5"
+                    >
+                      {isRemoving ? (
+                        <div className="w-3.5 h-3.5 border-2 border-[#EF4444] border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Trash2 size={14} />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -492,246 +777,7 @@ export default function PatientDetailPage() {
               <h2 className="text-xl font-bold text-[#0A0F1E]">
                 Exercices assignés
               </h2>
-              {loadingAssignedExercises ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="w-8 h-8 border-4 border-[#0052FF] border-t-transparent rounded-full animate-spin" />
-                </div>
-              ) : assignedExercises.length === 0 ? (
-                <div
-                  className="rounded-[12px] bg-white p-8 text-center"
-                  style={{ boxShadow: CARD_SHADOW }}
-                >
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#EFF6FF] mb-3">
-                    <FileText size={32} className="text-slate-300" />
-                  </div>
-                  <p className="text-sm text-[#64748B]">
-                    Aucun exercice assigné à ce patient.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {assignedExercises.map((assignment) => {
-                    const ex = assignment.exercise ?? {};
-                    const isExpanded = expandedId === assignment.assignmentId;
-                    const form = assignForms[assignment.assignmentId] ?? {};
-                    const isSaving = savingId === assignment.assignmentId;
-                    const isRemoving = removingId === assignment.assignmentId;
-                    return (
-                      <div
-                        key={assignment.assignmentId}
-                        className="rounded-[12px] bg-white border-l-4 border-[#0052FF] overflow-hidden transition-all duration-200 ease-in-out hover:shadow-md"
-                        style={{
-                          boxShadow: isExpanded
-                            ? "0 8px 30px rgba(0,82,255,0.10)"
-                            : CARD_SHADOW,
-                        }}
-                      >
-                        <button
-                          className="w-full flex items-start justify-between p-5 hover:bg-[#F1F5F9] transition-colors text-left"
-                          onClick={() =>
-                            setExpandedId((prev) =>
-                              prev === assignment.assignmentId
-                                ? null
-                                : assignment.assignmentId,
-                            )
-                          }
-                        >
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap mb-2">
-                              <span className="font-semibold text-[#0A0F1E] text-sm">
-                                {ex.name ?? "Exercice"}
-                              </span>
-                              {ex.category && (
-                                <span className="text-xs bg-[#EFF6FF] text-[#0052FF] px-2.5 py-1 rounded-full font-medium">
-                                  {ex.category}
-                                </span>
-                              )}
-                              {ex.side && (
-                                <span className="text-xs bg-slate-100 text-[#64748B] px-2.5 py-1 rounded-full font-medium">
-                                  {ex.side}
-                                </span>
-                              )}
-                            </div>
-                            {ex.description && (
-                              <p className="text-xs text-[#64748B] mt-1 truncate">
-                                {ex.description}
-                              </p>
-                            )}
-                            <div className="flex gap-4 mt-2 text-xs text-[#64748B] font-medium">
-                              <span>
-                                {form.repetitions ?? assignment.repetitions}{" "}
-                                rép. × {form.series ?? assignment.series} séries
-                              </span>
-                              <span>•</span>
-                              <span>
-                                {form.seancesParJour ??
-                                  assignment.seancesParJour}
-                                x/jour
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 ml-4 flex-shrink-0">
-                            {ex.videoUrl && (
-                              <a
-                                href={ex.videoUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                className="p-2 text-[#0052FF] hover:bg-[#EFF6FF] rounded-lg transition-colors"
-                                title="Voir la vidéo"
-                              >
-                                <Play size={16} />
-                              </a>
-                            )}
-                            <ChevronDown
-                              size={18}
-                              className={`text-[#0052FF] transition-transform ${isExpanded ? "rotate-180" : ""}`}
-                            />
-                          </div>
-                        </button>
-
-                        {isExpanded && (
-                          <div className="px-5 pb-5 space-y-4 border-t border-slate-100 bg-[#F8FAFF]">
-                            <div className="grid grid-cols-2 gap-4 mt-4">
-                              {[
-                                {
-                                  key: "repetitions",
-                                  label: "Répétitions",
-                                  min: 1,
-                                  max: 100,
-                                },
-                                {
-                                  key: "series",
-                                  label: "Séries",
-                                  min: 1,
-                                  max: 20,
-                                },
-                                {
-                                  key: "seancesParJour",
-                                  label: "Séances / jour",
-                                  min: 1,
-                                  max: 5,
-                                },
-                              ].map(({ key, label, min, max }) => (
-                                <div key={key}>
-                                  <label className="block text-xs font-semibold uppercase tracking-wide text-[#64748B] mb-2">
-                                    {label}
-                                  </label>
-                                  <input
-                                    type="number"
-                                    min={min}
-                                    max={max}
-                                    value={form[key] ?? ""}
-                                    onChange={(e) =>
-                                      updateAssignFormValue(
-                                        assignment.assignmentId,
-                                        key,
-                                        Number.parseInt(e.target.value) || min,
-                                      )
-                                    }
-                                    className="w-full px-3 py-2.5 bg-[#F1F5F9] border border-transparent rounded-[8px] text-sm text-[#0A0F1E] placeholder-[#94A3B8] transition-all focus:outline-none focus:border-[#0052FF] focus:ring-2 focus:ring-[#0052FF]/20"
-                                  />
-                                </div>
-                              ))}
-                              <div>
-                                <label className="block text-xs font-semibold uppercase tracking-wide text-[#64748B] mb-2">
-                                  Fréquence
-                                </label>
-                                <select
-                                  value={form.frequence ?? "quotidien"}
-                                  onChange={(e) =>
-                                    updateAssignFormValue(
-                                      assignment.assignmentId,
-                                      "frequence",
-                                      e.target.value,
-                                    )
-                                  }
-                                  className="w-full px-3 py-2.5 bg-[#F1F5F9] border border-transparent rounded-[8px] text-sm text-[#0A0F1E] transition-all focus:outline-none focus:border-[#0052FF] focus:ring-2 focus:ring-[#0052FF]/20"
-                                >
-                                  <option value="quotidien">Quotidien</option>
-                                  <option value="2x_jour">2x / jour</option>
-                                  <option value="3x_sem">3x / semaine</option>
-                                  <option value="2x_sem">2x / semaine</option>
-                                  <option value="1x_sem">1x / semaine</option>
-                                </select>
-                              </div>
-                            </div>
-
-                            {[
-                              {
-                                key: "consignesDouleur",
-                                label: "Consignes douleur",
-                                placeholder: "Seuil EVA à ne pas dépasser...",
-                              },
-                              {
-                                key: "notes",
-                                label: "Notes",
-                                placeholder: "Notes supplémentaires...",
-                              },
-                            ].map(({ key, label, placeholder }) => (
-                              <div key={key}>
-                                <label className="block text-xs font-semibold uppercase tracking-wide text-[#64748B] mb-2">
-                                  {label}
-                                </label>
-                                <textarea
-                                  value={form[key] ?? ""}
-                                  onChange={(e) =>
-                                    updateAssignFormValue(
-                                      assignment.assignmentId,
-                                      key,
-                                      e.target.value,
-                                    )
-                                  }
-                                  rows={2}
-                                  className="w-full px-3 py-2.5 bg-[#F1F5F9] border border-transparent rounded-[8px] text-sm text-[#0A0F1E] placeholder-[#94A3B8] transition-all resize-none focus:outline-none focus:border-[#0052FF] focus:ring-2 focus:ring-[#0052FF]/20"
-                                  placeholder={placeholder}
-                                />
-                              </div>
-                            ))}
-
-                            <div className="flex gap-3 pt-2">
-                              <button
-                                onClick={() =>
-                                  handleSaveAssignment(assignment.assignmentId)
-                                }
-                                disabled={isSaving}
-                                className="flex-1 py-2.5 bg-[#0052FF] text-white text-xs font-semibold rounded-[8px] hover:bg-[#0047db] transition-all duration-200 disabled:opacity-60 flex items-center justify-center gap-1.5"
-                              >
-                                {isSaving ? (
-                                  <>
-                                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                    Sauvegarde...
-                                  </>
-                                ) : (
-                                  <>
-                                    <Check size={14} />
-                                    Sauvegarder
-                                  </>
-                                )}
-                              </button>
-                              <button
-                                onClick={() =>
-                                  handleRemoveAssignment(
-                                    assignment.assignmentId,
-                                  )
-                                }
-                                disabled={isRemoving}
-                                className="px-3 py-2.5 bg-[#FEF2F2] text-[#EF4444] text-xs font-semibold rounded-[8px] hover:bg-[#FECACA] transition-all duration-200 disabled:opacity-60 flex items-center gap-1.5"
-                              >
-                                {isRemoving ? (
-                                  <div className="w-3.5 h-3.5 border-2 border-[#EF4444] border-t-transparent rounded-full animate-spin" />
-                                ) : (
-                                  <Trash2 size={14} />
-                                )}
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+              {renderTreatmentContent()}
             </div>
           )}
 

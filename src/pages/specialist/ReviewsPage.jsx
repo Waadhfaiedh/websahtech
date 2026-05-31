@@ -17,7 +17,7 @@ import { toast } from "react-toastify";
 import {
   fetchMyReviews,
   createReview,
-  deleteReview,
+  deleteMyReview,
   REVIEW_CATEGORIES,
   getCategoryLabel,
 } from "../../services/reviewService";
@@ -143,7 +143,7 @@ export default function SpecialistReviewsPage() {
     setDeleteConfirm(null);
 
     try {
-      await deleteReview(id);
+      await deleteMyReview(id);
       setReviews((prev) => prev.filter((r) => r.id !== id));
       if (selectedReview?.id === id) setSelectedReview(null);
       toast.success("Avis supprimé avec succès");
