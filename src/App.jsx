@@ -39,7 +39,7 @@ import { PrivateRoute } from "./routes/PrivateRoute";
 function RootRedirect() {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/landing" replace />;
   return (
     <Navigate
       to={user.role === "ADMIN" ? "/admin/dashboard" : "/specialist/dashboard"}
