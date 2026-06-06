@@ -7,6 +7,8 @@ import PageHeader from "../../components/common/PageHeader";
 import Modal from "../../components/common/Modal";
 import MovementReport from "../../components/reports/MovementReport";
 import api from "../../services/api";
+import mockReports from "../../mocks/mockReports";
+import { analyzeWithAI } from "../../services/aiService";
 
 const riskColors = {
   green: "badge-green",
@@ -68,7 +70,52 @@ export default function ReportsPage() {
         setReports(data);
       } catch (err) {
         console.error("Failed to load reports:", err);
-        setReports([]);
+        const qs = new URLSearchParams(window.location.search);
+        const mockParam = qs.get("mockReports");
+        const useMocks = mockParam === "1" || process.env.NODE_ENV === "development";
+
+        if (mockParam === "ai") {
+          // regenerate mocks by sending their metrics to the AI analyze endpoint
+          try {
+            const regenerated = await Promise.all(
+              mockReports.map(async (m) => {
+                const analysisReq = {
+                  patient_name: m.patient?.user?.fullName,
+                  body_part: m.bodyPart || m.body_part || "épaule",
+                  session_date: m.analysisDate || m.createdAt,
+                  affected_side: (m.affectedSide || m.affected_side || "left").toLowerCase().startsWith("g") ? "left" : (m.affectedSide || m.affected_side || "left"),
+                  metrics: m.metrics || {},
+                  movement_quality: m.movement_quality || {},
+                  symmetry_score: m.symmetryScore,
+                  recovery_score: m.recoveryScore,
+                  mobility_pct: m.mobilityPct,
+                  pain_pct: m.painPct,
+                  language: "fr",
+                };
+                const aiRes = await analyzeWithAI(analysisReq);
+                // map AnalysisResponse -> report shape used by ReportsPage
+                return {
+                  ...m,
+                  summary: aiRes.summary || m.summary,
+                  recommendation: aiRes.recommendation || m.recommendation,
+                  detailed_interpretation: aiRes.detailed_interpretation,
+                  correlation: aiRes.correlation,
+                  recoveryScore: aiRes.metrics_passthrough?.get("recovery_score") || aiRes.metrics_passthrough?.recovery_score || m.recoveryScore,
+                  symmetryScore: aiRes.metrics_passthrough?.symmetry_score || m.symmetryScore,
+                  mobilityPct: aiRes.metrics_passthrough?.mobility_pct || m.mobilityPct,
+                  painPct: aiRes.metrics_passthrough?.pain_pct || m.painPct,
+                };
+              }),
+            );
+            setReports(regenerated);
+          } catch (e) {
+            console.error("AI regenerate failed", e);
+            setReports(mockReports);
+            toast.error("Échec de la génération AI — affichage des mocks locaux");
+          }
+        } else {
+          setReports(useMocks ? mockReports : []);
+        }
         toast.error(
           err.response?.data?.message ||
             "Erreur lors du chargement des rapports",
@@ -105,7 +152,7 @@ export default function ReportsPage() {
   };
 
   const filtered = reports.filter((r) => {
-    const riskLevel = getRiskLevel(r.recoveryScore);
+    const riskLevel = getRiskLevel(r.recoveryScore ?? r.recovery_score);
     const matchSeverity =
       severityFilter === "all" || riskLevel === severityFilter;
     const matchPatient =
@@ -153,11 +200,11 @@ export default function ReportsPage() {
       ) : (
         <div className="space-y-4">
           {filtered.map((report) => {
-            const riskLevel = getRiskLevel(report.recoveryScore);
-            const patientName = report.patient?.user?.fullName || "—";
-            const imageUrl = report.patient?.user?.imageUrl;
-            const dateStr = report.analysisDate || report.createdAt;
-            const bodyLabel = [report.bodyPart, report.affectedSide]
+            const riskLevel = getRiskLevel(report.recoveryScore ?? report.recovery_score);
+            const patientName = report.patient?.user?.fullName || report.patient?.fullName || "—";
+            const imageUrl = report.patient?.user?.imageUrl || report.patient?.imageUrl;
+            const dateStr = report.analysisDate || report.createdAt || report.analysis_date;
+            const bodyLabel = [report.bodyPart || report.body_part, report.affectedSide || report.affected_side]
               .filter(Boolean)
               .join(" · ");
 
@@ -212,40 +259,40 @@ export default function ReportsPage() {
                 </div>
 
                 {/* Scores row */}
-                {(report.recoveryScore != null ||
-                  report.symmetryScore != null ||
-                  report.mobilityPct != null ||
-                  report.painPct != null) && (
+                {((report.recoveryScore ?? report.recovery_score) != null ||
+                  (report.symmetryScore ?? report.symmetry_score) != null ||
+                  (report.mobilityPct ?? report.mobility_pct) != null ||
+                  (report.painPct ?? report.pain_pct) != null) && (
                   <div className="flex flex-wrap gap-3 mb-4">
-                    {report.recoveryScore != null && (
+                    {(report.recoveryScore ?? report.recovery_score) != null && (
                       <div className="text-center bg-gray-50 rounded-lg px-3 py-1.5 border border-gray-100">
                         <p className="text-xs text-gray-400">Récupération</p>
                         <p className="text-sm font-bold text-gray-800">
-                          {report.recoveryScore}%
+                          {(report.recoveryScore ?? report.recovery_score)}%
                         </p>
                       </div>
                     )}
-                    {report.symmetryScore != null && (
+                    {(report.symmetryScore ?? report.symmetry_score) != null && (
                       <div className="text-center bg-gray-50 rounded-lg px-3 py-1.5 border border-gray-100">
                         <p className="text-xs text-gray-400">Symétrie</p>
                         <p className="text-sm font-bold text-gray-800">
-                          {report.symmetryScore}%
+                          {(report.symmetryScore ?? report.symmetry_score)}%
                         </p>
                       </div>
                     )}
-                    {report.mobilityPct != null && (
+                    {(report.mobilityPct ?? report.mobility_pct) != null && (
                       <div className="text-center bg-gray-50 rounded-lg px-3 py-1.5 border border-gray-100">
                         <p className="text-xs text-gray-400">Mobilité</p>
                         <p className="text-sm font-bold text-gray-800">
-                          {report.mobilityPct}%
+                          {(report.mobilityPct ?? report.mobility_pct)}%
                         </p>
                       </div>
                     )}
-                    {report.painPct != null && (
+                    {(report.painPct ?? report.pain_pct) != null && (
                       <div className="text-center bg-gray-50 rounded-lg px-3 py-1.5 border border-gray-100">
                         <p className="text-xs text-gray-400">Douleur</p>
                         <p className="text-sm font-bold text-gray-800">
-                          {report.painPct}%
+                          {(report.painPct ?? report.pain_pct)}%
                         </p>
                       </div>
                     )}
